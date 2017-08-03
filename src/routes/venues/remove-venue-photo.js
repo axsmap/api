@@ -8,6 +8,10 @@ const Venue = require('../../models/venue')
 const s3 = new aws.S3()
 
 module.exports = async (req, res, next) => {
+  if (!req.user.isAdmin) {
+    return res.status(403).json({ message: 'Forbidden action' })
+  }
+
   const photoID = req.params.photoID
   const venueID = req.params.venueID
 

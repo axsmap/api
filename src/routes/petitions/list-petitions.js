@@ -4,6 +4,10 @@ const Petition = require('../../models/petition')
 const Team = require('../../models/team')
 
 module.exports = async (req, res, next) => {
+  if (req.user.isBlocked) {
+    return res.status(423).json({ message: 'You are blocked' })
+  }
+
   const queryParams = req.query
 
   let managedEventsIDs = []

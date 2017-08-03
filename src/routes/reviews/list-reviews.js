@@ -6,6 +6,10 @@ const Review = require('../../models/review')
 const { validateListReviews } = require('./validations')
 
 module.exports = async (req, res, next) => {
+  if (req.user.isBlocked) {
+    return res.status(423).json({ message: 'You are blocked' })
+  }
+
   const queryParams = req.query
   const { errors, isValid } = validateListReviews(queryParams)
 

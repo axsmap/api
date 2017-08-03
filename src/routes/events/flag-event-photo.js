@@ -5,6 +5,10 @@ const Event = require('../../models/event')
 const logger = require('../../helpers/logger')
 
 module.exports = async (req, res, next) => {
+  if (req.user.isBlocked) {
+    return res.status(423).json({ message: 'You are blocked' })
+  }
+
   const eventID = req.params.eventID
   const photoID = req.params.photoID
 

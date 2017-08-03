@@ -5,6 +5,10 @@ const logger = require('../../helpers/logger')
 const Review = require('../../models/review')
 
 module.exports = async (req, res, next) => {
+  if (req.user.isBlocked) {
+    return res.status(423).json({ message: 'You are blocked' })
+  }
+
   const reviewID = req.params.reviewID
 
   let review

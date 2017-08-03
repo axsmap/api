@@ -8,6 +8,10 @@ const logger = require('../../helpers/logger')
 const s3 = new aws.S3()
 
 module.exports = async (req, res, next) => {
+  if (req.user.isBlocked) {
+    return res.status(423).json({ message: 'You are blocked' })
+  }
+
   const eventID = req.params.eventID
   const photoID = req.params.photoID
 

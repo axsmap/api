@@ -4,6 +4,10 @@ const Team = require('../../models/team')
 const validateListTeams = require('./validations')
 
 module.exports = async (req, res, next) => {
+  if (req.user.isBlocked) {
+    return res.status(423).json({ message: 'You are blocked' })
+  }
+
   const queryParams = req.query
   const { errors, isValid } = validateListTeams(queryParams)
 

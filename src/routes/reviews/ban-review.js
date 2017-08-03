@@ -4,6 +4,10 @@ const logger = require('../../helpers/logger')
 const Review = require('../../models/review')
 
 module.exports = async (req, res, next) => {
+  if (!req.user.isAdmin) {
+    return res.status(403).json({ message: 'Forbidden action' })
+  }
+
   const reviewID = req.params.reviewID
 
   let review

@@ -8,8 +8,11 @@ const logger = require('../../helpers/logger')
 const { validateCreateEvent } = require('./validations')
 
 module.exports = async (req, res, next) => {
-  const { errors, isValid } = validateCreateEvent(req.body)
+  if (req.user.isBlocked) {
+    return res.status(423).json({ message: 'You are blocked' })
+  }
 
+  const { errors, isValid } = validateCreateEvent(req.body)
   if (!isValid) {
     return res.status(400).json(errors)
   }

@@ -10,6 +10,10 @@ const Venue = require('../../models/venue')
 const { validateCreateEditReview } = require('./validations')
 
 module.exports = async (req, res, next) => {
+  if (req.user.isBlocked) {
+    return res.status(423).json({ message: 'You are blocked' })
+  }
+
   const { errors, isValid } = validateCreateEditReview(req.body)
 
   if (!isValid) {

@@ -4,6 +4,10 @@ const logger = require('../../helpers/logger')
 const Venue = require('../../models/venue')
 
 module.exports = async (req, res, next) => {
+  if (req.user.isBlocked) {
+    return res.status(423).json({ message: 'You are blocked' })
+  }
+
   const venueID = req.params.venueID
 
   let venue

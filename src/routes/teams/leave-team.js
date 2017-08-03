@@ -4,6 +4,10 @@ const logger = require('../../helpers/logger')
 const Team = require('../../models/team')
 
 module.exports = async (req, res, next) => {
+  if (req.user.isBlocked) {
+    return res.status(423).json({ message: 'You are blocked' })
+  }
+
   const teamID = req.params.teamID
 
   let team

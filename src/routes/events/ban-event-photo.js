@@ -5,6 +5,10 @@ const Event = require('../../models/event')
 const logger = require('../../helpers/logger')
 
 module.exports = async (req, res, next) => {
+  if (!req.user.isAdmin) {
+    return res.status(403).json({ message: 'Forbidden action' })
+  }
+
   const eventID = req.params.eventID
   const photoID = req.params.photoID
 
