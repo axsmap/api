@@ -55,8 +55,8 @@
     "winston-sentry": "0.2.1"
   },
   "lint-staged": {
-    "src/**/*.{js,jsx}": ["eslint --fix", "git add"],
-    "src/**/*.{js,jsx,json,css}": [
+    "src/**/*.{js}": ["eslint --fix", "git add"],
+    "src/**/*.{js,json}": [
       "prettier --single-quote --no-semi --trailing-comma none --tab-width=2 --write",
       "git add"
     ]
