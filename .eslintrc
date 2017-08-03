@@ -36,6 +36,7 @@
     ],
     "import/order": "error",
     "import/prefer-default-export": "error",
-    "import/no-unassigned-import": "error"
+    "import/no-unassigned-import": "error",
+    "space-before-function-paren": "off"
   }
 }
