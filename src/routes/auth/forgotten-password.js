@@ -60,9 +60,12 @@ module.exports = async (req, res, next) => {
 
   const htmlContent = `
     <h3>Hi from AXS Map!</h3>
-    <p>To <strong>reset</strong> your password use the below <strong>key</strong>:</p>
+    <p>To <strong>reset</strong> your password use the <strong>link</strong> below:</p>
     <br/>
-    <code>${passwordTicket.key}</code>
+    <a href="
+    ${process.env.APP_URL}/reset-password/${passwordTicket.key}">
+    ${process.env.APP_URL}/reset-password/${passwordTicket.key}
+    </a>
     <br/><br/>
     <p>Stay awesome.</p>
   `
@@ -70,8 +73,8 @@ module.exports = async (req, res, next) => {
   const subject = 'Reset Password'
   const textContent = `
     Hi from AXS Map!
-    To reset your password use the below key:
-    ${passwordTicket.key}
+    To reset your password use the link below:
+    ${process.env.APP_URL}/reset-password/${passwordTicket.key}
     Stay awesome.
   `
 

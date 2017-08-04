@@ -13,7 +13,7 @@ gulp.task('lint', () =>
 
 gulp.task('serve', ['lint'], () =>
   nodemon({
-    exec: 'node --inspect',
+    exec: 'node',
     script: paths.srcApp,
     tasks: 'lint',
     watch: paths.srcFiles

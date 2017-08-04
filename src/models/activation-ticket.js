@@ -21,6 +21,9 @@ const activationTicketSchema = new mongoose.Schema(
         type: String,
         maxlength: [24, 'Should have less than 25 characters']
       },
+      isSubscribed: {
+        type: Boolean
+      },
       lastName: {
         type: String,
         maxlength: [36, 'Should have less than 37 characters']

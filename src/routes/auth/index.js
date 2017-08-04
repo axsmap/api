@@ -12,7 +12,7 @@ const signUp = require('./sign-up')
 
 const router = new express.Router()
 
-router.post('/activate-account', activateAccount)
+router.get('/activate-account/:key', activateAccount)
 router.post('/forgotten-password', forgottenPassword)
 router.post('/token', generateToken)
 router.put('/reset-password', resetPassword)

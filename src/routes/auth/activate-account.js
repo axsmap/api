@@ -9,20 +9,17 @@ const logger = require('../../helpers/logger')
 const RefreshToken = require('../../models/refresh-token')
 const User = require('../../models/user')
 
-const { validateActivateAccount } = require('./validations')
-
 module.exports = async (req, res, next) => {
-  const { errors, isValid } = validateActivateAccount(req.body)
-  if (!isValid) {
-    return res.status(400).json(errors)
-  }
-
-  const key = req.body.key
+  const key = req.params.key
 
   let activationTicket
   try {
     activationTicket = await ActivationTicket.findOne({ key })
   } catch (err) {
+    if (err.name === 'CastError') {
+      return res.status(404).json({ message: 'Activation ticket not found' })
+    }
+
     logger.error(
       `Activation ticket with key ${key} failed to be found at activate-account.`
     )
@@ -48,8 +45,9 @@ module.exports = async (req, res, next) => {
     return res.status(400).json({ message: 'Activation ticket expired' })
   }
 
-  const userData = activationTicket.userData
-  userData.email = activationTicket.email
+  const userData = Object.assign({}, activationTicket.userData, {
+    email: activationTicket.email
+  })
 
   let repeatedUsers
   try {
@@ -106,7 +104,7 @@ module.exports = async (req, res, next) => {
   const refreshTokenData = {
     expiresAt,
     key: `${user.id}${crypto.randomBytes(28).toString('hex')}`,
-    userId: user.id
+    userID: user.id
   }
 
   try {
@@ -129,5 +127,5 @@ module.exports = async (req, res, next) => {
     return next(err)
   }
 
-  return res.status(201).json({ message: 'Success' })
+  return res.redirect(`${process.env.APP_URL}/sign-in`)
 }

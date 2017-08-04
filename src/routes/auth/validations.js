@@ -3,17 +3,6 @@ const { isEmpty } = require('lodash')
 const { trim } = require('lodash')
 
 module.exports = {
-  validateActivateAccount(data) {
-    const errors = {}
-
-    if (!data.key) {
-      errors.key = 'Is required'
-    } else if (typeof data.key !== 'string') {
-      errors.key = 'Should be a string'
-    }
-
-    return { errors, isValid: isEmpty(errors) }
-  },
   validateForgottenPassword(data) {
     const errors = {}
 
@@ -99,6 +88,12 @@ module.exports = {
       if (firstName.split(' ').length > 1) {
         errors.firstName = 'Should only be one name'
       }
+    }
+
+    if (typeof data.isSubscribed === 'undefined') {
+      errors.isSubscribed = 'Is required'
+    } else if (typeof data.isSubscribed !== 'boolean') {
+      errors.isSubscribed = 'Should be a boolean'
     }
 
     if (!data.lastName) {

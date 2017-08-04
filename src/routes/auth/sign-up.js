@@ -18,7 +18,13 @@ module.exports = async (req, res, next) => {
     return res.status(400).json(errors)
   }
 
-  const data = pick(req.body, ['email', 'firstName', 'lastName', 'password'])
+  const data = pick(req.body, [
+    'email',
+    'firstName',
+    'isSubscribed',
+    'lastName',
+    'password'
+  ])
   data.firstName = trim(data.firstName)
   data.lastName = trim(data.lastName)
   data.username = `${slugify(data.firstName)}-${slugify(data.lastName)}`
@@ -98,6 +104,7 @@ module.exports = async (req, res, next) => {
     key,
     userData: {
       firstName: data.firstName,
+      isSubscribed: data.isSubscribed,
       lastName: data.lastName,
       password: data.password,
       username: data.username
@@ -117,16 +124,19 @@ module.exports = async (req, res, next) => {
   const subject = 'Activate Account'
   const htmlContent = `
     <h3>Welcome to AXS Map!</h3>
-    <p>To <strong>activate</strong> your account use the below <strong>key</strong>:</p>
+    <p>To <strong>activate</strong> your account use the <strong>link</strong> below:</p>
     <br/>
-    <code>${activationTicket.key}</code>
+    <a href="
+    ${process.env.API_URL}/auth/activate-account/${activationTicket.key}">
+    ${process.env.API_URL}/auth/activate-account/${activationTicket.key}
+    </a>
     <br/><br/>
     <p>Stay awesome.</p>
   `
   const textContent = `
     Welcome to AXS Map!
-    To activate your account use the below key:
-    ${activationTicket.key}
+    To activate your account use the link below:
+    ${process.env.API_URL}/auth/activate-account/${activationTicket.key}
     Stay awesome.
   `
   const receiversEmails = [activationTicket.email]
