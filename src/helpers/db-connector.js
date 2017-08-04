@@ -10,13 +10,11 @@ let disconnecting
 let initialized = false
 const mongodbURI = process.env.MONGODB_URI
 const dbName = mongoUri.parse(mongodbURI).database
-const socket = {
-  socketOptions: { connectTimeoutMS: 30000, keepAlive: 1, socketTimeout: 0 }
-}
 const options = {
-  server: socket,
-  replset: socket,
-  db: { native_parser: true }
+  connectTimeoutMS: 30000,
+  keepAlive: 1,
+  db: { native_parser: true },
+  useMongoClient: true
 }
 
 function logging(db) {

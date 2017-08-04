@@ -12,7 +12,7 @@ const Team = require('../../models/team')
 const s3 = new aws.S3()
 const uploadAvatar = pify(
   multer({
-    dest: './src/uploads/',
+    dest: '/tmp',
     limits: { fields: 0, fieldSize: 0, fileSize: 2097152 },
     fileFilter: (req, file, cb) => {
       if (/^image\/(jpe?g|png)$/i.test(file.mimetype)) {

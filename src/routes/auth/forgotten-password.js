@@ -59,7 +59,7 @@ module.exports = async (req, res, next) => {
   }
 
   const htmlContent = `
-    <h3>Hi = require(AXS Map!</h3>
+    <h3>Hi from AXS Map!</h3>
     <p>To <strong>reset</strong> your password use the below <strong>key</strong>:</p>
     <br/>
     <code>${passwordTicket.key}</code>
@@ -69,7 +69,7 @@ module.exports = async (req, res, next) => {
   const receiversEmails = [passwordTicket.email]
   const subject = 'Reset Password'
   const textContent = `
-    Hi = require(AXS Map!
+    Hi from AXS Map!
     To reset your password use the below key:
     ${passwordTicket.key}
     Stay awesome.

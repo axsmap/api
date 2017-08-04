@@ -70,7 +70,7 @@ module.exports = async (req, res, next) => {
 
   places = places.map(place => {
     const review = find(venues, venue => venue.placeID === place.placeID)
-    return { ...place, review }
+    return Object.assign({}, place, review)
   })
 
   const dataResponse = {
