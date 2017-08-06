@@ -72,6 +72,8 @@ module.exports = {
       errors.email = 'Is required'
     } else if (typeof data.email !== 'string') {
       errors.email = 'Should be a string'
+    } else if (trim(data.email).length > 254) {
+      errors.email = 'Should have less than 255 characters'
     } else if (!isEmail(data.email)) {
       errors.email = 'Should be a valid email'
     }
@@ -82,6 +84,8 @@ module.exports = {
       errors.firstName = 'Should be a string'
     } else if (/[~`!#$%^&*+=\-[\]\\';,./{}|\\":<>?\d]/g.test(data.firstName)) {
       errors.firstName = 'Should only have letters'
+    } else if (trim(data.firstName).length > 24) {
+      errors.firstName = 'Should have less than 25 characters'
     } else {
       const firstName = trim(data.firstName)
 
@@ -102,6 +106,8 @@ module.exports = {
       errors.lastName = 'Should be a string'
     } else if (/[~`!#$%^&*+=\-[\]\\';,./{}|\\":<>?\d]/g.test(data.lastName)) {
       errors.lastName = 'Should only have letters'
+    } else if (trim(data.lastName).length > 36) {
+      errors.lastName = 'Should have less than 37 characters'
     } else {
       const lastName = trim(data.lastName)
 
