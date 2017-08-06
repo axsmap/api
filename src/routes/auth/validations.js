@@ -1,3 +1,4 @@
+const freemail = require('freemail')
 const { isEmail } = require('validator')
 const { isEmpty } = require('lodash')
 const { trim } = require('lodash')
@@ -74,7 +75,7 @@ module.exports = {
       errors.email = 'Should be a string'
     } else if (trim(data.email).length > 254) {
       errors.email = 'Should have less than 255 characters'
-    } else if (!isEmail(data.email)) {
+    } else if (!isEmail(data.email) || freemail.isDisposable(data.email)) {
       errors.email = 'Should be a valid email'
     }
 
