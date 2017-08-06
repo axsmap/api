@@ -1284,6 +1284,12 @@ frameguard@3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/frameguard/-/frameguard-3.0.0.tgz#7bcad469ee7b96e91d12ceb3959c78235a9272e9"
 
+freemail@1.5.0:
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/freemail/-/freemail-1.5.0.tgz#93bb0f67c4987143b478b407e98e326ead8ed4e0"
+  dependencies:
+    tldjs "^1.5.2"
+
 fresh@0.5.0:
   version "0.5.0"
   resolved "https://registry.yarnpkg.com/fresh/-/fresh-0.5.0.tgz#f474ca5e6a9246d6fd8e0953cfa9b9c805afa78e"
@@ -3729,6 +3735,12 @@ time-stamp@^1.0.0:
 timed-out@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/timed-out/-/timed-out-2.0.0.tgz#f38b0ae81d3747d628001f41dafc652ace671c0a"
+
+tldjs@^1.5.2:
+  version "1.8.0"
+  resolved "https://registry.yarnpkg.com/tldjs/-/tldjs-1.8.0.tgz#b9c16bd6de357b55ffcbe7d5be41f6b3ca76e3fa"
+  dependencies:
+    punycode "^1.4.1"
 
 tmp@^0.0.29:
   version "0.0.29"
