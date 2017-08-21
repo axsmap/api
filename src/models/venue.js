@@ -24,11 +24,6 @@ const venueSchema = new mongoose.Schema(
       max: [5, 'Should be less than 6'],
       min: [0, 'Should be more than -1']
     },
-    googlePlaceID: {
-      type: String,
-      maxlength: [255, 'Should be less than 256 characters'],
-      required: [true, 'Is required']
-    },
     guideDog: {
       type: Number,
       default: 0,
@@ -38,6 +33,22 @@ const venueSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
       required: [true, 'Is required']
+    },
+    location: {
+      latitude: {
+        type: Number,
+        max: [90, 'Should be less than 91'],
+        min: [-90, 'Should be more than -91']
+      },
+      longitude: {
+        type: Number,
+        max: [180, 'Should be less than 181'],
+        min: [-180, 'Should be more than -181']
+      }
+    },
+    name: {
+      type: String,
+      maxlength: [255, 'Should be less than 256 characters']
     },
     parking: {
       type: Number,
@@ -102,6 +113,11 @@ const venueSchema = new mongoose.Schema(
         }
       }
     ],
+    placeId: {
+      type: String,
+      maxlength: [255, 'Should be less than 256 characters'],
+      required: [true, 'Is required']
+    },
     quiet: {
       type: Number,
       default: 0,
@@ -132,6 +148,16 @@ const venueSchema = new mongoose.Schema(
       type: [Number],
       default: [0, 0, 0, 0]
     },
+    types: [
+      {
+        type: String,
+        maxlength: [50, 'Should be less than 51 characters']
+      }
+    ],
+    vicinity: {
+      type: String,
+      maxlength: [255, 'Should be less than 256 characters']
+    },
     wellLit: {
       type: Number,
       default: 0,
@@ -141,6 +167,6 @@ const venueSchema = new mongoose.Schema(
   { timestamps: true }
 )
 
-venueSchema.index({ googlePlaceID: 1 })
+venueSchema.index({ placeId: 1 })
 
 module.exports = mongoose.model('Venue', venueSchema)

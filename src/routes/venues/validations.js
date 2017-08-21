@@ -1,13 +1,17 @@
 const { isEmpty } = require('lodash')
 
 const { isNumber } = require('../../helpers')
-const { placesTypes } = require('../../helpers/constants')
+const { languages, placesTypes } = require('../../helpers/constants')
 
 module.exports = {
   validateListVenues(queryParams) {
     const errors = {}
 
     if (!queryParams.page) {
+      if (queryParams.language && !languages.includes(queryParams.language)) {
+        errors.language = 'Should be a valid language'
+      }
+
       if (!queryParams.location) {
         errors.location = 'Is required'
       } else {
@@ -34,16 +38,6 @@ module.exports = {
         ) {
           errors.location = 'Longitude value out of bounds'
         }
-      }
-
-      if (!queryParams.radius) {
-        errors.radius = 'Is required'
-      } else if (!isNumber(queryParams.radius)) {
-        errors.radius = 'Should be a number'
-      } else if (parseFloat(queryParams.radius) < 0) {
-        errors.radius = 'Should be a positive number'
-      } else if (parseFloat(queryParams.radius) > 50000) {
-        errors.radius = 'Should be less than 50000'
       }
 
       if (queryParams.type && !placesTypes.includes(queryParams.type)) {

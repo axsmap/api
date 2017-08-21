@@ -18,21 +18,33 @@ module.exports = async (req, res, next) => {
     return res.status(400).json(errors)
   }
 
-  let placesQueryString
+  let placesQueryString = `?key=${process.env.PLACES_API_KEY}`
   if (!queryParams.page) {
-    placesQueryString = `?location=${queryParams.location}&radius=${queryParams.radius}&type=establishment`
+    placesQueryString = `${placesQueryString}&location=${queryParams.location}&rankby=distance`
+
+    if (queryParams.keyword) {
+      placesQueryString = `${placesQueryString}&keyword=${queryParams.keyword}`
+    }
+
+    if (queryParams.language) {
+      placesQueryString = `${placesQueryString}&language=${queryParams.language}`
+    } else {
+      placesQueryString = `${placesQueryString}&language=en`
+    }
+
     if (queryParams.type) {
-      placesQueryString = `?location=${queryParams.location}&radius=${queryParams.radius}&type=${queryParams.type}`
+      placesQueryString = `${placesQueryString}&type=${queryParams.type}`
+    } else {
+      placesQueryString = `${placesQueryString}&type=establishment`
     }
   } else {
-    placesQueryString = `?pagetoken=${queryParams.page}`
+    placesQueryString = `${placesQueryString}&pagetoken=${queryParams.page}`
   }
 
   let placesResponse
   try {
     placesResponse = await axios.get(
-      `https://maps.googleapis.com/maps/api/place/nearbysearch/json${placesQueryString}&key=${process
-        .env.PLACES_API_KEY}`
+      `https://maps.googleapis.com/maps/api/place/nearbysearch/json${placesQueryString}`
     )
   } catch (err) {
     logger.error(
@@ -44,33 +56,55 @@ module.exports = async (req, res, next) => {
   }
 
   let places = []
-  const placesIDs = []
+  const placesIds = []
   placesResponse.data.results.forEach(place => {
+    let photo = ''
+    if (place.photos) {
+      photo = place.photos[0]
+    } else {
+      photo = place.icon
+    }
+
     places.push({
       location: place.geometry.location,
       name: place.name,
-      placeID: place.place_id,
+      photo,
+      placeId: place.place_id,
+      rating: place.rating,
       types: place.types,
       vicinity: place.vicinity
     })
-    placesIDs.push(place.place_id)
+    placesIds.push(place.place_id)
   })
 
   let venues
   try {
-    venues = await Venue.find({ placeID: { $in: placesIDs } }).select(
-      '-__v _id bathroomScore entryScore placeID'
+    venues = await Venue.find({ placeId: { $in: placesIds } }).select(
+      '-__v _id bathroomScore entryScore placeId'
     )
   } catch (err) {
     logger.error(
-      `Venues failed to be found at list-venues.\nPlaces IDs: [${placesIDs}]`
+      `Venues failed to be found at list-venues.\nPlaces ids: [${placesIds}]`
     )
     return next(err)
   }
 
   places = places.map(place => {
-    const review = find(venues, venue => venue.placeID === place.placeID)
-    return Object.assign({}, place, review)
+    const venue = find(venues, venue => venue.placeId === place.placeId)
+    if (venue) {
+      let photo = place.photo
+      if (venue.photos) {
+        photo = venues.photos[0].url
+      }
+
+      return Object.assign({}, place, {
+        bathroomScore: venue.bathroomScore,
+        entryScore: venue.entryScore,
+        photo
+      })
+    }
+
+    return place
   })
 
   const dataResponse = {

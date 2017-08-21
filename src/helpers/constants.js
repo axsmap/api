@@ -1,4 +1,5 @@
 module.exports = {
+  languages: ['en', 'es'],
   placesTypes: [
     'accounting',
     'airport',
