@@ -1,3 +1,6 @@
+const fs = require('fs')
+const https = require('https')
+
 const bodyParser = require('body-parser')
 const cors = require('cors')
 const express = require('express')
@@ -43,7 +46,19 @@ function connectedToDB() {
   )
 
   // App Initialization
-  app.listen(8000, () => logger.info('Listening on port 8000'))
+  if (process.env.NODE_ENV === 'development') {
+    https
+      .createServer(
+        {
+          key: fs.readFileSync('./certificates/server.key'),
+          cert: fs.readFileSync('./certificates/server.crt')
+        },
+        app
+      )
+      .listen(8000, () => logger.info('HTTPS server listening on port 8000'))
+  } else {
+    app.listen(8000, () => logger.info('HTTP server listening on port 8000'))
+  }
 }
 
 connectToDB(connectedToDB)

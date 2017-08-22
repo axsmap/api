@@ -11,11 +11,12 @@
     "cmt": "git-cz",
     "deploy": "now && now alias",
     "precommit": "lint-staged",
-    "serve": "gulp",
+    "serve": "cross-env NODE_ENV=development gulp",
     "start": "node src/index.js"
   },
   "devDependencies": {
     "commitizen": "2.9.6",
+    "cross-env": "^5.0.5",
     "cz-conventional-changelog": "2.0.0",
     "eslint": "4.3.0",
     "eslint-config-standard": "10.2.1",
@@ -59,10 +60,7 @@
     "winston-sentry": "0.2.1"
   },
   "lint-staged": {
-    "src/**/*.{js}": [
-      "eslint --fix",
-      "git add"
-    ],
+    "src/**/*.{js}": ["eslint --fix", "git add"],
     "src/**/*.{js,json}": [
       "prettier --single-quote --no-semi --trailing-comma none --tab-width=2 --write",
       "git add"
