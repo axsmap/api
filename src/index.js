@@ -5,6 +5,7 @@ const bodyParser = require('body-parser')
 const cors = require('cors')
 const express = require('express')
 const helmet = require('helmet')
+const ip = require('ip')
 const morgan = require('morgan')
 
 // Fill process.env with environment variables
@@ -55,9 +56,11 @@ function connectedToDB() {
         },
         app
       )
-      .listen(8000, () => logger.info('HTTPS server listening on port 8000'))
+      .listen(8000, () =>
+        logger.info(`Listening on https://${ip.address()}:8000`)
+      )
   } else {
-    app.listen(8000, () => logger.info('HTTP server listening on port 8000'))
+    app.listen(8000)
   }
 }
 

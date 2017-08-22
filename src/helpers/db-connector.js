@@ -18,16 +18,16 @@ const options = {
 
 function logging(db) {
   db.on('connected', () =>
-    logger.info(`Database connection to ${dbName} established.`)
+    logger.info(`Database connection to ${dbName} established`)
   )
-  db.on('open', () => logger.debug(`Database connection to ${dbName} opened.`))
+  db.on('open', () => logger.debug(`Database connection to ${dbName} opened`))
   db.on('disconnected', () => {
     if (disconnecting !== true) {
-      logger.error(`Database connection to ${dbName} lost.`)
+      logger.error(`Database connection to ${dbName} lost`)
     }
   })
   db.on('error', err =>
-    logger.error(`Database connection to ${dbName} error.`, {
+    logger.error(`Database connection to ${dbName} error`, {
       stack: err.stack || err.message || err || '(unknown)'
     })
   )
@@ -55,7 +55,7 @@ function reconnection(db) {
 
   function schedule() {
     if (disconnecting) {
-      logger.info(`Database connection to ${dbName} explicitly shut down.`)
+      logger.info(`Database connection to ${dbName} explicitly shut down`)
       return
     }
 
