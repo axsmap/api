@@ -11,7 +11,7 @@ const removeVenuePhoto = require('./remove-venue-photo')
 
 const router = new express.Router()
 
-router.get('', isAuthenticated, listVenues)
+router.get('', listVenues)
 router.get('/:venueID', isAuthenticated, getVenue)
 router.put('/:venueID/archive', isAuthenticated, archiveVenue)
 router.post('/:venueID/photos', isAuthenticated, addVenuePhoto)

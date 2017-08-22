@@ -7,10 +7,6 @@ const Venue = require('../../models/venue')
 const { validateListVenues } = require('./validations')
 
 module.exports = async (req, res, next) => {
-  if (req.user.isBlocked) {
-    return res.status(423).json({ message: 'You are blocked' })
-  }
-
   const queryParams = req.query
   const { errors, isValid } = validateListVenues(queryParams)
 
@@ -60,28 +56,29 @@ module.exports = async (req, res, next) => {
   placesResponse.data.results.forEach(place => {
     let photo = ''
     if (place.photos) {
-      photo = place.photos[0]
-    } else {
-      photo = place.icon
+      photo = `https://maps.googleapis.com/maps/api/place/photo?key=${process
+        .env.PLACES_API_KEY}&maxwidth=300&photoreference=${place.photos[0]
+        .photo_reference}`
     }
 
     places.push({
-      location: place.geometry.location,
+      generalScore: place.rating,
+      icon: place.icon,
+      location: {
+        latitude: place.geometry.location.lat,
+        longitude: place.geometry.location.lng
+      },
       name: place.name,
       photo,
       placeId: place.place_id,
-      rating: place.rating,
-      types: place.types,
-      vicinity: place.vicinity
+      types: place.types
     })
     placesIds.push(place.place_id)
   })
 
   let venues
   try {
-    venues = await Venue.find({ placeId: { $in: placesIds } }).select(
-      '-__v _id bathroomScore entryScore placeId'
-    )
+    venues = await Venue.find({ placeId: { $in: placesIds } })
   } catch (err) {
     logger.error(
       `Venues failed to be found at list-venues.\nPlaces ids: [${placesIds}]`
