@@ -15,7 +15,7 @@ const signUp = require('./sign-up')
 
 const router = new express.Router()
 const store = new MongooseStore(BruteForce)
-const bruteforce = new ExpressBrute(store)
+const bruteforce = new ExpressBrute(store, { freeRetries: 10 })
 
 router.get('/activate-account/:key', activateAccount)
 router.post('/forgotten-password', bruteforce.prevent, forgottenPassword)
