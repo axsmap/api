@@ -29,7 +29,7 @@
     "gulp-nodemon": "2.2.1",
     "husky": "0.14.3",
     "lint-staged": "4.0.2",
-    "now": "7.3.0",
+    "now": "^7.4.0",
     "prettier": "1.5.3"
   },
   "dependencies": {
