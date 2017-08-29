@@ -31,10 +31,10 @@ module.exports = {
 
       let user
       try {
-        user = await User.findOne({ _id: decoded.userID, isArchived: false })
+        user = await User.findOne({ _id: decoded.userId, isArchived: false })
       } catch (err) {
         logger.error(
-          `User ${decoded.userID} failed to be found at authenticate`
+          `User ${decoded.userId} failed to be found at authenticate`
         )
         return next(err)
       }

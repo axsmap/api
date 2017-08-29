@@ -43,7 +43,7 @@ module.exports = async (req, res, next) => {
 
   const dataResponse = {
     address: placeResponse.data.formatted_address,
-    googleURL: placeResponse.data.url,
+    googleUrl: placeResponse.data.url,
     location: placeResponse.data.geometry.location,
     name: placeResponse.data.name,
     phone: placeResponse.data.formatted_phone_number,
