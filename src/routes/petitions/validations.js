@@ -7,27 +7,27 @@ module.exports = {
   validateCreatePetition(data) {
     const errors = {}
 
-    if (!data.entityID) {
-      errors.entityID = 'Is required'
-    } else if (typeof data.entityID !== 'string') {
-      errors.entityID = 'Should be a string'
-    } else if (!isMongoId(data.entityID)) {
-      errors.entityID = `${data.entityID} should be an ID`
+    if (!data.entityId) {
+      errors.entityId = 'Is required'
+    } else if (typeof data.entityId !== 'string') {
+      errors.entityId = 'Should be a string'
+    } else if (!isMongoId(data.entityId)) {
+      errors.entityId = `${data.entityId} should be an Id`
     }
 
-    if (data.receiverID) {
-      if (typeof data.receiverID !== 'string') {
-        errors.receiverID = 'Should be a string'
-      } else if (!isMongoId(data.receiverID)) {
-        errors.receiverID = `${data.receiverID} should be an ID`
+    if (data.receiverId) {
+      if (typeof data.receiverId !== 'string') {
+        errors.receiverId = 'Should be a string'
+      } else if (!isMongoId(data.receiverId)) {
+        errors.receiverId = `${data.receiverId} should be an Id`
       }
     }
 
-    if (data.senderID) {
-      if (typeof data.senderID !== 'string') {
-        errors.senderID = 'Should be a string'
-      } else if (!isMongoId(data.senderID)) {
-        errors.senderID = `${data.senderID} should be an ID`
+    if (data.senderId) {
+      if (typeof data.senderId !== 'string') {
+        errors.senderId = 'Should be a string'
+      } else if (!isMongoId(data.senderId)) {
+        errors.senderId = `${data.senderId} should be an Id`
       }
     }
 

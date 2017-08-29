@@ -29,16 +29,16 @@ module.exports = async (req, res, next) => {
     return res.status(423).json({ message: 'You are blocked' })
   }
 
-  const eventID = req.params.eventID
+  const eventId = req.params.eventId
 
   let event
   try {
-    event = await Event.findOne({ _id: eventID })
+    event = await Event.findOne({ _id: eventId })
   } catch (err) {
     if (err.name === 'CastError') {
       return res.status(404).json({ message: 'Event not found' })
     }
-    logger.error(`Event ${eventID} failed to be found at add-event-photo`)
+    logger.error(`Event ${eventId} failed to be found at add-event-photo`)
     return next(err)
   }
 

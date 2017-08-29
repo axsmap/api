@@ -6,11 +6,11 @@ module.exports = async (req, res, next) => {
     return res.status(423).json({ message: 'You are blocked' })
   }
 
-  const teamID = req.params.teamID
+  const teamId = req.params.teamId
 
   let team
   try {
-    team = await Team.findOne({ _id: teamID, isArchived: false }).select(
+    team = await Team.findOne({ _id: teamId, isArchived: false }).select(
       '-__v -createdAt -isArchived -updatedAt'
     )
   } catch (err) {
@@ -18,7 +18,7 @@ module.exports = async (req, res, next) => {
       return res.status(404).json({ message: 'Team not found' })
     }
 
-    logger.error(`Team ${teamID} failed to be found at get-team`)
+    logger.error(`Team ${teamId} failed to be found at get-team`)
     return next(err)
   }
 

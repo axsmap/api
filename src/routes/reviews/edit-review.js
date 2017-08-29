@@ -14,11 +14,11 @@ module.exports = async (req, res, next) => {
     return res.status(423).json({ message: 'You are blocked' })
   }
 
-  const reviewID = req.params.reviewID
+  const reviewId = req.params.reviewId
 
   let review
   try {
-    review = await Review.findOne({ _id: reviewID }).select(
+    review = await Review.findOne({ _id: reviewId }).select(
       '-__v -createdAt -updatedAt'
     )
   } catch (err) {
@@ -26,7 +26,7 @@ module.exports = async (req, res, next) => {
       return res.status(404).json({ message: 'Review not found' })
     }
 
-    logger.error(`Review ${reviewID} failed to be found at edit-review`)
+    logger.error(`Review ${reviewId} failed to be found at edit-review`)
     return next(err)
   }
 

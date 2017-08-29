@@ -21,34 +21,34 @@ module.exports = async (req, res, next) => {
   }
 
   const data = pick(req.body, [
-    'entityID',
+    'entityId',
     'message',
-    'receiverID',
-    'senderID',
+    'receiverId',
+    'senderId',
     'type'
   ])
   const today = moment.utc()
 
   if (data.type === 'invite-team-event') {
-    data.senderID = req.user.id
+    data.senderId = req.user.id
 
     let petition
     try {
       petition = await Petition.findOne({
-        entityID: data.entityID,
-        receiverID: data.receiverID,
+        entityId: data.entityId,
+        receiverId: data.receiverId,
         type: data.type
       })
     } catch (err) {
       logger.error(
-        `Petition ${data.type} to ${data.receiverID} failed to be found at create-petition`
+        `Petition ${data.type} to ${data.receiverId} failed to be found at create-petition`
       )
       return next(err)
     }
 
     if (petition && petition.state === 'pending') {
       return res.status(400).json({
-        message: `Team ${data.receiverID} already has a pending invitation to the event ${data.entityID}`
+        message: `Team ${data.receiverId} already has a pending invitation to the event ${data.entityId}`
       })
     }
 
@@ -65,25 +65,25 @@ module.exports = async (req, res, next) => {
 
     let eventEntity
     try {
-      eventEntity = await Event.findOne({ _id: data.entityID })
+      eventEntity = await Event.findOne({ _id: data.entityId })
     } catch (err) {
       logger.error(
-        `Event ${data.entityID} failed to be found at create-petition`
+        `Event ${data.entityId} failed to be found at create-petition`
       )
       return next(err)
     }
 
     if (!eventEntity) {
-      return res.status(404).json({ entityID: 'Event not found' })
+      return res.status(404).json({ entityId: 'Event not found' })
     }
 
     if (!eventEntity.managers.find(m => m.toString() === req.user.id)) {
       return res.status(403).json({ message: 'Forbidden action' })
     }
 
-    if (eventEntity.teams.find(t => t.toString() === data.receiverID)) {
+    if (eventEntity.teams.find(t => t.toString() === data.receiverId)) {
       return res.status(400).json({
-        receiverID: `Is already a participant of the event ${data.entityID}`
+        receiverId: `Is already a participant of the event ${data.entityId}`
       })
     }
 
@@ -96,37 +96,37 @@ module.exports = async (req, res, next) => {
 
     let teamReceiver
     try {
-      teamReceiver = await Team.findOne({ _id: data.receiverID })
+      teamReceiver = await Team.findOne({ _id: data.receiverId })
     } catch (err) {
       logger.error(
-        `Team ${data.receiverID} failed to be found at create-petition`
+        `Team ${data.receiverId} failed to be found at create-petition`
       )
       return next(err)
     }
 
     if (!teamReceiver) {
-      return res.status(404).json({ receiverID: 'Team not found' })
+      return res.status(404).json({ receiverId: 'Team not found' })
     }
   } else if (data.type === 'invite-user-event') {
-    data.senderID = req.user.id
+    data.senderId = req.user.id
 
     let petition
     try {
       petition = await Petition.findOne({
-        entityID: data.entityID,
-        receiverID: data.receiverID,
+        entityId: data.entityId,
+        receiverId: data.receiverId,
         type: data.type
       })
     } catch (err) {
       logger.error(
-        `Petition ${data.type} to ${data.receiverID} failed to be found at create-petition`
+        `Petition ${data.type} to ${data.receiverId} failed to be found at create-petition`
       )
       return next(err)
     }
 
     if (petition && petition.state === 'pending') {
       return res.status(400).json({
-        message: `User ${data.receiverID} already has a pending invitation to the event ${data.entityID}`
+        message: `User ${data.receiverId} already has a pending invitation to the event ${data.entityId}`
       })
     }
 
@@ -141,33 +141,33 @@ module.exports = async (req, res, next) => {
       }
     }
 
-    if (req.user.id === data.receiverID) {
+    if (req.user.id === data.receiverId) {
       return res
         .status(400)
-        .json({ receiverID: 'Should be a different user than you' })
+        .json({ receiverId: 'Should be a different user than you' })
     }
 
     let eventEntity
     try {
-      eventEntity = await Event.findOne({ _id: data.entityID })
+      eventEntity = await Event.findOne({ _id: data.entityId })
     } catch (err) {
       logger.error(
-        `Event ${data.entityID} failed to be found at create-petition`
+        `Event ${data.entityId} failed to be found at create-petition`
       )
       return next(err)
     }
 
     if (!eventEntity) {
-      return res.status(404).json({ entityID: 'Event not found' })
+      return res.status(404).json({ entityId: 'Event not found' })
     }
 
     if (!eventEntity.managers.find(m => m.toString() === req.user.id)) {
       return res.status(403).json({ message: 'Forbidden action' })
     }
 
-    if (eventEntity.participants.find(p => p.toString() === data.receiverID)) {
+    if (eventEntity.participants.find(p => p.toString() === data.receiverId)) {
       return res.status(400).json({
-        receiverID: `Is already a participant of the event ${data.entityID}`
+        receiverId: `Is already a participant of the event ${data.entityId}`
       })
     }
 
@@ -180,37 +180,37 @@ module.exports = async (req, res, next) => {
 
     let userReceiver
     try {
-      userReceiver = await User.findOne({ _id: data.receiverID })
+      userReceiver = await User.findOne({ _id: data.receiverId })
     } catch (err) {
       logger.error(
-        `User ${data.receiverID} failed to be found at create-petition`
+        `User ${data.receiverId} failed to be found at create-petition`
       )
       return next(err)
     }
 
     if (!userReceiver) {
-      return res.status(404).json({ receiverID: 'User not found' })
+      return res.status(404).json({ receiverId: 'User not found' })
     }
   } else if (data.type === 'invite-user-team') {
-    data.senderID = req.user.id
+    data.senderId = req.user.id
 
     let petition
     try {
       petition = await Petition.findOne({
-        entityID: data.entityID,
-        receiverID: data.receiverID,
+        entityId: data.entityId,
+        receiverId: data.receiverId,
         type: data.type
       })
     } catch (err) {
       logger.error(
-        `Petition ${data.type} to ${data.receiverID} failed to be found at create-petition`
+        `Petition ${data.type} to ${data.receiverId} failed to be found at create-petition`
       )
       return next(err)
     }
 
     if (petition && petition.state === 'pending') {
       return res.status(400).json({
-        message: `User ${data.receiverID} already has a pending invitation to the team ${data.entityID}`
+        message: `User ${data.receiverId} already has a pending invitation to the team ${data.entityId}`
       })
     }
 
@@ -225,69 +225,69 @@ module.exports = async (req, res, next) => {
       }
     }
 
-    if (req.user.id === data.receiverID) {
+    if (req.user.id === data.receiverId) {
       return res
         .status(400)
-        .json({ receiverID: 'Should be a different user than you' })
+        .json({ receiverId: 'Should be a different user than you' })
     }
 
     let teamEntity
     try {
-      teamEntity = await Team.findOne({ _id: data.entityID })
+      teamEntity = await Team.findOne({ _id: data.entityId })
     } catch (err) {
       logger.error(
-        `Team ${data.entityID} failed to be found at create-petition`
+        `Team ${data.entityId} failed to be found at create-petition`
       )
       return next(err)
     }
 
     if (!teamEntity) {
-      return res.status(404).json({ entityID: 'Team not found' })
+      return res.status(404).json({ entityId: 'Team not found' })
     }
 
     if (!teamEntity.managers.find(m => m.toString() === req.user.id)) {
       return res.status(403).json({ message: 'Forbidden action' })
     }
 
-    if (teamEntity.members.find(m => m.toString() === data.receiverID)) {
+    if (teamEntity.members.find(m => m.toString() === data.receiverId)) {
       return res.status(400).json({
-        receiverID: `Is already a member of the team ${data.entityID}`
+        receiverId: `Is already a member of the team ${data.entityId}`
       })
     }
 
     let userReceiver
     try {
-      userReceiver = await User.findOne({ _id: data.receiverID })
+      userReceiver = await User.findOne({ _id: data.receiverId })
     } catch (err) {
       logger.error(
-        `User ${data.receiverID} failed to be found at create-petition`
+        `User ${data.receiverId} failed to be found at create-petition`
       )
       return next(err)
     }
 
     if (!userReceiver) {
-      return res.status(404).json({ receiverID: 'User not found' })
+      return res.status(404).json({ receiverId: 'User not found' })
     }
   } else if (data.type === 'request-team-event') {
-    data.receiverID = data.entityID
+    data.receiverId = data.entityId
 
     let petition
     try {
       petition = await Petition.findOne({
-        receiverID: data.receiverID,
-        senderID: data.senderID,
+        receiverId: data.receiverId,
+        senderId: data.senderId,
         type: data.type
       })
     } catch (err) {
       logger.error(
-        `Petition ${data.type} from ${data.senderID} failed to be found at create-petition`
+        `Petition ${data.type} from ${data.senderId} failed to be found at create-petition`
       )
       return next(err)
     }
 
     if (petition && petition.state === 'pending') {
       return res.status(400).json({
-        message: `Team ${data.senderID} already has a pending request with the event ${data.receiverID}`
+        message: `Team ${data.senderId} already has a pending request with the event ${data.receiverId}`
       })
     }
 
@@ -304,21 +304,21 @@ module.exports = async (req, res, next) => {
 
     let eventEntity
     try {
-      eventEntity = await Event.findOne({ _id: data.entityID })
+      eventEntity = await Event.findOne({ _id: data.entityId })
     } catch (err) {
       logger.error(
-        `Event ${data.entityID} failed to be found at create-petition`
+        `Event ${data.entityId} failed to be found at create-petition`
       )
       return next(err)
     }
 
     if (!eventEntity) {
-      return res.status(404).json({ entityID: 'Event not found' })
+      return res.status(404).json({ entityId: 'Event not found' })
     }
 
-    if (eventEntity.teams.find(t => t.toString() === data.senderID)) {
+    if (eventEntity.teams.find(t => t.toString() === data.senderId)) {
       return res.status(400).json({
-        senderID: `Team is already a participant of the event ${data.entityID}`
+        senderId: `Team is already a participant of the event ${data.entityId}`
       })
     }
 
@@ -331,42 +331,42 @@ module.exports = async (req, res, next) => {
 
     let teamSender
     try {
-      teamSender = await Team.findOne({ _id: data.senderID })
+      teamSender = await Team.findOne({ _id: data.senderId })
     } catch (err) {
       logger.error(
-        `Team ${data.senderID} failed to be found at create-petition`
+        `Team ${data.senderId} failed to be found at create-petition`
       )
       return next(err)
     }
 
     if (!teamSender) {
-      return res.status(404).json({ senderID: 'Team not found' })
+      return res.status(404).json({ senderId: 'Team not found' })
     }
 
     if (!teamSender.managers.find(m => m.toString() === req.user.id)) {
       return res.status(403).json({ message: 'Forbidden action' })
     }
   } else if (data.type === 'request-user-event') {
-    data.receiverID = data.entityID
-    data.senderID = req.user.id
+    data.receiverId = data.entityId
+    data.senderId = req.user.id
 
     let petition
     try {
       petition = await Petition.findOne({
-        receiverID: data.receiverID,
-        senderID: data.senderID,
+        receiverId: data.receiverId,
+        senderId: data.senderId,
         type: data.type
       })
     } catch (err) {
       logger.error(
-        `Petition ${data.type} from ${data.senderID} failed to be found at create-petition`
+        `Petition ${data.type} from ${data.senderId} failed to be found at create-petition`
       )
       return next(err)
     }
 
     if (petition && petition.state === 'pending') {
       return res.status(400).json({
-        message: `You already have a pending request with the event ${data.receiverID}`
+        message: `You already have a pending request with the event ${data.receiverId}`
       })
     }
 
@@ -383,21 +383,21 @@ module.exports = async (req, res, next) => {
 
     let eventEntity
     try {
-      eventEntity = await Event.findOne({ _id: data.entityID })
+      eventEntity = await Event.findOne({ _id: data.entityId })
     } catch (err) {
       logger.error(
-        `Event ${data.entityID} failed to be found at create-petition`
+        `Event ${data.entityId} failed to be found at create-petition`
       )
       return next(err)
     }
 
     if (!eventEntity) {
-      return res.status(404).json({ entityID: 'Event not found' })
+      return res.status(404).json({ entityId: 'Event not found' })
     }
 
     if (eventEntity.participants.find(p => p.toString() === req.user.id)) {
       return res.status(400).json({
-        message: `You already are a participant of the event ${data.entityID}`
+        message: `You already are a participant of the event ${data.entityId}`
       })
     }
 
@@ -409,26 +409,26 @@ module.exports = async (req, res, next) => {
     }
   } else {
     // data.type === request-user-team
-    data.receiverID = data.entityID
-    data.senderID = req.user.id
+    data.receiverId = data.entityId
+    data.senderId = req.user.id
 
     let petition
     try {
       petition = await Petition.findOne({
-        receiverID: data.receiverID,
-        senderID: data.senderID,
+        receiverId: data.receiverId,
+        senderId: data.senderId,
         type: data.type
       })
     } catch (err) {
       logger.error(
-        `Petition ${data.type} from ${data.senderID} failed to be found at create-petition`
+        `Petition ${data.type} from ${data.senderId} failed to be found at create-petition`
       )
       return next(err)
     }
 
     if (petition && petition.state === 'pending') {
       return res.status(400).json({
-        message: `You already have a pending request with the team ${data.receiverID}`
+        message: `You already have a pending request with the team ${data.receiverId}`
       })
     }
 
@@ -445,21 +445,21 @@ module.exports = async (req, res, next) => {
 
     let teamEntity
     try {
-      teamEntity = await Team.findOne({ _id: data.entityID })
+      teamEntity = await Team.findOne({ _id: data.entityId })
     } catch (err) {
       logger.error(
-        `Team ${data.entityID} failed to be found at create-petition`
+        `Team ${data.entityId} failed to be found at create-petition`
       )
       return next(err)
     }
 
     if (!teamEntity) {
-      return res.status(404).json({ entityID: 'Team not found' })
+      return res.status(404).json({ entityId: 'Team not found' })
     }
 
     if (teamEntity.members.find(m => m.toString() === req.user.id)) {
       return res.status(400).json({
-        message: `You already are a member of the team ${data.entityID}`
+        message: `You already are a member of the team ${data.entityId}`
       })
     }
   }
@@ -479,17 +479,17 @@ module.exports = async (req, res, next) => {
     }
 
     logger.error(
-      `Petition ${data.type} from ${data.senderID} to ${data.receiverID} failed to be created at create-petition`
+      `Petition ${data.type} from ${data.senderId} to ${data.receiverId} failed to be created at create-petition`
     )
     return next(err)
   }
 
   const dataResponse = pick(petition, [
     '_id',
-    'entityID',
+    'entityId',
     'message',
-    'receiverID',
-    'senderID',
+    'receiverId',
+    'senderId',
     'state',
     'type'
   ])

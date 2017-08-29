@@ -104,7 +104,7 @@ module.exports = async (req, res, next) => {
   const refreshTokenData = {
     expiresAt,
     key: `${user.id}${crypto.randomBytes(28).toString('hex')}`,
-    userID: user.id
+    userId: user.id
   }
 
   try {

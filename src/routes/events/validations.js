@@ -114,7 +114,7 @@ module.exports = {
 
     if (data.managers) {
       if (!Array.isArray(data.managers)) {
-        errors.managers = 'Should be an array of users IDs'
+        errors.managers = 'Should be an array of users Ids'
       } else if (data.managers.length > 0) {
         data.managers.forEach(m => {
           if (m && m.toString().startsWith('-')) {
@@ -122,7 +122,7 @@ module.exports = {
           }
 
           if (!m || !isMongoId(m.toString())) {
-            errors.managers = `${m} should be an user ID`
+            errors.managers = `${m} should be an user Id`
           }
         })
       }
@@ -130,7 +130,7 @@ module.exports = {
 
     if (data.participants) {
       if (!Array.isArray(data.participants)) {
-        errors.participants = 'Should be an array of users IDs'
+        errors.participants = 'Should be an array of users Ids'
       } else if (data.participants.length > 0) {
         data.participants.forEach(p => {
           if (!p) {
@@ -138,7 +138,7 @@ module.exports = {
           } else if (!p.toString().startsWith('-')) {
             errors.participants = `${p} should start with -`
           } else if (!isMongoId(p.substring(1))) {
-            errors.participants = `${p} should be an user ID`
+            errors.participants = `${p} should be an user Id`
           }
         })
       }
@@ -191,7 +191,7 @@ module.exports = {
 
     if (data.teams) {
       if (!Array.isArray(data.teams)) {
-        errors.teams = 'Should be an array of teams IDs'
+        errors.teams = 'Should be an array of teams Ids'
       } else if (data.teams.length > 0) {
         data.teams.forEach(t => {
           if (!t) {
@@ -199,7 +199,7 @@ module.exports = {
           } else if (!t.toString().startsWith('-')) {
             errors.teams = `${t} should start with -`
           } else if (!isMongoId(t.substring(1))) {
-            errors.teams = `${t} should be an user ID`
+            errors.teams = `${t} should be an user Id`
           }
         })
       }
@@ -239,7 +239,7 @@ module.exports = {
     }
 
     if (queryParams.creator && !isMongoId(queryParams.creator)) {
-      errors.creator = `${queryParams.creator} should be an user ID`
+      errors.creator = `${queryParams.creator} should be an user Id`
     }
 
     if (queryParams.isApproved) {
@@ -254,11 +254,11 @@ module.exports = {
       const managers = [...new Set(queryParams.managers.split(','))]
 
       if (managers.length === 0) {
-        errors.managers = 'Should have at least one user ID'
+        errors.managers = 'Should have at least one user Id'
       } else {
         managers.forEach(m => {
           if (!m || !isMongoId(m)) {
-            errors.managers = `${m} should be an user ID`
+            errors.managers = `${m} should be an user Id`
           }
         })
       }
@@ -268,11 +268,11 @@ module.exports = {
       const participants = [...new Set(queryParams.participants.split(','))]
 
       if (participants.length === 0) {
-        errors.participants = 'Should have at least one user ID'
+        errors.participants = 'Should have at least one user Id'
       } else {
         participants.forEach(p => {
           if (!p || !isMongoId(p)) {
-            errors.participants = `${p} should be an user ID`
+            errors.participants = `${p} should be an user Id`
           }
         })
       }
@@ -282,11 +282,11 @@ module.exports = {
       const teams = [...new Set(queryParams.teams.split(','))]
 
       if (teams.length === 0) {
-        errors.teams = 'Should have at least one team ID'
+        errors.teams = 'Should have at least one team Id'
       } else {
         teams.forEach(t => {
           if (!t || !isMongoId(t)) {
-            errors.teams = `${t} should be a team ID`
+            errors.teams = `${t} should be a team Id`
           }
         })
       }
@@ -307,7 +307,7 @@ module.exports = {
     const errors = {}
 
     if (data.t && !isMongoId(data.t.toString())) {
-      errors.t = `${data.t} should be a team ID`
+      errors.t = `${data.t} should be a team Id`
     }
 
     return { errors, isValid: isEmpty(errors) }

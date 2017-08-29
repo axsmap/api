@@ -29,17 +29,17 @@ module.exports = async (req, res, next) => {
     return res.status(423).json({ message: 'You are blocked' })
   }
 
-  const userID = req.params.userID
+  const userId = req.params.userId
 
   let user
   try {
-    user = await User.findOne({ _id: userID, isArchived: false })
+    user = await User.findOne({ _id: userId, isArchived: false })
   } catch (err) {
     if (err.name === 'CastError') {
       return res.status(404).json({ message: 'User not found' })
     }
 
-    logger.error(`User ${userID} failed to be found at upload-user-avatar`)
+    logger.error(`User ${userId} failed to be found at upload-user-avatar`)
     return next(err)
   }
 

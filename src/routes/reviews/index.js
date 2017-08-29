@@ -13,9 +13,9 @@ const router = new express.Router()
 
 router.get('', isAuthenticated, listReviews)
 router.post('', isAuthenticated, createReview)
-router.put('/:reviewID', isAuthenticated, editReview)
-router.put('/:reviewID/vote', isAuthenticated, voteReview)
-router.post('/:reviewID/flag', isAuthenticated, flagReview)
-router.put('/:reviewID/ban', isAuthenticated, banReview)
+router.put('/:reviewId', isAuthenticated, editReview)
+router.put('/:reviewId/vote', isAuthenticated, voteReview)
+router.post('/:reviewId/flag', isAuthenticated, flagReview)
+router.put('/:reviewId/ban', isAuthenticated, banReview)
 
 module.exports = router

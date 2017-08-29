@@ -10,6 +10,6 @@ const router = new express.Router()
 
 router.get('', isAuthenticated, listPetitions)
 router.post('', isAuthenticated, createPetition)
-router.put('/:petitionID', isAuthenticated, editPetition)
+router.put('/:petitionId', isAuthenticated, editPetition)
 
 module.exports = router

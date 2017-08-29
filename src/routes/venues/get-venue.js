@@ -8,11 +8,11 @@ module.exports = async (req, res, next) => {
     return res.status(423).json({ message: 'You are blocked' })
   }
 
-  const venueID = req.params.venueID
+  const venueId = req.params.venueId
 
   let venue
   try {
-    venue = await Venue.findOne({ _id: venueID, isArchived: false }).select(
+    venue = await Venue.findOne({ _id: venueId, isArchived: false }).select(
       '-__v -createdAt -updatedAt'
     )
   } catch (err) {
@@ -20,7 +20,7 @@ module.exports = async (req, res, next) => {
       return res.status(404).json({ message: 'Venue not found' })
     }
 
-    logger.error(`Venue ${venueID} failed to be found at get-venue`)
+    logger.error(`Venue ${venueId} failed to be found at get-venue`)
     return next(err)
   }
 
@@ -31,12 +31,12 @@ module.exports = async (req, res, next) => {
   let placeResponse
   try {
     placeResponse = await axios.get(
-      `https://maps.googleapis.com/maps/api/place/details/json?placeid=${venue.placeID}&key=${process
+      `https://maps.googleapis.com/maps/api/place/details/json?placeid=${venue.placeId}&key=${process
         .env.PLACES_API_KEY}`
     )
   } catch (err) {
     logger.error(
-      `Place with ID ${venue.placeID} failed to be found at get-venue.`
+      `Place with Id ${venue.placeId} failed to be found at get-venue.`
     )
     return next(err)
   }
@@ -47,7 +47,7 @@ module.exports = async (req, res, next) => {
     location: placeResponse.data.geometry.location,
     name: placeResponse.data.name,
     phone: placeResponse.data.formatted_phone_number,
-    placeID: placeResponse.data.place_id,
+    placeId: placeResponse.data.place_id,
     review: venue,
     types: placeResponse.data.types,
     vicinity: placeResponse.data.vicinity,

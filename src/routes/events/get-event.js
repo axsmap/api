@@ -6,11 +6,11 @@ module.exports = async (req, res, next) => {
     return res.status(423).json({ message: 'You are blocked' })
   }
 
-  const eventID = req.params.eventID
+  const eventId = req.params.eventId
 
   let event
   try {
-    event = await Event.findOne({ _id: eventID }).select(
+    event = await Event.findOne({ _id: eventId }).select(
       '-__v -createdAt -updatedAt'
     )
   } catch (err) {
@@ -18,7 +18,7 @@ module.exports = async (req, res, next) => {
       return res.status(404).json({ message: 'Event not found' })
     }
 
-    logger.error(`Event ${eventID} failed to be found at get-event`)
+    logger.error(`Event ${eventId} failed to be found at get-event`)
     return next(err)
   }
 

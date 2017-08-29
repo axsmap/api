@@ -4,6 +4,17 @@ const { isEmpty } = require('lodash')
 const { trim } = require('lodash')
 
 module.exports = {
+  validateFacebookSignIn(data) {
+    const errors = {}
+
+    if (!data.accessToken) {
+      errors.accessToken = 'Is required'
+    } else if (typeof data.accessToken !== 'string') {
+      errors.accessToken = 'Should be a string'
+    }
+
+    return { errors, isValid: isEmpty(errors) }
+  },
   validateForgottenPassword(data) {
     const errors = {}
 

@@ -12,7 +12,7 @@ const refreshTokenSchema = new mongoose.Schema(
       required: [true, 'Is required'],
       unique: true
     },
-    userID: {
+    userId: {
       type: String,
       maxlength: [24, 'Should have less than 25 characters'],
       required: [true, 'Is required']

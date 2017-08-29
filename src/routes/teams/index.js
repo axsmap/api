@@ -14,10 +14,10 @@ const router = new express.Router()
 
 router.get('', isAuthenticated, listTeams)
 router.post('', isAuthenticated, createTeam)
-router.get('/:teamID', isAuthenticated, getTeam)
-router.put('/:teamID', isAuthenticated, editTeam)
-router.delete('/:teamID', isAuthenticated, deleteTeam)
-router.put('/:teamID/avatar', isAuthenticated, uploadTeamAvatar)
-router.put('/:teamID/leave', isAuthenticated, leaveTeam)
+router.get('/:teamId', isAuthenticated, getTeam)
+router.put('/:teamId', isAuthenticated, editTeam)
+router.delete('/:teamId', isAuthenticated, deleteTeam)
+router.put('/:teamId/avatar', isAuthenticated, uploadTeamAvatar)
+router.put('/:teamId/leave', isAuthenticated, leaveTeam)
 
 module.exports = router

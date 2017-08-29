@@ -12,18 +12,18 @@ module.exports = async (req, res, next) => {
     return res.status(403).json({ message: 'Forbidden action' })
   }
 
-  const photoID = req.params.photoID
-  const venueID = req.params.venueID
+  const photoId = req.params.photoId
+  const venueId = req.params.venueId
 
   let venue
   try {
-    venue = await Venue.findOne({ _id: venueID, isArchived: false })
+    venue = await Venue.findOne({ _id: venueId, isArchived: false })
   } catch (err) {
     if (err.name === 'CastError') {
       return res.status(404).json({ message: 'Venue not found' })
     }
 
-    logger.error(`Venue ${venueID} failed to be found at remove-venue-photo`)
+    logger.error(`Venue ${venueId} failed to be found at remove-venue-photo`)
     return next(err)
   }
 
@@ -31,7 +31,7 @@ module.exports = async (req, res, next) => {
     return res.status(404).json({ message: 'Venue not found' })
   }
 
-  const isParamPhoto = photo => last(photo.url.split('/')) === photoID
+  const isParamPhoto = photo => last(photo.url.split('/')) === photoId
 
   if (!venue.photos || !venue.photos.find(isParamPhoto)) {
     return res.status(404).json({ message: 'Photo not found' })
@@ -39,7 +39,7 @@ module.exports = async (req, res, next) => {
 
   const photoParams = {
     Bucket: process.env.AWS_S3_BUCKET,
-    Key: `venues/photos/${photoID}`
+    Key: `venues/photos/${photoId}`
   }
 
   try {
@@ -51,7 +51,7 @@ module.exports = async (req, res, next) => {
     return next(err)
   }
 
-  const isNotParamPhoto = photo => last(photo.url.split('/')) !== photoID
+  const isNotParamPhoto = photo => last(photo.url.split('/')) !== photoId
 
   venue.photos = venue.photos.filter(isNotParamPhoto)
   venue.updatedAt = moment.utc().toDate()

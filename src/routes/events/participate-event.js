@@ -11,17 +11,17 @@ module.exports = async (req, res, next) => {
     return res.status(423).json({ message: 'You are blocked' })
   }
 
-  const eventID = req.params.eventID
+  const eventId = req.params.eventId
 
   let event
   try {
-    event = await Event.findOne({ _id: eventID })
+    event = await Event.findOne({ _id: eventId })
   } catch (err) {
     if (err.name === 'CastError') {
       return res.status(404).json({ message: 'Event not found' })
     }
 
-    logger.error(`Event ${eventID} failed to be found at participate-event`)
+    logger.error(`Event ${eventId} failed to be found at participate-event`)
     return next(err)
   }
 
@@ -41,20 +41,20 @@ module.exports = async (req, res, next) => {
     return res.status(400).json(errors)
   }
 
-  const teamID = req.body.teamID
+  const teamId = req.body.teamId
 
-  if (teamID) {
-    if (event.teams.find(t => t.toString() === teamID)) {
+  if (teamId) {
+    if (event.teams.find(t => t.toString() === teamId)) {
       return res
         .status(400)
-        .json({ message: `Team ${teamID} already participates in this` })
+        .json({ message: `Team ${teamId} already participates in this` })
     }
 
     let team
     try {
-      team = await Team.findOne({ _id: teamID })
+      team = await Team.findOne({ _id: teamId })
     } catch (err) {
-      logger.error(`Team ${teamID} failed to be found at participate-event`)
+      logger.error(`Team ${teamId} failed to be found at participate-event`)
       return next(err)
     }
 
@@ -64,7 +64,7 @@ module.exports = async (req, res, next) => {
       return res.status(403).json({ message: 'Forbidden action' })
     }
 
-    event.teams = [...event.teams, teamID]
+    event.teams = [...event.teams, teamId]
 
     team.events = [...team.events, event.id]
     team.updatedAt = moment.utc().toDate()

@@ -9,17 +9,17 @@ module.exports = async (req, res, next) => {
     return res.status(423).json({ message: 'You are blocked' })
   }
 
-  const reviewID = req.params.reviewID
+  const reviewId = req.params.reviewId
 
   let review
   try {
-    review = await Review.findOne({ _id: reviewID })
+    review = await Review.findOne({ _id: reviewId })
   } catch (err) {
     if (err.name === 'CastError') {
       return res.status(404).json({ message: 'Review not found' })
     }
 
-    logger.error(`Review ${reviewID} failed to be found at flag-review`)
+    logger.error(`Review ${reviewId} failed to be found at flag-review`)
     return next(err)
   }
 

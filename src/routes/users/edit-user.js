@@ -11,17 +11,17 @@ module.exports = async (req, res, next) => {
     return res.status(423).json({ message: 'You are blocked' })
   }
 
-  const userID = req.params.userID
+  const userId = req.params.userId
 
   let user
   try {
-    user = await User.findOne({ _id: userID, isArchived: false })
+    user = await User.findOne({ _id: userId, isArchived: false })
   } catch (err) {
     if (err.name === 'CastError') {
       return res.status(404).json({ message: 'User not found' })
     }
 
-    logger.error(`User with ID ${userID} failed to be found at edit-user.`)
+    logger.error(`User with Id ${userId} failed to be found at edit-user.`)
     return next(err)
   }
 
@@ -126,7 +126,7 @@ module.exports = async (req, res, next) => {
       return res.status(400).json(validationErrors)
     }
 
-    logger.error(`User with ID ${user.id} failed to be updated at edit-user.`)
+    logger.error(`User with Id ${user.id} failed to be updated at edit-user.`)
     return next(err)
   }
 

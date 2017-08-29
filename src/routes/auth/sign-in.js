@@ -40,26 +40,26 @@ module.exports = async (req, res, next) => {
     return res.status(400).json({ message: 'Email or password incorrect' })
   }
 
-  const userID = user.id
+  const userId = user.id
   const today = moment.utc()
   const expiresAt = today.add(14, 'days').toDate()
-  const key = `${userID}${crypto.randomBytes(28).toString('hex')}`
+  const key = `${userId}${crypto.randomBytes(28).toString('hex')}`
 
   let refreshToken
   try {
     refreshToken = await RefreshToken.findOneAndUpdate(
-      { userID },
-      { expiresAt, key, userID },
+      { userId },
+      { expiresAt, key, userId },
       { new: true, setDefaultsOnInsert: true, upsert: true }
     )
   } catch (err) {
     logger.error(
-      `Refresh Token for userID ${userID} failed to be created or updated at sign-in.`
+      `Refresh Token for userId ${userId} failed to be created or updated at sign-in.`
     )
     return next(err)
   }
 
-  const token = jwt.sign({ userID }, process.env.JWT_SECRET, {
+  const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
     expiresIn: 3600
   })
   return res.status(200).json({ refreshToken: refreshToken.key, token })

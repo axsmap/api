@@ -37,8 +37,7 @@ const userSchema = new mongoose.Schema(
     },
     email: {
       type: String,
-      maxlength: [254, 'Should have less than 255 characters'],
-      required: [true, 'Is required']
+      maxlength: [254, 'Should have less than 255 characters']
     },
     events: [
       {
@@ -46,7 +45,7 @@ const userSchema = new mongoose.Schema(
         ref: 'Event'
       }
     ],
-    facebookID: String,
+    facebookId: String,
     firstName: {
       type: String,
       maxlength: [24, 'Should have less than 25 characters'],
@@ -61,7 +60,7 @@ const userSchema = new mongoose.Schema(
       },
       required: [true, 'Is required']
     },
-    googleID: String,
+    googleId: String,
     hashedPassword: {
       type: String,
       maxlength: [256, 'Should have less than 255 characters']

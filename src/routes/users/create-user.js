@@ -112,13 +112,13 @@ module.exports = async (req, res, next) => {
   const refreshTokenData = {
     expiresAt: moment.utc().add(14, 'days').toDate(),
     key: `${user.id}${crypto.randomBytes(40).toString('hex')}`,
-    userID: user.id
+    userId: user.id
   }
   try {
     await RefreshToken.create(refreshTokenData)
   } catch (err) {
     logger.error(
-      `Refresh token with userID ${refreshTokenData.userID} failed to be created at create-user.`
+      `Refresh token with userId ${refreshTokenData.userId} failed to be created at create-user.`
     )
     return next(err)
   }

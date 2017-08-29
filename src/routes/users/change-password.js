@@ -26,10 +26,10 @@ module.exports = async (req, res, next) => {
 
   let refreshToken
   try {
-    refreshToken = await RefreshToken.findOne({ userID: req.user.id })
+    refreshToken = await RefreshToken.findOne({ userId: req.user.id })
   } catch (err) {
     logger.error(
-      `Refresh Token with userID ${req.user
+      `Refresh Token with userId ${req.user
         .id} failed to be found at change-password.`
     )
     return next(err)
@@ -53,7 +53,7 @@ module.exports = async (req, res, next) => {
     req.user.save()
   } catch (err) {
     logger.error(
-      `User with ID ${req.user.id} failed to be updated at change-password.`
+      `User with Id ${req.user.id} failed to be updated at change-password.`
     )
     return next(err)
   }

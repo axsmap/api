@@ -2,7 +2,7 @@ const mongoose = require('mongoose')
 
 const petitionSchema = new mongoose.Schema(
   {
-    entityID: {
+    entityId: {
       type: String,
       maxlength: [24, 'Should be less than 25 characters'],
       required: [true, 'Is required']
@@ -11,12 +11,12 @@ const petitionSchema = new mongoose.Schema(
       type: String,
       maxlength: [250, 'Should be less than 251 characters']
     },
-    receiverID: {
+    receiverId: {
       type: String,
       maxlength: [24, 'Should be less than 25 characters'],
       required: [true, 'Is required']
     },
-    senderID: {
+    senderId: {
       type: String,
       maxlength: [24, 'Should be less than 25 characters'],
       required: [true, 'Is required']
@@ -49,6 +49,6 @@ const petitionSchema = new mongoose.Schema(
   { timestamps: true }
 )
 
-petitionSchema.index({ receiverID: 1, senderID: 1 })
+petitionSchema.index({ receiverId: 1, senderId: 1 })
 
 module.exports = mongoose.model('Petition', petitionSchema)

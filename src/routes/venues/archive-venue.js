@@ -8,17 +8,17 @@ module.exports = async (req, res, next) => {
     return res.status(403).json({ message: 'Forbidden action' })
   }
 
-  const venueID = req.params.venueID
+  const venueId = req.params.venueId
 
   let venue
   try {
-    venue = await Venue.findOne({ _id: venueID, isArchived: false })
+    venue = await Venue.findOne({ _id: venueId, isArchived: false })
   } catch (err) {
     if (err.name === 'CastError') {
       return res.status(404).json({ message: 'Venue not found' })
     }
 
-    logger.error(`Venue ${venueID} failed to be found at delete-venue`)
+    logger.error(`Venue ${venueId} failed to be found at delete-venue`)
     return next(err)
   }
 

@@ -25,7 +25,7 @@ module.exports = {
       if (typeof data.event !== 'string') {
         errors.event = 'Should be a string'
       } else if (!isMongoId(data.event)) {
-        errors.event = 'Should be a valid ID'
+        errors.event = 'Should be a valid Id'
       }
     }
 
@@ -89,7 +89,7 @@ module.exports = {
       if (typeof data.team !== 'string') {
         errors.team = 'Should be a string'
       } else if (!isMongoId(data.team)) {
-        errors.team = 'Should be a valid ID'
+        errors.team = 'Should be a valid Id'
       }
     }
 
@@ -97,7 +97,7 @@ module.exports = {
       if (typeof data.venue !== 'string') {
         errors.venue = 'Should be a string'
       } else if (!isMongoId(data.venue)) {
-        errors.venue = 'Should be a valid ID'
+        errors.venue = 'Should be a valid Id'
       }
     }
 
@@ -141,7 +141,7 @@ module.exports = {
     }
 
     if (queryParams.event && !isMongoId(queryParams.event)) {
-      errors.event = 'Should be a valid ID'
+      errors.event = 'Should be a valid Id'
     }
 
     if (
@@ -185,15 +185,15 @@ module.exports = {
     }
 
     if (queryParams.team && !isMongoId(queryParams.team)) {
-      errors.team = 'Should be a valid ID'
+      errors.team = 'Should be a valid Id'
     }
 
     if (queryParams.user && !isMongoId(queryParams.user)) {
-      errors.user = 'Should be a valid ID'
+      errors.user = 'Should be a valid Id'
     }
 
     if (queryParams.venue && !isMongoId(queryParams.venue)) {
-      errors.venue = 'Should be a valid ID'
+      errors.venue = 'Should be a valid Id'
     }
 
     if (

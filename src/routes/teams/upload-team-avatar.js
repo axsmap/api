@@ -29,17 +29,17 @@ module.exports = async (req, res, next) => {
     return res.status(423).json({ message: 'You are blocked' })
   }
 
-  const teamID = req.params.teamID
+  const teamId = req.params.teamId
 
   let team
   try {
-    team = await Team.findOne({ _id: teamID, isArchived: false })
+    team = await Team.findOne({ _id: teamId, isArchived: false })
   } catch (err) {
     if (err.name === 'CastError') {
       return res.status(404).json({ message: 'Team not found' })
     }
 
-    logger.error(`Team ${teamID} failed to be found at upload-team-avatar`)
+    logger.error(`Team ${teamId} failed to be found at upload-team-avatar`)
     return next(err)
   }
 

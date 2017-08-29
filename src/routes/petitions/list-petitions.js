@@ -10,7 +10,7 @@ module.exports = async (req, res, next) => {
 
   const queryParams = req.query
 
-  let managedEventsIDs = []
+  let managedEventsIds = []
   if (req.user.events && req.user.events.length > 0) {
     const eventsPromises = req.user.events.map(e =>
       Event.findOne({ _id: e.toString() })
@@ -27,10 +27,10 @@ module.exports = async (req, res, next) => {
     const managedEvents = userEvents.filter(e =>
       e.managers.find(m => m.toString() === req.user.id)
     )
-    managedEventsIDs = managedEvents.map(e => e.id)
+    managedEventsIds = managedEvents.map(e => e.id)
   }
 
-  let managedTeamsIDs = []
+  let managedTeamsIds = []
   if (req.user.teams && req.user.teams.length > 0) {
     const teamsPromises = req.user.teams.map(t =>
       Team.findOne({ _id: t.toString() })
@@ -47,16 +47,16 @@ module.exports = async (req, res, next) => {
     const managedTeams = userTeams.filter(t =>
       t.managers.find(m => m.toString() === req.user.id)
     )
-    managedTeamsIDs = managedTeams.map(t => t.id)
+    managedTeamsIds = managedTeams.map(t => t.id)
   }
 
   const petitionsQuery = {
     $or: [
-      { receiverID: req.user.id },
-      { receiverID: { $in: managedEventsIDs } },
-      { receiverID: { $in: managedTeamsIDs } },
-      { senderID: req.user.id },
-      { senderID: { $in: managedTeamsIDs } }
+      { receiverId: req.user.id },
+      { receiverId: { $in: managedEventsIds } },
+      { receiverId: { $in: managedTeamsIds } },
+      { senderId: req.user.id },
+      { senderId: { $in: managedTeamsIds } }
     ]
   }
 

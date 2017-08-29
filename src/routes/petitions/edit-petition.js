@@ -11,17 +11,17 @@ module.exports = async (req, res, next) => {
     return res.status(423).json({ message: 'You are blocked' })
   }
 
-  const petitionID = req.params.petitionID
+  const petitionId = req.params.petitionId
 
   let petition
   try {
-    petition = await Petition.findOne({ _id: petitionID })
+    petition = await Petition.findOne({ _id: petitionId })
   } catch (err) {
     if (err.name === 'CastError') {
       return res.status(404).json({ message: 'Petition not found' })
     }
 
-    logger.error(`Petition ${petitionID} failed to be found at edit-petition`)
+    logger.error(`Petition ${petitionId} failed to be found at edit-petition`)
     return next(err)
   }
 
@@ -36,10 +36,10 @@ module.exports = async (req, res, next) => {
   if (petition.type.endsWith('event')) {
     let eventEntity
     try {
-      eventEntity = await Event.findOne({ _id: petition.entityID })
+      eventEntity = await Event.findOne({ _id: petition.entityId })
     } catch (err) {
       logger.error(
-        `Event ${petition.entityID} failed to be found at edit-petition`
+        `Event ${petition.entityId} failed to be found at edit-petition`
       )
       return next(err)
     }
@@ -62,10 +62,10 @@ module.exports = async (req, res, next) => {
     if (petition.type === 'invite-team-event') {
       let teamReceiver
       try {
-        teamReceiver = await Team.findOne({ _id: petition.receiverID })
+        teamReceiver = await Team.findOne({ _id: petition.receiverId })
       } catch (err) {
         logger.error(
-          `Team ${petition.receiverID} failed to be found at edit-petition`
+          `Team ${petition.receiverId} failed to be found at edit-petition`
         )
         return next(err)
       }
@@ -149,7 +149,7 @@ module.exports = async (req, res, next) => {
 
       return res.status(200).json({ message: 'Success' })
     } else if (petition.type === 'invite-user-event') {
-      if (petition.receiverID !== req.user.id) {
+      if (petition.receiverId !== req.user.id) {
         return res.status(403).json({ message: 'Forbidden action' })
       }
 
@@ -220,10 +220,10 @@ module.exports = async (req, res, next) => {
 
       let teamSender
       try {
-        teamSender = await Team.findOne({ _id: petition.senderID })
+        teamSender = await Team.findOne({ _id: petition.senderId })
       } catch (err) {
         logger.error(
-          `Team ${petition.senderID} failed to be found at edit-petition`
+          `Team ${petition.senderId} failed to be found at edit-petition`
         )
         return next(err)
       }
@@ -311,10 +311,10 @@ module.exports = async (req, res, next) => {
 
     let userSender
     try {
-      userSender = await User.findOne({ _id: petition.senderID })
+      userSender = await User.findOne({ _id: petition.senderId })
     } catch (err) {
       logger.error(
-        `User ${petition.senderID} failed to be found at edit-petition`
+        `User ${petition.senderId} failed to be found at edit-petition`
       )
       return next(err)
     }
@@ -330,7 +330,7 @@ module.exports = async (req, res, next) => {
       }
 
       return res.status(400).json({
-        message: `User ${petition.senderID} is already removed. This petition is being removed`
+        message: `User ${petition.senderId} is already removed. This petition is being removed`
       })
     }
 
@@ -398,10 +398,10 @@ module.exports = async (req, res, next) => {
 
   let teamEntity
   try {
-    teamEntity = await Team.findOne({ _id: petition.entityID })
+    teamEntity = await Team.findOne({ _id: petition.entityId })
   } catch (err) {
     logger.error(
-      `Team ${petition.entityID} failed to be found at edit-petition`
+      `Team ${petition.entityId} failed to be found at edit-petition`
     )
     return next(err)
   }
@@ -422,11 +422,11 @@ module.exports = async (req, res, next) => {
   }
 
   if (petition.type === 'invite-user-team') {
-    if (petition.receiverID !== req.user.id) {
+    if (petition.receiverId !== req.user.id) {
       return res.status(403).json({ message: 'Forbidden action' })
     }
 
-    if (teamEntity.members.find(m => m.toString() === petition.receiverID)) {
+    if (teamEntity.members.find(m => m.toString() === petition.receiverId)) {
       try {
         await petition.remove()
       } catch (err) {
@@ -495,10 +495,10 @@ module.exports = async (req, res, next) => {
 
   let userSender
   try {
-    userSender = await User.findOne({ _id: petition.senderID })
+    userSender = await User.findOne({ _id: petition.senderId })
   } catch (err) {
     logger.error(
-      `User ${petition.senderID} failed to be found at edit-petition`
+      `User ${petition.senderId} failed to be found at edit-petition`
     )
     return next(err)
   }
@@ -514,7 +514,7 @@ module.exports = async (req, res, next) => {
     }
 
     return res.status(400).json({
-      message: `User ${petition.senderID} is already removed. This petition is being removed`
+      message: `User ${petition.senderId} is already removed. This petition is being removed`
     })
   }
 

@@ -7,17 +7,17 @@ const RefreshToken = require('../../models/refresh-token')
 const User = require('../../models/user')
 
 module.exports = async (req, res, next) => {
-  const userID = req.params.userID
+  const userId = req.params.userId
 
   let user
   try {
-    user = await User.findOne({ _id: userID, isArchived: false })
+    user = await User.findOne({ _id: userId, isArchived: false })
   } catch (err) {
     if (err.name === 'CastError') {
       return res.status(404).json({ message: 'User not found' })
     }
 
-    logger.error(`User with ID ${userID} failed to be found at archive-user.`)
+    logger.error(`User with Id ${userId} failed to be found at archive-user.`)
     return next(err)
   }
 
@@ -36,7 +36,7 @@ module.exports = async (req, res, next) => {
     ;[activateAccountTicket, passwordTicket, refreshToken] = await Promise.all([
       ActivationTicket.findOne({ email: user.email }),
       PasswordTicket.findOne({ email: user.email }),
-      RefreshToken.findOne({ userID: user.id })
+      RefreshToken.findOne({ userId: user.id })
     ])
   } catch (err) {
     logger.error(

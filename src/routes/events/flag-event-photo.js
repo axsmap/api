@@ -9,17 +9,17 @@ module.exports = async (req, res, next) => {
     return res.status(423).json({ message: 'You are blocked' })
   }
 
-  const eventID = req.params.eventID
-  const photoID = req.params.photoID
+  const eventId = req.params.eventId
+  const photoId = req.params.photoId
 
   let event
   try {
-    event = await Event.findOne({ _id: eventID })
+    event = await Event.findOne({ _id: eventId })
   } catch (err) {
     if (err.name === 'CastError') {
       return res.status(404).json({ message: 'Event not found' })
     }
-    logger.error(`Event ${eventID} failed to be found at flag-event-photo`)
+    logger.error(`Event ${eventId} failed to be found at flag-event-photo`)
     return next(err)
   }
 
@@ -27,7 +27,7 @@ module.exports = async (req, res, next) => {
     return res.status(404).json({ message: 'Event not found' })
   }
 
-  const isParamPhoto = photo => last(photo.url.split('/')) === photoID
+  const isParamPhoto = photo => last(photo.url.split('/')) === photoId
 
   if (!event.photos || !event.photos.find(isParamPhoto)) {
     return res.status(404).json({ message: 'Photo not found' })

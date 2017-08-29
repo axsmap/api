@@ -8,17 +8,17 @@ module.exports = async (req, res, next) => {
     return res.status(403).json({ message: 'Forbidden action' })
   }
 
-  const userID = req.params.userID
+  const userId = req.params.userId
 
   let user
   try {
-    user = await User.findOne({ _id: userID, isArchived: false })
+    user = await User.findOne({ _id: userId, isArchived: false })
   } catch (err) {
     if (err.name === 'CastError') {
       return res.status(404).json({ message: 'User not found' })
     }
 
-    logger.error(`User with ID ${userID} failed to be found at block-user.`)
+    logger.error(`User with Id ${userId} failed to be found at block-user.`)
     return next(err)
   }
 
@@ -32,7 +32,7 @@ module.exports = async (req, res, next) => {
   try {
     await user.save()
   } catch (err) {
-    logger.error(`User with ID ${user.id} failed to be updated at block-user.`)
+    logger.error(`User with Id ${user.id} failed to be updated at block-user.`)
     return next(err)
   }
 

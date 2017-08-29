@@ -6,17 +6,17 @@ module.exports = async (req, res, next) => {
     return res.status(403).json({ message: 'Forbidden action' })
   }
 
-  const userID = req.params.userID
+  const userId = req.params.userId
 
   let user
   try {
-    user = await User.findOne({ _id: userID, isArchived: true })
+    user = await User.findOne({ _id: userId, isArchived: true })
   } catch (err) {
     if (err.name === 'CastError') {
       return res.status(404).json({ message: 'Archived user not found' })
     }
 
-    logger.error(`User with ID ${userID} failed to be found at delete-user.`)
+    logger.error(`User with Id ${userId} failed to be found at delete-user.`)
     return next(err)
   }
 

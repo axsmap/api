@@ -44,7 +44,7 @@ module.exports = async (req, res, next) => {
   }
 
   const token = jwt.sign(
-    { userID: refreshToken.userID },
+    { userId: refreshToken.userId },
     process.env.JWT_SECRET,
     {
       expiresIn: 3600

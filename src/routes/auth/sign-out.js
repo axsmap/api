@@ -8,10 +8,10 @@ module.exports = async (req, res, next) => {
 
   let refreshToken
   try {
-    refreshToken = await RefreshToken.findOne({ userID: req.user.id })
+    refreshToken = await RefreshToken.findOne({ userId: req.user.id })
   } catch (err) {
     logger.error(
-      `Refresh token with userID ${req.user.id} failed to be found at sign-out.`
+      `Refresh token with userId ${req.user.id} failed to be found at sign-out.`
     )
     return next(err)
   }
@@ -24,7 +24,7 @@ module.exports = async (req, res, next) => {
     await refreshToken.remove()
   } catch (err) {
     logger.error(
-      `Refresh token with userID ${req.user
+      `Refresh token with userId ${req.user
         .id} failed to be deleted at sign-out.`
     )
     return next(err)
