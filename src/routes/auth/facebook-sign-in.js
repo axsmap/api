@@ -148,13 +148,12 @@ module.exports = async (req, res, next) => {
       getPictureResponse = await axios.get(getPictureUrl, getPictureOptions)
     } catch (err) {
       logger.error('User picture failed to be found at facebook-sign-in.')
-      logger.error(err.response.data)
-      return res.redirect(`${process.env.APP_URL}/sign-in`)
+      return next(err)
     }
 
     const isSilhouette = getPictureResponse.data.data.is_silhouette
     if (!isSilhouette) {
-      userData.picture = getPictureResponse.data.data.url
+      userData.avatar = getPictureResponse.data.data.url
     }
 
     try {

@@ -5,8 +5,8 @@ const userSchema = new mongoose.Schema(
   {
     avatar: {
       type: String,
-      default: `https://s3.amazonaws.com/${process.env
-        .AWS_S3_BUCKET}/users/avatars/default.png`,
+      default: `https://s3.amazonaws.com/
+        ${process.env.AWS_S3_BUCKET}/users/avatars/default.png`,
       maxlength: [2000, 'Should have less than 2001 characters'],
       required: [true, 'Is required']
     },
