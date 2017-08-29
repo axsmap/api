@@ -6,6 +6,7 @@ winston.emitErrs = true
 const transports = [
   new winston.transports.Console({
     level: 'info',
+    humanReadableUnhandledException: true,
     handleExceptions: true,
     json: false,
     colorize: true
@@ -15,7 +16,7 @@ const transports = [
 if (process.env.NODE_ENV === 'production') {
   transports.push(
     new Sentry({
-      level: 'error',
+      level: 'warn',
       dsn: process.env.SENTRY_URL,
       tags: { key: 'value' },
       extra: { key: 'value' }
