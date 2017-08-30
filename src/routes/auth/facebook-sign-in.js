@@ -25,13 +25,12 @@ module.exports = async (req, res, next) => {
   try {
     debugTokenResponse = await axios.get(debugTokenUrl, debugTokenOptions)
   } catch (err) {
-    logger.error('Access token failed to be debugged at facebook-sign-in.')
-    return next(err)
+    return res.status(400).json({ message: 'Invalid token' })
   }
 
   const tokenIsValid = debugTokenResponse.data.data.is_valid
   if (!tokenIsValid) {
-    return res.status(401).json({ message: 'Token expired' })
+    return res.status(401).json({ message: 'Expired token' })
   }
 
   const getLongLivedTokenUrl =
