@@ -47,7 +47,9 @@ function connectedToDB() {
   )
 
   // App Initialization
-  if (process.env.NODE_ENV === 'development') {
+  if (process.env.NODE_ENV === 'production') {
+    app.listen(8000)
+  } else {
     https
       .createServer(
         {
@@ -59,8 +61,6 @@ function connectedToDB() {
       .listen(8000, () =>
         logger.info(`Listening on https://${ip.address()}:8000`)
       )
-  } else {
-    app.listen(8000)
   }
 }
 
