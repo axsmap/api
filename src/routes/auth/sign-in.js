@@ -34,6 +34,10 @@ module.exports = async (req, res, next) => {
     return res.status(423).json({ message: 'You are blocked' })
   }
 
+  if (!user.hashedPassword) {
+    return res.status(400).json({ message: 'Email or password incorrect' })
+  }
+
   const passwordMatches = user.comparePassword(password)
 
   if (!passwordMatches) {
