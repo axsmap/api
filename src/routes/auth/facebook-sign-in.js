@@ -21,10 +21,16 @@ module.exports = async (req, res, next) => {
   let facebookToken = req.body.accessToken
 
   const debugTokenUrl = `https://graph.facebook.com/v2.10/debug_token?input_token=${facebookToken}`
+  const debugTokenOptions = {
+    params: {
+      access_token: facebookToken
+    }
+  }
   let debugTokenResponse
   try {
-    debugTokenResponse = await axios.get(debugTokenUrl)
+    debugTokenResponse = await axios.get(debugTokenUrl, debugTokenOptions)
   } catch (err) {
+    console.log(err.response.data)
     return res.status(400).json({ message: 'Invalid token' })
   }
 
