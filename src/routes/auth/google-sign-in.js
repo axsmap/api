@@ -20,9 +20,9 @@ module.exports = async (req, res, next) => {
     return res.status(400).json(errors)
   }
 
-  let code = req.body.code
+  const code = req.body.code
 
-  const getTokenUrl = `https://www.googleapis.com/oauth2/v4/token`
+  const getTokenUrl = 'https://www.googleapis.com/oauth2/v4/token'
   const getTokenParams = {
     code,
     client_id: process.env.GOOGLE_CLIENT_ID,

@@ -7,10 +7,10 @@ module.exports = {
   validateFacebookSignIn(data) {
     const errors = {}
 
-    if (!data.accessToken) {
-      errors.accessToken = 'Is required'
-    } else if (typeof data.accessToken !== 'string') {
-      errors.accessToken = 'Should be a string'
+    if (!data.code) {
+      errors.code = 'Is required'
+    } else if (typeof data.code !== 'string') {
+      errors.code = 'Should be a string'
     }
 
     return { errors, isValid: isEmpty(errors) }

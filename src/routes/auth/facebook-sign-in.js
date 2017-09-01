@@ -18,26 +18,23 @@ module.exports = async (req, res, next) => {
     return res.status(400).json(errors)
   }
 
-  let facebookToken = req.body.accessToken
+  const code = req.body.code
 
-  const debugTokenUrl = `https://graph.facebook.com/v2.10/debug_token?input_token=${facebookToken}`
-  const debugTokenOptions = {
-    params: {
-      access_token: facebookToken
-    }
+  const getTokenUrl = 'https://graph.facebook.com/v2.10/oauth/access_token'
+  const getTokenParams = {
+    code,
+    client_id: process.env.FACEBOOK_CLIENT_ID,
+    client_secret: process.env.FACEBOOK_CLIENT_SECRET,
+    redirect_uri: 'https://localhost:3000/auth/facebook'
   }
-  let debugTokenResponse
+  let getTokenResponse
   try {
-    debugTokenResponse = await axios.get(debugTokenUrl, debugTokenOptions)
+    getTokenResponse = await axios.get(getTokenUrl, { params: getTokenParams })
   } catch (err) {
-    console.log(err.response.data)
-    return res.status(400).json({ message: 'Invalid token' })
+    return res.status(400).json({ message: 'Invalid code' })
   }
 
-  const tokenIsValid = debugTokenResponse.data.data.is_valid
-  if (!tokenIsValid) {
-    return res.status(401).json({ message: 'Expired token' })
-  }
+  const facebookToken = getTokenResponse.data.access_token
 
   const getProfileUrl =
     'https://graph.facebook.com/v2.10/me?fields=id,email,first_name,last_name,locale'
