@@ -43,6 +43,7 @@
     "express-brute": "1.0.1",
     "express-brute-mongoose": "0.0.9",
     "freemail": "1.5.0",
+    "google-auth-library": "^0.10.0",
     "helmet": "3.8.1",
     "ip": "^1.1.5",
     "jsonwebtoken": "7.4.1",
