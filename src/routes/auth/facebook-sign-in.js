@@ -1,8 +1,13 @@
+const crypto = require('crypto')
+
 const axios = require('axios')
+const jwt = require('jsonwebtoken')
+const moment = require('moment')
 const randomstring = require('randomstring')
 const slugify = require('speakingurl')
 
 const logger = require('../../helpers/logger')
+const RefreshToken = require('../../models/refresh-token')
 const User = require('../../models/user')
 
 const { validateFacebookSignIn } = require('./validations')
@@ -13,17 +18,12 @@ module.exports = async (req, res, next) => {
     return res.status(400).json(errors)
   }
 
-  let accessToken = req.body.accessToken
+  let facebookToken = req.body.accessToken
 
-  const debugTokenUrl = `https://graph.facebook.com/v2.10/debug_token?input_token=${accessToken}`
-  const debugTokenOptions = {
-    params: {
-      access_token: accessToken
-    }
-  }
+  const debugTokenUrl = `https://graph.facebook.com/v2.10/debug_token?input_token=${facebookToken}`
   let debugTokenResponse
   try {
-    debugTokenResponse = await axios.get(debugTokenUrl, debugTokenOptions)
+    debugTokenResponse = await axios.get(debugTokenUrl)
   } catch (err) {
     return res.status(400).json({ message: 'Invalid token' })
   }
@@ -33,68 +33,48 @@ module.exports = async (req, res, next) => {
     return res.status(401).json({ message: 'Expired token' })
   }
 
-  const getLongLivedTokenUrl =
-    'https://graph.facebook.com/v2.10/oauth/access_token'
-  const getLongLivedTokenOptions = {
+  const getProfileUrl =
+    'https://graph.facebook.com/v2.10/me?fields=id,email,first_name,last_name,locale'
+  const getProfileOptions = {
     params: {
-      grant_type: 'fb_exchange_token',
-      client_id: process.env.FACEBOOK_APP_ID,
-      client_secret: process.env.FACEBOOK_APP_SECRET,
-      fb_exchange_token: accessToken
+      access_token: facebookToken
     }
   }
-  let getLongLivedTokenResponse
+  let getProfileResponse
   try {
-    getLongLivedTokenResponse = await axios.get(
-      getLongLivedTokenUrl,
-      getLongLivedTokenOptions
-    )
+    getProfileResponse = await axios.get(getProfileUrl, getProfileOptions)
   } catch (err) {
-    logger.error('Long lived token failed to be found at facebook-sign-in.')
+    logger.error('Profile data failed to be found at facebook-sign-in.')
     return next(err)
   }
 
-  accessToken = getLongLivedTokenResponse.data.access_token
-
-  const getUserUrl =
-    'https://graph.facebook.com/v2.10/me?fields=id,email,first_name,last_name'
-  const getUserOptions = {
-    params: {
-      access_token: accessToken
-    }
-  }
-  let getUserResponse
-  try {
-    getUserResponse = await axios.get(getUserUrl, getUserOptions)
-  } catch (err) {
-    logger.error('User data failed to be found at facebook-sign-in.')
-    return next(err)
-  }
-
-  const userData = {
-    facebookId: getUserResponse.data.id,
-    firstName: getUserResponse.data.first_name,
-    lastName: getUserResponse.data.last_name
-  }
-
-  if (getUserResponse.data.email) {
-    userData.email = getUserResponse.data.email
-  }
-
+  const email = getProfileResponse.data.email
+    ? getProfileResponse.data.email
+    : ''
+  const facebookId = getProfileResponse.data.id
   let user
   try {
     user = await User.findOne({
-      facebookId: userData.facebookId,
+      $or: [{ email }, { facebookId }],
       isArchived: false
     })
   } catch (err) {
     logger.error(
-      `User with facebookId ${userData.facebookId} failed to be found at facebook-sign-in.`
+      `User with facebookId ${facebookId} and email ${email} failed to be found at facebook-sign-in.`
     )
     return next(err)
   }
 
+  let accessToken
+  let refreshToken
+
   if (!user) {
+    const userData = {
+      email: getProfileResponse.data.email ? getProfileResponse.data.email : '',
+      facebookId: getProfileResponse.data.facebookId,
+      firstName: getProfileResponse.data.first_name,
+      lastName: getProfileResponse.data.last_name
+    }
     userData.username = `${slugify(userData.firstName)}-${slugify(
       userData.lastName
     )}`
@@ -165,7 +145,49 @@ module.exports = async (req, res, next) => {
       )
       return next(err)
     }
+
+    const today = moment.utc()
+    const expiresAt = today.add(14, 'days').toDate()
+    const refreshTokenData = {
+      expiresAt,
+      key: `${user.id}${crypto.randomBytes(28).toString('hex')}`,
+      userId: user.id
+    }
+
+    try {
+      refreshToken = await RefreshToken.create(refreshTokenData)
+    } catch (err) {
+      logger.error(
+        `Refresh token failed to be created at facebook-sign-in.\nData: ${JSON.stringify(
+          refreshTokenData
+        )}`
+      )
+      return next(err)
+    }
+  } else {
+    const userId = user.id
+    const today = moment.utc()
+    const expiresAt = today.add(14, 'days').toDate()
+    const key = `${userId}${crypto.randomBytes(28).toString('hex')}`
+
+    try {
+      refreshToken = await RefreshToken.findOneAndUpdate(
+        { userId },
+        { expiresAt, key, userId },
+        { new: true, setDefaultsOnInsert: true, upsert: true }
+      )
+    } catch (err) {
+      logger.error(
+        `Refresh Token for userId ${userId} failed to be created or updated at facebook-sign-in.`
+      )
+      return next(err)
+    }
   }
 
-  return res.status(200).json({ accessToken, facebookId: user.facebookId })
+  accessToken = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
+    expiresIn: 3600
+  })
+  refreshToken = refreshToken.key
+
+  return res.status(200).json({ accessToken, refreshToken })
 }

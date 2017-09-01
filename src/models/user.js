@@ -90,6 +90,15 @@ const userSchema = new mongoose.Schema(
       maxlength: [36, 'Should have less than 37 characters'],
       required: [true, 'Is required']
     },
+    language: {
+      type: String,
+      default: 'en',
+      enum: {
+        values: ['en', 'es'],
+        message: 'Invalid type of language'
+      },
+      required: [true, 'Is required']
+    },
     phone: {
       type: String,
       maxlength: [50, 'Should have less than 51 characters']

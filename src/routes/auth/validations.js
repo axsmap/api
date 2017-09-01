@@ -39,6 +39,17 @@ module.exports = {
 
     return { errors, isValid: isEmpty(errors) }
   },
+  validateGoogleSignIn(data) {
+    const errors = {}
+
+    if (!data.code) {
+      errors.code = 'Is required'
+    } else if (typeof data.code !== 'string') {
+      errors.code = 'Should be a string'
+    }
+
+    return { errors, isValid: isEmpty(errors) }
+  },
   validateResetPassword(data) {
     const errors = {}
 
