@@ -27,10 +27,9 @@ module.exports = async (req, res, next) => {
     code,
     client_id: process.env.GOOGLE_CLIENT_ID,
     client_secret: process.env.GOOGLE_CLIENT_SECRET,
-    redirect_uri: `${process.env.APP_URL}/auth/google`,
+    redirect_uri: 'https://localhost:3000/auth/google',
     grant_type: 'authorization_code'
   }
-  console.log(getTokenParams)
   let getTokenResponse
   try {
     getTokenResponse = await axios.post(
@@ -38,7 +37,6 @@ module.exports = async (req, res, next) => {
       querystring.stringify(getTokenParams)
     )
   } catch (err) {
-    console.log(err.response.data)
     return res.status(400).json({ message: 'Invalid code' })
   }
 
