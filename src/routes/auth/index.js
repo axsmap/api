@@ -17,7 +17,11 @@ const signUp = require('./sign-up')
 
 const router = new express.Router()
 const store = new MongooseStore(BruteForce)
-const bruteforce = new ExpressBrute(store, { freeRetries: 10 })
+const bruteforce = new ExpressBrute(store, {
+  freeRetries: 2,
+  minWait: 500,
+  maxWait: 15 * 60 * 1000
+})
 
 router.get('/activate-account/:key', activateAccount)
 router.post('/facebook', bruteforce.prevent, facebookSignIn)
