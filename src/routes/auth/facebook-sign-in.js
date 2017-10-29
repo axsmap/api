@@ -72,9 +72,10 @@ module.exports = async (req, res, next) => {
   let refreshToken
 
   if (!user) {
+    console.log(getProfileResponse.data)
     const userData = {
       email: getProfileResponse.data.email ? getProfileResponse.data.email : '',
-      facebookId: getProfileResponse.data.facebookId,
+      facebookId: getProfileResponse.data.id,
       firstName: getProfileResponse.data.first_name,
       lastName: getProfileResponse.data.last_name
     }
@@ -187,10 +188,10 @@ module.exports = async (req, res, next) => {
     }
   }
 
-  accessToken = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
+  const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
     expiresIn: 3600
   })
   refreshToken = refreshToken.key
 
-  return res.status(200).json({ accessToken, refreshToken })
+  return res.status(200).json({ token, refreshToken })
 }
