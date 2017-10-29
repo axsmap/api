@@ -25,7 +25,7 @@ module.exports = async (req, res, next) => {
     code,
     client_id: process.env.FACEBOOK_CLIENT_ID,
     client_secret: process.env.FACEBOOK_CLIENT_SECRET,
-    redirect_uri: 'https://localhost:3000/auth/facebook'
+    redirect_uri: `${process.env.APP_URL}/auth/facebook`
   }
   let getTokenResponse
   try {

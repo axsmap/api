@@ -27,7 +27,7 @@ module.exports = async (req, res, next) => {
     code,
     client_id: process.env.GOOGLE_CLIENT_ID,
     client_secret: process.env.GOOGLE_CLIENT_SECRET,
-    redirect_uri: 'https://localhost:3000/auth/google',
+    redirect_uri: `${process.env.APP_URL}/auth/google`,
     grant_type: 'authorization_code'
   }
   let getTokenResponse
