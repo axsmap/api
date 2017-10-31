@@ -3,7 +3,7 @@ const RefreshToken = require('../../models/refresh-token')
 
 module.exports = async (req, res, next) => {
   if (req.user.isBlocked) {
-    return res.status(423).json({ message: 'You are blocked' })
+    return res.status(423).json({ general: 'You are blocked' })
   }
 
   let refreshToken
@@ -17,7 +17,7 @@ module.exports = async (req, res, next) => {
   }
 
   if (!refreshToken) {
-    return res.status(204).json({ message: 'Success' })
+    return res.status(204).json({ general: 'Success' })
   }
 
   try {
@@ -30,5 +30,5 @@ module.exports = async (req, res, next) => {
     return next(err)
   }
 
-  return res.status(204).json({ message: 'Success' })
+  return res.status(204).json({ general: 'Success' })
 }

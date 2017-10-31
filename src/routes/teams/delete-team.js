@@ -7,7 +7,7 @@ const User = require('../../models/user')
 
 module.exports = async (req, res, next) => {
   if (req.user.isBlocked) {
-    return res.status(423).json({ message: 'You are blocked' })
+    return res.status(423).json({ general: 'You are blocked' })
   }
 
   const teamId = req.params.teamId
@@ -17,7 +17,7 @@ module.exports = async (req, res, next) => {
     team = await Team.findOne({ _id: teamId, isArchived: false })
   } catch (err) {
     if (err.name === 'CastError') {
-      return res.status(404).json({ message: 'Team not found' })
+      return res.status(404).json({ general: 'Team not found' })
     }
 
     logger.error(`Team ${teamId} failed to be found at delete-team`)
@@ -25,14 +25,14 @@ module.exports = async (req, res, next) => {
   }
 
   if (!team) {
-    return res.status(404).json({ message: 'Team not found' })
+    return res.status(404).json({ general: 'Team not found' })
   }
 
   if (
     !team.managers.find(m => m.toString() === req.user.id) &&
     !req.user.isAdmin
   ) {
-    return res.status(403).json({ message: 'Forbidden action' })
+    return res.status(403).json({ general: 'Forbidden action' })
   }
 
   let archiveTeam = false
@@ -112,5 +112,5 @@ module.exports = async (req, res, next) => {
     }
   }
 
-  return res.status(204).json({ message: 'Success' })
+  return res.status(204).json({ general: 'Success' })
 }

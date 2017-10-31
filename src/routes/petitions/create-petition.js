@@ -11,7 +11,7 @@ const { validateCreatePetition } = require('./validations')
 
 module.exports = async (req, res, next) => {
   if (req.user.isBlocked) {
-    return res.status(423).json({ message: 'You are blocked' })
+    return res.status(423).json({ general: 'You are blocked' })
   }
 
   const { errors, isValid } = validateCreatePetition(req.body)
@@ -48,7 +48,7 @@ module.exports = async (req, res, next) => {
 
     if (petition && petition.state === 'pending') {
       return res.status(400).json({
-        message: `Team ${data.receiverId} already has a pending invitation to the event ${data.entityId}`
+        general: `Team ${data.receiverId} already has a pending invitation to the event ${data.entityId}`
       })
     }
 
@@ -78,7 +78,7 @@ module.exports = async (req, res, next) => {
     }
 
     if (!eventEntity.managers.find(m => m.toString() === req.user.id)) {
-      return res.status(403).json({ message: 'Forbidden action' })
+      return res.status(403).json({ general: 'Forbidden action' })
     }
 
     if (eventEntity.teams.find(t => t.toString() === data.receiverId)) {
@@ -91,7 +91,7 @@ module.exports = async (req, res, next) => {
     if (endDate.isBefore(today)) {
       return res
         .status(423)
-        .json({ message: 'This event has already finished' })
+        .json({ general: 'This event has already finished' })
     }
 
     let teamReceiver
@@ -126,7 +126,7 @@ module.exports = async (req, res, next) => {
 
     if (petition && petition.state === 'pending') {
       return res.status(400).json({
-        message: `User ${data.receiverId} already has a pending invitation to the event ${data.entityId}`
+        general: `User ${data.receiverId} already has a pending invitation to the event ${data.entityId}`
       })
     }
 
@@ -162,7 +162,7 @@ module.exports = async (req, res, next) => {
     }
 
     if (!eventEntity.managers.find(m => m.toString() === req.user.id)) {
-      return res.status(403).json({ message: 'Forbidden action' })
+      return res.status(403).json({ general: 'Forbidden action' })
     }
 
     if (eventEntity.participants.find(p => p.toString() === data.receiverId)) {
@@ -175,7 +175,7 @@ module.exports = async (req, res, next) => {
     if (endDate.isBefore(today)) {
       return res
         .status(423)
-        .json({ message: 'This event has already finished' })
+        .json({ general: 'This event has already finished' })
     }
 
     let userReceiver
@@ -210,7 +210,7 @@ module.exports = async (req, res, next) => {
 
     if (petition && petition.state === 'pending') {
       return res.status(400).json({
-        message: `User ${data.receiverId} already has a pending invitation to the team ${data.entityId}`
+        general: `User ${data.receiverId} already has a pending invitation to the team ${data.entityId}`
       })
     }
 
@@ -246,7 +246,7 @@ module.exports = async (req, res, next) => {
     }
 
     if (!teamEntity.managers.find(m => m.toString() === req.user.id)) {
-      return res.status(403).json({ message: 'Forbidden action' })
+      return res.status(403).json({ general: 'Forbidden action' })
     }
 
     if (teamEntity.members.find(m => m.toString() === data.receiverId)) {
@@ -287,7 +287,7 @@ module.exports = async (req, res, next) => {
 
     if (petition && petition.state === 'pending') {
       return res.status(400).json({
-        message: `Team ${data.senderId} already has a pending request with the event ${data.receiverId}`
+        general: `Team ${data.senderId} already has a pending request with the event ${data.receiverId}`
       })
     }
 
@@ -326,7 +326,7 @@ module.exports = async (req, res, next) => {
     if (endDate.isBefore(today)) {
       return res
         .status(423)
-        .json({ message: 'This event has already finished' })
+        .json({ general: 'This event has already finished' })
     }
 
     let teamSender
@@ -344,7 +344,7 @@ module.exports = async (req, res, next) => {
     }
 
     if (!teamSender.managers.find(m => m.toString() === req.user.id)) {
-      return res.status(403).json({ message: 'Forbidden action' })
+      return res.status(403).json({ general: 'Forbidden action' })
     }
   } else if (data.type === 'request-user-event') {
     data.receiverId = data.entityId
@@ -366,7 +366,7 @@ module.exports = async (req, res, next) => {
 
     if (petition && petition.state === 'pending') {
       return res.status(400).json({
-        message: `You already have a pending request with the event ${data.receiverId}`
+        general: `You already have a pending request with the event ${data.receiverId}`
       })
     }
 
@@ -397,7 +397,7 @@ module.exports = async (req, res, next) => {
 
     if (eventEntity.participants.find(p => p.toString() === req.user.id)) {
       return res.status(400).json({
-        message: `You already are a participant of the event ${data.entityId}`
+        general: `You already are a participant of the event ${data.entityId}`
       })
     }
 
@@ -405,7 +405,7 @@ module.exports = async (req, res, next) => {
     if (endDate.isBefore(today)) {
       return res
         .status(423)
-        .json({ message: 'This event has already finished' })
+        .json({ general: 'This event has already finished' })
     }
   } else {
     // data.type === request-user-team
@@ -428,7 +428,7 @@ module.exports = async (req, res, next) => {
 
     if (petition && petition.state === 'pending') {
       return res.status(400).json({
-        message: `You already have a pending request with the team ${data.receiverId}`
+        general: `You already have a pending request with the team ${data.receiverId}`
       })
     }
 
@@ -459,7 +459,7 @@ module.exports = async (req, res, next) => {
 
     if (teamEntity.members.find(m => m.toString() === req.user.id)) {
       return res.status(400).json({
-        message: `You already are a member of the team ${data.entityId}`
+        general: `You already are a member of the team ${data.entityId}`
       })
     }
   }

@@ -6,7 +6,7 @@ const Venue = require('../../models/venue')
 
 module.exports = async (req, res, next) => {
   if (req.user.isBlocked) {
-    return res.status(423).json({ message: 'You are blocked' })
+    return res.status(423).json({ general: 'You are blocked' })
   }
 
   const photoId = req.params.photoId
@@ -17,7 +17,7 @@ module.exports = async (req, res, next) => {
     venue = await Venue.findOne({ _id: venueId, isArchived: false })
   } catch (err) {
     if (err.name === 'CastError') {
-      return res.status(404).json({ message: 'Venue not found' })
+      return res.status(404).json({ general: 'Venue not found' })
     }
 
     logger.error(`Venue ${venueId} failed to be found at flag-venue-photo`)
@@ -25,13 +25,13 @@ module.exports = async (req, res, next) => {
   }
 
   if (!venue) {
-    return res.status(404).json({ message: 'Venue not found' })
+    return res.status(404).json({ general: 'Venue not found' })
   }
 
   const isParamPhoto = photo => last(photo.url.split('/')) === photoId
 
   if (!venue.photos || !venue.photos.find(isParamPhoto)) {
-    return res.status(404).json({ message: 'Photo not found' })
+    return res.status(404).json({ general: 'Photo not found' })
   }
 
   const data = pick(req.body, ['comments', 'type'])
@@ -74,5 +74,5 @@ module.exports = async (req, res, next) => {
     return next(err)
   }
 
-  return res.status(200).json({ message: 'Success' })
+  return res.status(200).json({ general: 'Success' })
 }

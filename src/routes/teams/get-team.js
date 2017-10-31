@@ -3,7 +3,7 @@ const Team = require('../../models/team')
 
 module.exports = async (req, res, next) => {
   if (req.user.isBlocked) {
-    return res.status(423).json({ message: 'You are blocked' })
+    return res.status(423).json({ general: 'You are blocked' })
   }
 
   const teamId = req.params.teamId
@@ -15,7 +15,7 @@ module.exports = async (req, res, next) => {
     )
   } catch (err) {
     if (err.name === 'CastError') {
-      return res.status(404).json({ message: 'Team not found' })
+      return res.status(404).json({ general: 'Team not found' })
     }
 
     logger.error(`Team ${teamId} failed to be found at get-team`)
@@ -26,5 +26,5 @@ module.exports = async (req, res, next) => {
     return res.status(200).json(team)
   }
 
-  return res.status(404).json({ message: 'Team not found' })
+  return res.status(404).json({ general: 'Team not found' })
 }

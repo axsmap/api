@@ -26,7 +26,7 @@ const uploadPhoto = pify(
 
 module.exports = async (req, res, next) => {
   if (req.user.isBlocked) {
-    return res.status(423).json({ message: 'You are blocked' })
+    return res.status(423).json({ general: 'You are blocked' })
   }
 
   const eventId = req.params.eventId
@@ -36,21 +36,21 @@ module.exports = async (req, res, next) => {
     event = await Event.findOne({ _id: eventId })
   } catch (err) {
     if (err.name === 'CastError') {
-      return res.status(404).json({ message: 'Event not found' })
+      return res.status(404).json({ general: 'Event not found' })
     }
     logger.error(`Event ${eventId} failed to be found at add-event-photo`)
     return next(err)
   }
 
   if (!event) {
-    return res.status(404).json({ message: 'Event not found' })
+    return res.status(404).json({ general: 'Event not found' })
   }
 
   if (
     !event.managers.find(m => m.toString() === req.user.id) &&
     !req.user.isAdmin
   ) {
-    return res.status(403).json({ message: 'Forbidden action' })
+    return res.status(403).json({ general: 'Forbidden action' })
   }
 
   try {

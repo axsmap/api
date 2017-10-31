@@ -29,14 +29,14 @@ function connectedToDB() {
   app.use('/', routes)
 
   // Error handling
-  app.use((req, res, _next) => res.status(404).json({ message: 'Not found' }))
+  app.use((req, res, _next) => res.status(404).json({ general: 'Not found' }))
   app.use((err, req, res, _next) => {
     if (err instanceof SyntaxError) {
-      return res.status(400).json({ message: 'Invalid JSON format' })
+      return res.status(400).json({ general: 'Invalid JSON format' })
     }
 
     logger.error(err.stack)
-    return res.status(500).json({ message: 'Something went wrong' })
+    return res.status(500).json({ general: 'Something went wrong' })
   })
 
   process.on('uncaughtException', err =>

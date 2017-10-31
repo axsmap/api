@@ -141,19 +141,12 @@ module.exports = async (req, res, next) => {
   `
   const receiversEmails = [activationTicket.email]
 
-  try {
-    await sendEmail({
-      subject,
-      htmlContent,
-      textContent,
-      receiversEmails
-    })
-  } catch (err) {
-    logger.error(
-      `Mail for user ${activationTicket.email} failed to be sent at sign-up.`
-    )
-    return next(err)
-  }
+  sendEmail({
+    subject,
+    htmlContent,
+    textContent,
+    receiversEmails
+  })
 
-  return res.status(201).json({ message: 'Success' })
+  return res.status(201).json({ general: 'Success' })
 }

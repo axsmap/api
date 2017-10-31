@@ -8,7 +8,7 @@ const { validateEditUser } = require('./validations')
 
 module.exports = async (req, res, next) => {
   if (req.user.isBlocked) {
-    return res.status(423).json({ message: 'You are blocked' })
+    return res.status(423).json({ general: 'You are blocked' })
   }
 
   const userId = req.params.userId
@@ -18,7 +18,7 @@ module.exports = async (req, res, next) => {
     user = await User.findOne({ _id: userId, isArchived: false })
   } catch (err) {
     if (err.name === 'CastError') {
-      return res.status(404).json({ message: 'User not found' })
+      return res.status(404).json({ general: 'User not found' })
     }
 
     logger.error(`User with Id ${userId} failed to be found at edit-user.`)
@@ -26,11 +26,11 @@ module.exports = async (req, res, next) => {
   }
 
   if (!user) {
-    return res.status(404).json({ message: 'User not found' })
+    return res.status(404).json({ general: 'User not found' })
   }
 
   if (user.id !== req.user.id && !req.user.isAdmin) {
-    return res.status(403).json({ message: 'Forbidden action' })
+    return res.status(403).json({ general: 'Forbidden action' })
   }
 
   const { errors, isValid } = validateEditUser(req.body)

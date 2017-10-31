@@ -25,7 +25,7 @@ module.exports = async (req, res, next) => {
   }
 
   if (!refreshToken) {
-    return res.status(404).json({ message: 'Refresh Token not found' })
+    return res.status(404).json({ general: 'Refresh Token not found' })
   }
 
   const expiresAt = moment(refreshToken.expiresAt).utc()
@@ -40,7 +40,7 @@ module.exports = async (req, res, next) => {
       return next(err)
     }
 
-    return res.status(401).json({ message: 'Refresh Token expired' })
+    return res.status(401).json({ general: 'Refresh Token expired' })
   }
 
   const token = jwt.sign(

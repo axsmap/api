@@ -3,7 +3,7 @@ const User = require('../../models/user')
 
 module.exports = async (req, res, next) => {
   if (!req.user.isAdmin) {
-    return res.status(403).json({ message: 'Forbidden action' })
+    return res.status(403).json({ general: 'Forbidden action' })
   }
 
   const userId = req.params.userId
@@ -13,7 +13,7 @@ module.exports = async (req, res, next) => {
     user = await User.findOne({ _id: userId, isArchived: true })
   } catch (err) {
     if (err.name === 'CastError') {
-      return res.status(404).json({ message: 'Archived user not found' })
+      return res.status(404).json({ general: 'Archived user not found' })
     }
 
     logger.error(`User with Id ${userId} failed to be found at delete-user.`)
@@ -21,7 +21,7 @@ module.exports = async (req, res, next) => {
   }
 
   if (!user) {
-    return res.status(404).json({ message: 'Archived user not found' })
+    return res.status(404).json({ general: 'Archived user not found' })
   }
 
   try {
@@ -33,5 +33,5 @@ module.exports = async (req, res, next) => {
     return next(err)
   }
 
-  return res.status(204).json({ message: 'Success' })
+  return res.status(204).json({ general: 'Success' })
 }

@@ -5,7 +5,7 @@ const User = require('../../models/user')
 
 module.exports = async (req, res, next) => {
   if (req.user.isBlocked) {
-    return res.status(423).json({ message: 'You are blocked' })
+    return res.status(423).json({ general: 'You are blocked' })
   }
 
   const userId = req.params.userId
@@ -15,7 +15,7 @@ module.exports = async (req, res, next) => {
     user = await User.findOne({ _id: userId, isArchived: false })
   } catch (err) {
     if (err.name === 'CastError') {
-      return res.status(404).json({ message: 'User not found' })
+      return res.status(404).json({ general: 'User not found' })
     }
 
     logger.error(`User with Id ${userId} failed to be found at get-user.`)
@@ -23,7 +23,7 @@ module.exports = async (req, res, next) => {
   }
 
   if (!user) {
-    return res.status(404).json({ message: 'User not found' })
+    return res.status(404).json({ general: 'User not found' })
   }
 
   let visibleFields

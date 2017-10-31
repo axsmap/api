@@ -31,7 +31,7 @@ module.exports = async (req, res, next) => {
   try {
     getTokenResponse = await axios.get(getTokenUrl, { params: getTokenParams })
   } catch (err) {
-    return res.status(400).json({ message: 'Invalid code' })
+    return res.status(400).json({ general: 'Invalid code' })
   }
 
   const facebookToken = getTokenResponse.data.access_token

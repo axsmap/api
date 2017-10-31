@@ -7,7 +7,7 @@ const { validateChangePassword } = require('./validations')
 
 module.exports = async (req, res, next) => {
   if (req.user.isBlocked) {
-    return res.status(423).json({ message: 'You are blocked' })
+    return res.status(423).json({ general: 'You are blocked' })
   }
 
   const { errors, isValid } = validateChangePassword(req.body)
@@ -58,5 +58,5 @@ module.exports = async (req, res, next) => {
     return next(err)
   }
 
-  return res.status(200).json({ message: 'Success' })
+  return res.status(200).json({ general: 'Success' })
 }

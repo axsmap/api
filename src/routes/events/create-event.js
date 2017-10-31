@@ -9,7 +9,7 @@ const { validateCreateEvent } = require('./validations')
 
 module.exports = async (req, res, next) => {
   if (req.user.isBlocked) {
-    return res.status(423).json({ message: 'You are blocked' })
+    return res.status(423).json({ general: 'You are blocked' })
   }
 
   const { errors, isValid } = validateCreateEvent(req.body)

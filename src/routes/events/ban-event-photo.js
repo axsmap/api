@@ -6,7 +6,7 @@ const logger = require('../../helpers/logger')
 
 module.exports = async (req, res, next) => {
   if (!req.user.isAdmin) {
-    return res.status(403).json({ message: 'Forbidden action' })
+    return res.status(403).json({ general: 'Forbidden action' })
   }
 
   const eventId = req.params.eventId
@@ -17,7 +17,7 @@ module.exports = async (req, res, next) => {
     event = await Event.findOne({ _id: eventId })
   } catch (err) {
     if (err.name === 'CastError') {
-      return res.status(404).json({ message: 'Event not found' })
+      return res.status(404).json({ general: 'Event not found' })
     }
 
     logger.error(`Event ${eventId} failed to be found at ban-event-photo`)
@@ -25,13 +25,13 @@ module.exports = async (req, res, next) => {
   }
 
   if (!event) {
-    return res.status(404).json({ message: 'Event not found' })
+    return res.status(404).json({ general: 'Event not found' })
   }
 
   const isParamPhoto = photo => last(photo.url.split('/')) === photoId
 
   if (!event.photos || !event.photos.find(isParamPhoto)) {
-    return res.status(404).json({ message: 'Photo not found' })
+    return res.status(404).json({ general: 'Photo not found' })
   }
 
   event.photos = event.photos.map(photo => {
@@ -51,5 +51,5 @@ module.exports = async (req, res, next) => {
     return next(err)
   }
 
-  return res.status(200).json({ message: 'Success' })
+  return res.status(200).json({ general: 'Success' })
 }

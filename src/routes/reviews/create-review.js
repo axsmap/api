@@ -11,7 +11,7 @@ const { validateCreateEditReview } = require('./validations')
 
 module.exports = async (req, res, next) => {
   if (req.user.isBlocked) {
-    return res.status(423).json({ message: 'You are blocked' })
+    return res.status(423).json({ general: 'You are blocked' })
   }
 
   const { errors, isValid } = validateCreateEditReview(req.body)
@@ -54,7 +54,7 @@ module.exports = async (req, res, next) => {
   if (repeatedReview) {
     return res
       .status(400)
-      .json({ message: `You already rated the venue ${data.venue}` })
+      .json({ general: `You already rated the venue ${data.venue}` })
   }
 
   if (data.event) {

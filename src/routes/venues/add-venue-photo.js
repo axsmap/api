@@ -26,7 +26,7 @@ const uploadPhoto = pify(
 
 module.exports = async (req, res, next) => {
   if (!req.user.isAdmin) {
-    return res.status(403).json({ message: 'Forbidden action' })
+    return res.status(403).json({ general: 'Forbidden action' })
   }
 
   const venueId = req.params.venueId
@@ -36,7 +36,7 @@ module.exports = async (req, res, next) => {
     venue = await Venue.findOne({ _id: venueId, isArchived: false })
   } catch (err) {
     if (err.name === 'CastError') {
-      return res.status(404).json({ message: 'Venue not found' })
+      return res.status(404).json({ general: 'Venue not found' })
     }
 
     logger.error(`Venue ${venueId} failed to be found at add-venue-photo`)
@@ -44,7 +44,7 @@ module.exports = async (req, res, next) => {
   }
 
   if (!venue) {
-    return res.status(404).json({ message: 'Venue not found' })
+    return res.status(404).json({ general: 'Venue not found' })
   }
 
   try {

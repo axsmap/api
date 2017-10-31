@@ -31,7 +31,7 @@ const userSchema = new mongoose.Schema(
           'spinal-cord',
           'vision'
         ],
-        message: 'Invalid type of disability'
+        general: 'Invalid type of disability'
       },
       required: [true, 'Is required']
     },
@@ -56,7 +56,7 @@ const userSchema = new mongoose.Schema(
       default: 'private',
       enum: {
         values: ['female', 'male', 'other', 'private', 'transgender'],
-        message: 'Invalid type of gender'
+        general: 'Invalid type of gender'
       },
       required: [true, 'Is required']
     },
@@ -95,7 +95,7 @@ const userSchema = new mongoose.Schema(
       default: 'en',
       enum: {
         values: ['en', 'es'],
-        message: 'Invalid type of language'
+        general: 'Invalid type of language'
       },
       required: [true, 'Is required']
     },

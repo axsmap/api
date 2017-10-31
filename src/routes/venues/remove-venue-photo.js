@@ -9,7 +9,7 @@ const s3 = new aws.S3()
 
 module.exports = async (req, res, next) => {
   if (!req.user.isAdmin) {
-    return res.status(403).json({ message: 'Forbidden action' })
+    return res.status(403).json({ general: 'Forbidden action' })
   }
 
   const photoId = req.params.photoId
@@ -20,7 +20,7 @@ module.exports = async (req, res, next) => {
     venue = await Venue.findOne({ _id: venueId, isArchived: false })
   } catch (err) {
     if (err.name === 'CastError') {
-      return res.status(404).json({ message: 'Venue not found' })
+      return res.status(404).json({ general: 'Venue not found' })
     }
 
     logger.error(`Venue ${venueId} failed to be found at remove-venue-photo`)
@@ -28,13 +28,13 @@ module.exports = async (req, res, next) => {
   }
 
   if (!venue) {
-    return res.status(404).json({ message: 'Venue not found' })
+    return res.status(404).json({ general: 'Venue not found' })
   }
 
   const isParamPhoto = photo => last(photo.url.split('/')) === photoId
 
   if (!venue.photos || !venue.photos.find(isParamPhoto)) {
-    return res.status(404).json({ message: 'Photo not found' })
+    return res.status(404).json({ general: 'Photo not found' })
   }
 
   const photoParams = {
@@ -63,5 +63,5 @@ module.exports = async (req, res, next) => {
     return next(err)
   }
 
-  return res.status(204).json({ message: 'Success' })
+  return res.status(204).json({ general: 'Success' })
 }

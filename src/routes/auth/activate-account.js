@@ -17,7 +17,7 @@ module.exports = async (req, res, next) => {
     activationTicket = await ActivationTicket.findOne({ key })
   } catch (err) {
     if (err.name === 'CastError') {
-      return res.status(404).json({ message: 'Activation ticket not found' })
+      return res.status(404).json({ general: 'Activation ticket not found' })
     }
 
     logger.error(
@@ -27,7 +27,7 @@ module.exports = async (req, res, next) => {
   }
 
   if (!activationTicket) {
-    return res.status(404).json({ message: 'Activation ticket not found' })
+    return res.status(404).json({ general: 'Activation ticket not found' })
   }
 
   let expiresAt = moment(activationTicket.expiresAt).utc()
@@ -42,7 +42,7 @@ module.exports = async (req, res, next) => {
       return next(err)
     }
 
-    return res.status(400).json({ message: 'Activation ticket expired' })
+    return res.status(400).json({ general: 'Activation ticket expired' })
   }
 
   const userData = Object.assign({}, activationTicket.userData, {

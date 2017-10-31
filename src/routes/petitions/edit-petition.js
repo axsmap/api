@@ -8,7 +8,7 @@ const User = require('../../models/user')
 
 module.exports = async (req, res, next) => {
   if (req.user.isBlocked) {
-    return res.status(423).json({ message: 'You are blocked' })
+    return res.status(423).json({ general: 'You are blocked' })
   }
 
   const petitionId = req.params.petitionId
@@ -18,7 +18,7 @@ module.exports = async (req, res, next) => {
     petition = await Petition.findOne({ _id: petitionId })
   } catch (err) {
     if (err.name === 'CastError') {
-      return res.status(404).json({ message: 'Petition not found' })
+      return res.status(404).json({ general: 'Petition not found' })
     }
 
     logger.error(`Petition ${petitionId} failed to be found at edit-petition`)
@@ -26,11 +26,11 @@ module.exports = async (req, res, next) => {
   }
 
   if (!petition) {
-    return res.status(404).json({ message: 'Petition not found' })
+    return res.status(404).json({ general: 'Petition not found' })
   }
 
   if (petition.state !== 'pending') {
-    return res.status(423).json({ message: `Is already ${petition.state}` })
+    return res.status(423).json({ general: `Is already ${petition.state}` })
   }
 
   if (petition.type.endsWith('event')) {
@@ -55,7 +55,7 @@ module.exports = async (req, res, next) => {
       }
 
       return res.status(400).json({
-        message: 'Event is already removed. This petition is being removed'
+        general: 'Event is already removed. This petition is being removed'
       })
     }
 
@@ -81,12 +81,12 @@ module.exports = async (req, res, next) => {
         }
 
         return res.status(400).json({
-          message: 'Team is already removed. This petition is being removed'
+          general: 'Team is already removed. This petition is being removed'
         })
       }
 
       if (!teamReceiver.managers.find(m => m.toString() === req.user.id)) {
-        return res.status(403).json({ message: 'Forbidden action' })
+        return res.status(403).json({ general: 'Forbidden action' })
       }
 
       if (eventEntity.teams.find(t => t.toString() === teamReceiver.id)) {
@@ -100,7 +100,7 @@ module.exports = async (req, res, next) => {
         }
 
         return res.status(400).json({
-          message: `Team ${teamReceiver.id} is already a participant of the event. This petition is being removed`
+          general: `Team ${teamReceiver.id} is already a participant of the event. This petition is being removed`
         })
       }
 
@@ -147,10 +147,10 @@ module.exports = async (req, res, next) => {
         return next(err)
       }
 
-      return res.status(200).json({ message: 'Success' })
+      return res.status(200).json({ general: 'Success' })
     } else if (petition.type === 'invite-user-event') {
       if (petition.receiverId !== req.user.id) {
-        return res.status(403).json({ message: 'Forbidden action' })
+        return res.status(403).json({ general: 'Forbidden action' })
       }
 
       if (eventEntity.participants.find(p => p.toString() === req.user.id)) {
@@ -164,7 +164,7 @@ module.exports = async (req, res, next) => {
         }
 
         return res.status(400).json({
-          message:
+          general:
             'You already are a participant of the event. This petition is being removed'
         })
       }
@@ -212,10 +212,10 @@ module.exports = async (req, res, next) => {
         return next(err)
       }
 
-      return res.status(200).json({ message: 'Success' })
+      return res.status(200).json({ general: 'Success' })
     } else if (petition.type === 'request-team-event') {
       if (!eventEntity.managers.find(m => m.toString() === req.user.id)) {
-        return res.status(403).json({ message: 'Forbidden action' })
+        return res.status(403).json({ general: 'Forbidden action' })
       }
 
       let teamSender
@@ -239,7 +239,7 @@ module.exports = async (req, res, next) => {
         }
 
         return res.status(400).json({
-          message: `Team ${teamSender.id} is already removed. This petition is being removed`
+          general: `Team ${teamSender.id} is already removed. This petition is being removed`
         })
       }
 
@@ -254,7 +254,7 @@ module.exports = async (req, res, next) => {
         }
 
         return res.status(400).json({
-          message: `Team ${teamSender.id} is already a participant of the event. This petition is being removed`
+          general: `Team ${teamSender.id} is already a participant of the event. This petition is being removed`
         })
       }
 
@@ -301,12 +301,12 @@ module.exports = async (req, res, next) => {
         return next(err)
       }
 
-      return res.status(200).json({ message: 'Success' })
+      return res.status(200).json({ general: 'Success' })
     }
     // petition.type === 'request-user-event'
 
     if (!eventEntity.managers.find(m => m.toString() === req.user.id)) {
-      return res.status(403).json({ message: 'Forbidden action' })
+      return res.status(403).json({ general: 'Forbidden action' })
     }
 
     let userSender
@@ -330,7 +330,7 @@ module.exports = async (req, res, next) => {
       }
 
       return res.status(400).json({
-        message: `User ${petition.senderId} is already removed. This petition is being removed`
+        general: `User ${petition.senderId} is already removed. This petition is being removed`
       })
     }
 
@@ -345,7 +345,7 @@ module.exports = async (req, res, next) => {
       }
 
       return res.status(400).json({
-        message: `User ${userSender.id} is already a participant of the event. This petition is being removed`
+        general: `User ${userSender.id} is already a participant of the event. This petition is being removed`
       })
     }
 
@@ -392,7 +392,7 @@ module.exports = async (req, res, next) => {
       return next(err)
     }
 
-    return res.status(200).json({ message: 'Success' })
+    return res.status(200).json({ general: 'Success' })
   }
   // petition.type.endsWith('team')
 
@@ -417,13 +417,13 @@ module.exports = async (req, res, next) => {
     }
 
     return res.status(400).json({
-      message: 'Team is already removed. This petition is being removed'
+      general: 'Team is already removed. This petition is being removed'
     })
   }
 
   if (petition.type === 'invite-user-team') {
     if (petition.receiverId !== req.user.id) {
-      return res.status(403).json({ message: 'Forbidden action' })
+      return res.status(403).json({ general: 'Forbidden action' })
     }
 
     if (teamEntity.members.find(m => m.toString() === petition.receiverId)) {
@@ -437,7 +437,7 @@ module.exports = async (req, res, next) => {
       }
 
       return res.status(400).json({
-        message:
+        general:
           'You already are a member of the team. This petition is being removed'
       })
     }
@@ -485,12 +485,12 @@ module.exports = async (req, res, next) => {
       return next(err)
     }
 
-    return res.status(200).json({ message: 'Success' })
+    return res.status(200).json({ general: 'Success' })
   }
   // petition.type === 'request-user-team'
 
   if (!teamEntity.managers.find(m => m.toString() === req.user.id)) {
-    return res.status(403).json({ message: 'Forbidden action' })
+    return res.status(403).json({ general: 'Forbidden action' })
   }
 
   let userSender
@@ -514,7 +514,7 @@ module.exports = async (req, res, next) => {
     }
 
     return res.status(400).json({
-      message: `User ${petition.senderId} is already removed. This petition is being removed`
+      general: `User ${petition.senderId} is already removed. This petition is being removed`
     })
   }
 
@@ -529,7 +529,7 @@ module.exports = async (req, res, next) => {
     }
 
     return res.status(400).json({
-      message: `User ${userSender.id} is already a member of the team. This petition is being removed`
+      general: `User ${userSender.id} is already a member of the team. This petition is being removed`
     })
   }
 
@@ -576,5 +576,5 @@ module.exports = async (req, res, next) => {
     return next(err)
   }
 
-  return res.status(200).json({ message: 'Success' })
+  return res.status(200).json({ general: 'Success' })
 }

@@ -8,7 +8,7 @@ const { validateParticipateEvent } = require('./validations')
 
 module.exports = async (req, res, next) => {
   if (req.user.isBlocked) {
-    return res.status(423).json({ message: 'You are blocked' })
+    return res.status(423).json({ general: 'You are blocked' })
   }
 
   const eventId = req.params.eventId
@@ -18,7 +18,7 @@ module.exports = async (req, res, next) => {
     event = await Event.findOne({ _id: eventId })
   } catch (err) {
     if (err.name === 'CastError') {
-      return res.status(404).json({ message: 'Event not found' })
+      return res.status(404).json({ general: 'Event not found' })
     }
 
     logger.error(`Event ${eventId} failed to be found at participate-event`)
@@ -26,12 +26,12 @@ module.exports = async (req, res, next) => {
   }
 
   if (!event) {
-    return res.status(404).json({ message: 'Event not found' })
+    return res.status(404).json({ general: 'Event not found' })
   }
 
   if (!event.isPublic) {
     return res.status(423).json({
-      message: 'You cannot participate, without a petition, in a private event'
+      general: 'You cannot participate, without a petition, in a private event'
     })
   }
 
@@ -47,7 +47,7 @@ module.exports = async (req, res, next) => {
     if (event.teams.find(t => t.toString() === teamId)) {
       return res
         .status(400)
-        .json({ message: `Team ${teamId} already participates in this` })
+        .json({ general: `Team ${teamId} already participates in this` })
     }
 
     let team
@@ -61,7 +61,7 @@ module.exports = async (req, res, next) => {
     if (!team) {
       return res.status(404).json({ team: 'Team not found' })
     } else if (!team.managers.find(m => m.toString() === req.user.id)) {
-      return res.status(403).json({ message: 'Forbidden action' })
+      return res.status(403).json({ general: 'Forbidden action' })
     }
 
     event.teams = [...event.teams, teamId]
@@ -76,7 +76,7 @@ module.exports = async (req, res, next) => {
       return next(err)
     }
   } else if (event.participants.find(p => p.toString() === req.user.id)) {
-    return res.status(400).json({ message: 'You already participate in this' })
+    return res.status(400).json({ general: 'You already participate in this' })
   } else {
     event.participants = [...event.participants, req.user.id]
 
@@ -102,5 +102,5 @@ module.exports = async (req, res, next) => {
     return next(err)
   }
 
-  return res.status(200).json({ message: 'Success' })
+  return res.status(200).json({ general: 'Success' })
 }

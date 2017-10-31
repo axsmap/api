@@ -85,7 +85,7 @@ const venueSchema = new mongoose.Schema(
                   'other',
                   'spam'
                 ],
-                message: 'Invalid type of complaint'
+                general: 'Invalid type of complaint'
               },
               required: [true, 'Is required']
             },

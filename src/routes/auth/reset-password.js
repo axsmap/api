@@ -27,7 +27,7 @@ module.exports = async (req, res, next) => {
   }
 
   if (!passwordTicket) {
-    return res.status(404).json({ message: 'Password Ticket not found' })
+    return res.status(404).json({ general: 'Password Ticket not found' })
   }
 
   const expiresAt = moment(passwordTicket.expiresAt).utc()
@@ -42,7 +42,7 @@ module.exports = async (req, res, next) => {
       return next(err)
     }
 
-    return res.status(400).json({ message: 'Password Ticket expired' })
+    return res.status(400).json({ general: 'Password Ticket expired' })
   }
 
   let user
@@ -68,7 +68,7 @@ module.exports = async (req, res, next) => {
       return next(err)
     }
 
-    return res.status(400).json({ message: 'User not found' })
+    return res.status(400).json({ general: 'User not found' })
   }
 
   user.password = password
@@ -113,5 +113,5 @@ module.exports = async (req, res, next) => {
     return next(err)
   }
 
-  return res.status(200).json({ message: 'Success' })
+  return res.status(200).json({ general: 'Success' })
 }

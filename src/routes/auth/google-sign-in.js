@@ -37,7 +37,7 @@ module.exports = async (req, res, next) => {
       querystring.stringify(getTokenParams)
     )
   } catch (err) {
-    return res.status(400).json({ message: 'Invalid code' })
+    return res.status(400).json({ general: 'Invalid code' })
   }
 
   const auth = new GoogleAuth()
@@ -48,7 +48,7 @@ module.exports = async (req, res, next) => {
     process.env.GOOGLE_CLIENT_ID,
     async (err, login) => {
       if (err) {
-        return res.status(400).json({ message: 'Invalid token id' })
+        return res.status(400).json({ general: 'Invalid token id' })
       }
 
       const payload = login.getPayload()

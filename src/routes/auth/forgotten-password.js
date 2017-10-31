@@ -28,7 +28,7 @@ module.exports = async (req, res, next) => {
   }
 
   if (!user) {
-    return res.status(200).json({ message: 'Success' })
+    return res.status(200).json({ general: 'Success' })
   }
 
   try {
@@ -78,19 +78,12 @@ module.exports = async (req, res, next) => {
     Stay awesome.
   `
 
-  try {
-    await sendEmail({
-      receiversEmails,
-      subject,
-      htmlContent,
-      textContent
-    })
-  } catch (err) {
-    logger.error(
-      `Mail for user ${passwordTicket.email} failed to be sent at forgotten-password.`
-    )
-    return next(err)
-  }
+  sendEmail({
+    receiversEmails,
+    subject,
+    htmlContent,
+    textContent
+  })
 
-  return res.status(200).json({ message: 'Success' })
+  return res.status(200).json({ general: 'Success' })
 }

@@ -26,7 +26,7 @@ module.exports = {
       try {
         decoded = await jwt.verify(token, process.env.JWT_SECRET)
       } catch (err) {
-        return res.status(401).json({ message: 'Failed to authenticate' })
+        return res.status(401).json({ general: 'Failed to authenticate' })
       }
 
       let user
@@ -44,10 +44,10 @@ module.exports = {
         return next()
       }
 
-      return res.status(404).json({ message: 'User not found' })
+      return res.status(404).json({ general: 'User not found' })
     }
 
-    return res.status(401).json({ message: 'No token provided' })
+    return res.status(401).json({ general: 'No token provided' })
   },
   isNumber(number) {
     return !isNaN(parseFloat(number)) && isFinite(number)

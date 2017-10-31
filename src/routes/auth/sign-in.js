@@ -27,21 +27,21 @@ module.exports = async (req, res, next) => {
   }
 
   if (!user) {
-    return res.status(400).json({ message: 'Email or password incorrect' })
+    return res.status(400).json({ general: 'Email or password incorrect' })
   }
 
   if (user.isBlocked) {
-    return res.status(423).json({ message: 'You are blocked' })
+    return res.status(423).json({ general: 'You are blocked' })
   }
 
   if (!user.hashedPassword) {
-    return res.status(400).json({ message: 'Email or password incorrect' })
+    return res.status(400).json({ general: 'Email or password incorrect' })
   }
 
   const passwordMatches = user.comparePassword(password)
 
   if (!passwordMatches) {
-    return res.status(400).json({ message: 'Email or password incorrect' })
+    return res.status(400).json({ general: 'Email or password incorrect' })
   }
 
   const userId = user.id

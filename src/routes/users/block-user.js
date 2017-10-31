@@ -5,7 +5,7 @@ const User = require('../../models/user')
 
 module.exports = async (req, res, next) => {
   if (!req.user.isAdmin) {
-    return res.status(403).json({ message: 'Forbidden action' })
+    return res.status(403).json({ general: 'Forbidden action' })
   }
 
   const userId = req.params.userId
@@ -15,7 +15,7 @@ module.exports = async (req, res, next) => {
     user = await User.findOne({ _id: userId, isArchived: false })
   } catch (err) {
     if (err.name === 'CastError') {
-      return res.status(404).json({ message: 'User not found' })
+      return res.status(404).json({ general: 'User not found' })
     }
 
     logger.error(`User with Id ${userId} failed to be found at block-user.`)
@@ -23,7 +23,7 @@ module.exports = async (req, res, next) => {
   }
 
   if (!user) {
-    return res.status(404).json({ message: 'User not found' })
+    return res.status(404).json({ general: 'User not found' })
   }
 
   user.isBlocked = true
@@ -36,5 +36,5 @@ module.exports = async (req, res, next) => {
     return next(err)
   }
 
-  return res.status(200).json({ message: 'Success' })
+  return res.status(200).json({ general: 'Success' })
 }

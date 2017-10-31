@@ -7,7 +7,7 @@ const petitionSchema = new mongoose.Schema(
       maxlength: [24, 'Should be less than 25 characters'],
       required: [true, 'Is required']
     },
-    message: {
+    general: {
       type: String,
       maxlength: [250, 'Should be less than 251 characters']
     },
@@ -26,7 +26,7 @@ const petitionSchema = new mongoose.Schema(
       default: 'pending',
       enum: {
         values: ['accepted', 'pending', 'rejected'],
-        message: 'Invalid type of state'
+        general: 'Invalid type of state'
       },
       required: [true, 'Is required']
     },
@@ -41,7 +41,7 @@ const petitionSchema = new mongoose.Schema(
           'request-user-event',
           'request-user-team'
         ],
-        message: 'Invalid type of petition'
+        general: 'Invalid type of petition'
       },
       required: [true, 'Is required']
     }

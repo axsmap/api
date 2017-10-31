@@ -6,7 +6,7 @@ const Review = require('../../models/review')
 
 module.exports = async (req, res, next) => {
   if (req.user.isBlocked) {
-    return res.status(423).json({ message: 'You are blocked' })
+    return res.status(423).json({ general: 'You are blocked' })
   }
 
   const reviewId = req.params.reviewId
@@ -16,7 +16,7 @@ module.exports = async (req, res, next) => {
     review = await Review.findOne({ _id: reviewId })
   } catch (err) {
     if (err.name === 'CastError') {
-      return res.status(404).json({ message: 'Review not found' })
+      return res.status(404).json({ general: 'Review not found' })
     }
 
     logger.error(`Review ${reviewId} failed to be found at flag-review`)
@@ -24,7 +24,7 @@ module.exports = async (req, res, next) => {
   }
 
   if (!review) {
-    return res.status(404).json({ message: 'Review not found' })
+    return res.status(404).json({ general: 'Review not found' })
   }
 
   const data = pick(req.body, ['comments', 'type'])
@@ -47,5 +47,5 @@ module.exports = async (req, res, next) => {
     return next(err)
   }
 
-  return res.status(200).json({ message: 'Success' })
+  return res.status(200).json({ general: 'Success' })
 }

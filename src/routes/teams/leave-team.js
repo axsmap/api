@@ -5,7 +5,7 @@ const Team = require('../../models/team')
 
 module.exports = async (req, res, next) => {
   if (req.user.isBlocked) {
-    return res.status(423).json({ message: 'You are blocked' })
+    return res.status(423).json({ general: 'You are blocked' })
   }
 
   const teamId = req.params.teamId
@@ -15,7 +15,7 @@ module.exports = async (req, res, next) => {
     team = await Team.findOne({ _id: teamId, isArchived: false })
   } catch (err) {
     if (err.name === 'CastError') {
-      return res.status(404).json({ message: 'Team not found' })
+      return res.status(404).json({ general: 'Team not found' })
     }
 
     logger.error(`Team ${teamId} failed to be found at leave-team`)
@@ -23,7 +23,7 @@ module.exports = async (req, res, next) => {
   }
 
   if (!team) {
-    return res.status(404).json({ message: 'Team not found' })
+    return res.status(404).json({ general: 'Team not found' })
   }
 
   if (team.managers.find(m => m.toString() === req.user.id)) {
@@ -32,14 +32,14 @@ module.exports = async (req, res, next) => {
 
     if (team.managers.length === 0) {
       return res.status(400).json({
-        message:
+        general:
           'You cannot leave the team because there will not be more managers'
       })
     }
   } else if (team.members.find(m => m.toString() === req.user.id)) {
     team.members = team.members.filter(m => m.toString() !== req.user.id)
   } else {
-    return res.status(400).json({ message: "You don't belong to this team" })
+    return res.status(400).json({ general: "You don't belong to this team" })
   }
 
   team.updatedAt = moment.utc().toDate()
@@ -61,5 +61,5 @@ module.exports = async (req, res, next) => {
     return next(err)
   }
 
-  return res.status(200).json({ message: 'Success' })
+  return res.status(200).json({ general: 'Success' })
 }
