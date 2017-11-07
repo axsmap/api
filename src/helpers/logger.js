@@ -8,7 +8,7 @@ const transports = [
     level: 'info',
     humanReadableUnhandledException: true,
     handleExceptions: true,
-    json: false,
+    prettyPrint: true,
     colorize: true
   })
 ]

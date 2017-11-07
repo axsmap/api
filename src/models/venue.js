@@ -2,6 +2,10 @@ const mongoose = require('mongoose')
 
 const venueSchema = new mongoose.Schema(
   {
+    address: {
+      type: String,
+      maxlength: [255, 'Should be less than 256 characters']
+    },
     allowsGuideDog: {
       yes: {
         type: Number,
@@ -200,20 +204,16 @@ const venueSchema = new mongoose.Schema(
         type: String,
         maxlength: [50, 'Should be less than 51 characters']
       }
-    ],
-    vicinity: {
-      type: String,
-      maxlength: [255, 'Should be less than 256 characters']
-    }
+    ]
   },
   { timestamps: true }
 )
 
 venueSchema.index({
+  address: 'text',
   name: 'text',
   location: '2dsphere',
-  placeId: 1,
-  vicinity: 'text'
+  placeId: 1
 })
 
 module.exports = {
