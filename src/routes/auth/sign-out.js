@@ -1,5 +1,5 @@
 const logger = require('../../helpers/logger')
-const RefreshToken = require('../../models/refresh-token')
+const { RefreshToken } = require('../../models/refresh-token')
 
 module.exports = async (req, res, next) => {
   if (req.user.isBlocked) {

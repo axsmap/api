@@ -1,7 +1,7 @@
 const { isEmpty } = require('lodash')
 const { isMongoId } = require('validator')
 
-const Petition = require('../../models/petition')
+const { Petition } = require('../../models/petition')
 
 module.exports = {
   validateCreatePetition(data) {

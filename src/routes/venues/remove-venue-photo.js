@@ -3,7 +3,7 @@ const { last } = require('lodash')
 const moment = require('moment')
 
 const logger = require('../../helpers/logger')
-const Venue = require('../../models/venue')
+const { Venue } = require('../../models/venue')
 
 const s3 = new aws.S3()
 

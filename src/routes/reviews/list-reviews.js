@@ -1,7 +1,7 @@
 const { toBoolean, toInt } = require('validator')
 
 const logger = require('../../helpers/logger')
-const Review = require('../../models/review')
+const { Review } = require('../../models/review')
 
 const { validateListReviews } = require('./validations')
 

@@ -2,10 +2,10 @@ const { difference, intersection, pick, trim } = require('lodash')
 const moment = require('moment')
 const slugify = require('speakingurl')
 
-const Event = require('../../models/event')
+const { Event } = require('../../models/event')
 const logger = require('../../helpers/logger')
-const Team = require('../../models/team')
-const User = require('../../models/user')
+const { Team } = require('../../models/team')
+const { User } = require('../../models/user')
 
 const { validateEditEvent } = require('./validations')
 

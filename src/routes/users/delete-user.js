@@ -1,5 +1,5 @@
 const logger = require('../../helpers/logger')
-const User = require('../../models/user')
+const { User } = require('../../models/user')
 
 module.exports = async (req, res, next) => {
   if (!req.user.isAdmin) {

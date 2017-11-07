@@ -21,4 +21,7 @@ const refreshTokenSchema = new mongoose.Schema(
   { timestamps: true }
 )
 
-module.exports = mongoose.model('RefreshToken', refreshTokenSchema)
+module.exports = {
+  RefreshToken: mongoose.model('RefreshToken', refreshTokenSchema),
+  refreshTokenSchema
+}

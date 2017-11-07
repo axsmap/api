@@ -1,4 +1,4 @@
-const Event = require('../../models/event')
+const { Event } = require('../../models/event')
 const logger = require('../../helpers/logger')
 
 module.exports = async (req, res, next) => {

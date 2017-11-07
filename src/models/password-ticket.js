@@ -20,4 +20,7 @@ const passwordTicketSchema = new mongoose.Schema(
   { timestamps: true }
 )
 
-module.exports = mongoose.model('PasswordTicket', passwordTicketSchema)
+module.exports = {
+  PasswordTicket: mongoose.model('PasswordTicket', passwordTicketSchema),
+  passwordTicketSchema
+}

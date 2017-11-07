@@ -1,11 +1,11 @@
 const moment = require('moment')
 const { pick } = require('lodash')
 
-const Event = require('../../models/event')
+const { Event } = require('../../models/event')
 const logger = require('../../helpers/logger')
-const Petition = require('../../models/petition')
-const Team = require('../../models/team')
-const User = require('../../models/user')
+const { Petition } = require('../../models/petition')
+const { Team } = require('../../models/team')
+const { User } = require('../../models/user')
 
 const { validateCreatePetition } = require('./validations')
 

@@ -2,7 +2,7 @@ const moment = require('moment')
 const { pick, trim } = require('lodash')
 const slugify = require('speakingurl')
 
-const Event = require('../../models/event')
+const { Event } = require('../../models/event')
 const logger = require('../../helpers/logger')
 
 const { validateCreateEvent } = require('./validations')

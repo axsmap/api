@@ -7,7 +7,7 @@ const multer = require('multer')
 const pify = require('pify')
 
 const logger = require('../../helpers/logger')
-const Team = require('../../models/team')
+const { Team } = require('../../models/team')
 
 const s3 = new aws.S3()
 const uploadAvatar = pify(

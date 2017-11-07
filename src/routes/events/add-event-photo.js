@@ -6,7 +6,7 @@ const moment = require('moment')
 const multer = require('multer')
 const pify = require('pify')
 
-const Event = require('../../models/event')
+const { Event } = require('../../models/event')
 const logger = require('../../helpers/logger')
 
 const s3 = new aws.S3()

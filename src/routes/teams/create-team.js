@@ -3,9 +3,9 @@ const { pick, trim } = require('lodash')
 const slugify = require('speakingurl')
 
 const logger = require('../../helpers/logger')
-const Team = require('../../models/team')
+const { Team } = require('../../models/team')
 
-const validateCreateTeam = require('./validations')
+const { validateCreateTeam } = require('./validations')
 
 module.exports = async (req, res, next) => {
   if (req.user.isBlocked) {

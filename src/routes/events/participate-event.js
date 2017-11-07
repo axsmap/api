@@ -1,8 +1,8 @@
 const moment = require('moment')
 
-const Event = require('../../models/event')
+const { Event } = require('../../models/event')
 const logger = require('../../helpers/logger')
-const Team = require('../../models/team')
+const { Team } = require('../../models/team')
 
 const { validateParticipateEvent } = require('./validations')
 

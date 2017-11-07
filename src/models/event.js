@@ -174,4 +174,7 @@ eventSchema.index({
   point: '2dsphere'
 })
 
-module.exports = mongoose.model('Event', eventSchema)
+module.exports = {
+  Event: mongoose.model('Event', eventSchema),
+  eventSchema
+}

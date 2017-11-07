@@ -1,9 +1,9 @@
 const moment = require('moment')
 
-const Event = require('../../models/event')
+const { Event } = require('../../models/event')
 const logger = require('../../helpers/logger')
-const Team = require('../../models/team')
-const User = require('../../models/user')
+const { Team } = require('../../models/team')
+const { User } = require('../../models/user')
 
 module.exports = async (req, res, next) => {
   if (req.user.isBlocked) {

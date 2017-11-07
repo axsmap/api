@@ -3,9 +3,9 @@ const moment = require('moment')
 const slugify = require('speakingurl')
 
 const logger = require('../../helpers/logger')
-const Team = require('../../models/team')
+const { Team } = require('../../models/team')
 
-const validateEditTeam = require('./validations')
+const { validateEditTeam } = require('./validations')
 
 module.exports = async (req, res, next) => {
   if (req.user.isBlocked) {

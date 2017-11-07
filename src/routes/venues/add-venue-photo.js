@@ -7,7 +7,7 @@ const multer = require('multer')
 const pify = require('pify')
 
 const logger = require('../../helpers/logger')
-const Venue = require('../../models/venue')
+const { Venue } = require('../../models/venue')
 
 const s3 = new aws.S3()
 const uploadPhoto = pify(

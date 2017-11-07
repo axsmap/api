@@ -172,4 +172,7 @@ function comparePassword(password) {
 userSchema.virtual('password').set(hashPassword)
 userSchema.methods.comparePassword = comparePassword
 
-module.exports = mongoose.model('User', userSchema)
+module.exports = {
+  User: mongoose.model('User', userSchema),
+  userSchema
+}

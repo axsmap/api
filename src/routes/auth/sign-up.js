@@ -5,10 +5,10 @@ const { pick, trim } = require('lodash')
 const randomstring = require('randomstring')
 const slugify = require('speakingurl')
 
-const ActivationTicket = require('../../models/activation-ticket')
+const { ActivationTicket } = require('../../models/activation-ticket')
 const logger = require('../../helpers/logger')
 const { sendEmail } = require('../../helpers')
-const User = require('../../models/user')
+const { User } = require('../../models/user')
 
 const { validateSignUp } = require('./validations')
 

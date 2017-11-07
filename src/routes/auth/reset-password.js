@@ -1,9 +1,9 @@
 const moment = require('moment')
 
 const logger = require('../../helpers/logger')
-const PasswordTicket = require('../../models/password-ticket')
-const RefreshToken = require('../../models/refresh-token')
-const User = require('../../models/user')
+const { PasswordTicket } = require('../../models/password-ticket')
+const { RefreshToken } = require('../../models/refresh-token')
+const { User } = require('../../models/user')
 
 const { validateResetPassword } = require('./validations')
 

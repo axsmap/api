@@ -1,5 +1,5 @@
 const logger = require('../../helpers/logger')
-const Team = require('../../models/team')
+const { Team } = require('../../models/team')
 
 module.exports = async (req, res, next) => {
   if (req.user.isBlocked) {

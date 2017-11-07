@@ -4,8 +4,8 @@ const jwt = require('jsonwebtoken')
 const moment = require('moment')
 
 const logger = require('../../helpers/logger')
-const RefreshToken = require('../../models/refresh-token')
-const User = require('../../models/user')
+const { RefreshToken } = require('../../models/refresh-token')
+const { User } = require('../../models/user')
 
 const { validateSignIn } = require('./validations')
 

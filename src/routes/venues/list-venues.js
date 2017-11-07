@@ -3,7 +3,7 @@ const { find, isEmpty } = require('lodash')
 
 const { isNumber } = require('../../helpers')
 const logger = require('../../helpers/logger')
-const Venue = require('../../models/venue')
+const { Venue } = require('../../models/venue')
 
 const { validateListVenues } = require('./validations')
 

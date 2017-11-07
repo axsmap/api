@@ -42,4 +42,7 @@ const activationTicketSchema = new mongoose.Schema(
   { timestamps: true }
 )
 
-module.exports = mongoose.model('ActivationTicket', activationTicketSchema)
+module.exports = {
+  ActivationTicket: mongoose.model('ActivationTicket', activationTicketSchema),
+  activationTicketSchema
+}

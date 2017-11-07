@@ -2,7 +2,7 @@ const aws = require('aws-sdk')
 const { last } = require('lodash')
 const moment = require('moment')
 
-const Event = require('../../models/event')
+const { Event } = require('../../models/event')
 const logger = require('../../helpers/logger')
 
 const s3 = new aws.S3()

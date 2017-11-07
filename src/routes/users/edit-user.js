@@ -2,7 +2,7 @@ const moment = require('moment')
 const { pick, trim } = require('lodash')
 
 const logger = require('../../helpers/logger')
-const User = require('../../models/user')
+const { User } = require('../../models/user')
 
 const { validateEditUser } = require('./validations')
 

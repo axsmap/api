@@ -63,4 +63,7 @@ const teamSchema = new mongoose.Schema(
 
 teamSchema.index({ name: 'text' })
 
-module.exports = mongoose.model('Team', teamSchema)
+module.exports = {
+  Team: mongoose.model('Team', teamSchema),
+  teamSchema
+}

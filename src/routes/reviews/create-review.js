@@ -1,11 +1,11 @@
 const moment = require('moment')
 const { pick } = require('lodash')
 
-const Event = require('../../models/event')
+const { Event } = require('../../models/event')
 const logger = require('../../helpers/logger')
-const Review = require('../../models/review')
-const Team = require('../../models/team')
-const Venue = require('../../models/venue')
+const { Review } = require('../../models/review')
+const { Team } = require('../../models/team')
+const { Venue } = require('../../models/venue')
 
 const { validateCreateEditReview } = require('./validations')
 

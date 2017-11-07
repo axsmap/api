@@ -2,7 +2,7 @@ const moment = require('moment')
 const { pick } = require('lodash')
 
 const logger = require('../../helpers/logger')
-const Review = require('../../models/review')
+const { Review } = require('../../models/review')
 
 module.exports = async (req, res, next) => {
   if (req.user.isBlocked) {

@@ -1,7 +1,7 @@
 const axios = require('axios')
 
 const logger = require('../../helpers/logger')
-const Venue = require('../../models/venue')
+const { Venue } = require('../../models/venue')
 
 module.exports = async (req, res, next) => {
   if (req.user.isBlocked) {

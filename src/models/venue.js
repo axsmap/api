@@ -216,4 +216,7 @@ venueSchema.index({
   vicinity: 'text'
 })
 
-module.exports = mongoose.model('Venue', venueSchema)
+module.exports = {
+  Venue: mongoose.model('Venue', venueSchema),
+  venueSchema
+}

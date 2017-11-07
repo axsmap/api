@@ -6,8 +6,8 @@ const randomstring = require('randomstring')
 const slugify = require('speakingurl')
 
 const logger = require('../../helpers/logger')
-const RefreshToken = require('../../models/refresh-token')
-const User = require('../../models/user')
+const { RefreshToken } = require('../../models/refresh-token')
+const { User } = require('../../models/user')
 
 const { validateCreateUser } = require('./validations')
 

@@ -1,7 +1,7 @@
 const moment = require('moment')
 const { toBoolean } = require('validator')
 
-const Event = require('../../models/event')
+const { Event } = require('../../models/event')
 const logger = require('../../helpers/logger')
 
 const { validateListEvents } = require('./validations')

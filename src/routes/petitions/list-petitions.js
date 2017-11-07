@@ -1,7 +1,7 @@
-const Event = require('../../models/event')
+const { Event } = require('../../models/event')
 const logger = require('../../helpers/logger')
-const Petition = require('../../models/petition')
-const Team = require('../../models/team')
+const { Petition } = require('../../models/petition')
+const { Team } = require('../../models/team')
 
 module.exports = async (req, res, next) => {
   if (req.user.isBlocked) {

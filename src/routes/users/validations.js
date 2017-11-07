@@ -4,7 +4,7 @@ const { isEmpty } = require('lodash')
 const slugify = require('speakingurl')
 const { trim } = require('lodash')
 
-const User = require('../../models/user')
+const { User } = require('../../models/user')
 
 module.exports = {
   validateChangePassword(data) {

@@ -4,10 +4,10 @@ const moment = require('moment')
 const randomstring = require('randomstring')
 const slugify = require('speakingurl')
 
-const ActivationTicket = require('../../models/activation-ticket')
+const { ActivationTicket } = require('../../models/activation-ticket')
 const logger = require('../../helpers/logger')
-const RefreshToken = require('../../models/refresh-token')
-const User = require('../../models/user')
+const { RefreshToken } = require('../../models/refresh-token')
+const { User } = require('../../models/user')
 
 module.exports = async (req, res, next) => {
   const key = req.params.key

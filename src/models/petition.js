@@ -51,4 +51,7 @@ const petitionSchema = new mongoose.Schema(
 
 petitionSchema.index({ receiverId: 1, senderId: 1 })
 
-module.exports = mongoose.model('Petition', petitionSchema)
+module.exports = {
+  Petition: mongoose.model('Petition', petitionSchema),
+  petitionSchema
+}

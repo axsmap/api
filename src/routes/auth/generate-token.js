@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken')
 const moment = require('moment')
 
 const logger = require('../../helpers/logger')
-const RefreshToken = require('../../models/refresh-token')
+const { RefreshToken } = require('../../models/refresh-token')
 
 const { validateGenerateToken } = require('./validations')
 

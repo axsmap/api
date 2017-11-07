@@ -3,9 +3,9 @@ const crypto = require('crypto')
 const moment = require('moment')
 
 const logger = require('../../helpers/logger')
-const PasswordTicket = require('../../models/password-ticket')
+const { PasswordTicket } = require('../../models/password-ticket')
 const { sendEmail } = require('../../helpers')
-const User = require('../../models/user')
+const { User } = require('../../models/user')
 
 const { validateForgottenPassword } = require('./validations')
 
