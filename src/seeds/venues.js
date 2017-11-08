@@ -84,6 +84,18 @@ db.on('connected', async () => {
       location: { coordinates: [-25.2930684, -57.605086] },
       name: 'Claro',
       placeId: 'ChIJ29ayuXioXZQR4gCvhQkwk1g'
+    },
+    {
+      address: 'Fernando De La Mora, Paraguay',
+      location: { coordinates: [-25.3170158, -57.5519492] },
+      name: 'Plaza Villa Marangatu',
+      placeId: 'ChIJfd8cQCuvXZQR3-0AecBLo5I'
+    },
+    {
+      address: 'Villa Marangatu, Fernando De La Mora, Paraguay',
+      location: { coordinates: [-25.3169936, -57.552135] },
+      name: 'Plaza Yrendague',
+      placeId: 'ChIJj1zeQCuvXZQR1ApZCWkCFgQ'
     }
   ]
 
