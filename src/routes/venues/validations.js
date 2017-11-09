@@ -1,7 +1,7 @@
 const { isEmpty } = require('lodash')
 
 const { isNumber } = require('../../helpers')
-const { languages, placesTypes } = require('../../helpers/constants')
+const { placesTypes } = require('../../helpers/constants')
 
 module.exports = {
   validateListVenues(queryParams) {
@@ -55,10 +55,6 @@ module.exports = {
       ) {
         errors.entryScore = 'Should be between 1 and 5'
       }
-    }
-
-    if (queryParams.language && !languages.includes(queryParams.language)) {
-      errors.language = 'Should be a valid language'
     }
 
     if (queryParams.allowsGuideDog) {

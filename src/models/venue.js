@@ -216,6 +216,14 @@ venueSchema.index({
   placeId: 1
 })
 
+venueSchema.virtual('coordinates').get(function() {
+  return this.location.coordinates
+})
+
+venueSchema.virtual('photo').get(function() {
+  return this.photos[0] ? this.photos[0].url : undefined
+})
+
 module.exports = {
   Venue: mongoose.model('Venue', venueSchema),
   venueSchema

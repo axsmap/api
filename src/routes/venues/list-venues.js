@@ -19,90 +19,90 @@ module.exports = async (req, res, next) => {
 
   if (queryParams.bathroomScore) {
     venuesQuery.bathroomScore = {
-      $gte: queryParams.bathroomScore,
-      $lt: queryParams.bathroomScore + 1
+      $gte: parseFloat(queryParams.bathroomScore),
+      $lt: parseFloat(queryParams.bathroomScore) + 1
     }
   }
 
   if (queryParams.entryScore) {
     venuesQuery.entryScore = {
-      $gte: queryParams.entryScore,
-      $lt: queryParams.entryScore + 1
+      $gte: parseFloat(queryParams.entryScore),
+      $lt: parseFloat(queryParams.entryScore) + 1
     }
   }
 
-  if (typeof queryParams.allowsGuideDog !== 'undefined') {
+  if (queryParams.allowsGuideDog) {
     const allowsGuideDog = parseFloat(queryParams.allowsGuideDog) === 1
     if (allowsGuideDog) {
-      venuesQuery.allowsGuideDog.yes = { $gte: 1 }
+      venuesQuery['allowsGuideDog.yes'] = { $gte: 1 }
     } else {
-      venuesQuery.allowsGuideDog.no = { $gte: 1 }
+      venuesQuery['allowsGuideDog.no'] = { $gte: 1 }
     }
   }
 
-  if (typeof queryParams.hasParking !== 'undefined') {
+  if (queryParams.hasParking) {
     const hasParking = parseFloat(queryParams.hasParking) === 1
     if (hasParking) {
-      venuesQuery.hasParking.yes = { $gte: 1 }
+      venuesQuery['hasParking.yes'] = { $gte: 1 }
     } else {
-      venuesQuery.hasParking.no = { $gte: 1 }
+      venuesQuery['hasParking.no'] = { $gte: 1 }
     }
   }
 
-  if (typeof queryParams.hasRamp !== 'undefined') {
+  if (queryParams.hasRamp) {
     const hasRamp = parseFloat(queryParams.hasRamp) === 1
     if (hasRamp) {
-      venuesQuery.hasRamp.yes = { $gte: 1 }
+      venuesQuery['hasRamp.yes'] = { $gte: 1 }
     } else {
-      venuesQuery.hasRamp.no = { $gte: 1 }
+      venuesQuery['hasRamp.no'] = { $gte: 1 }
     }
   }
 
-  if (typeof queryParams.hasSecondEntry !== 'undefined') {
+  if (queryParams.hasSecondEntry) {
     const hasSecondEntry = parseFloat(queryParams.hasSecondEntry) === 1
     if (hasSecondEntry) {
-      venuesQuery.hasSecondEntry.yes = { $gte: 1 }
+      venuesQuery['hasSecondEntry.yes'] = { $gte: 1 }
     } else {
-      venuesQuery.hasSecondEntry.no = { $gte: 1 }
+      venuesQuery['hasSecondEntry.no'] = { $gte: 1 }
     }
   }
 
-  if (typeof queryParams.hasWellLit !== 'undefined') {
+  if (queryParams.hasWellLit) {
     const hasWellLit = parseFloat(queryParams.hasWellLit) === 1
     if (hasWellLit) {
-      venuesQuery.hasWellLit.yes = { $gte: 1 }
+      venuesQuery['hasWellLit.yes'] = { $gte: 1 }
     } else {
-      venuesQuery.hasWellLit.no = { $gte: 1 }
+      venuesQuery['hasWellLit.no'] = { $gte: 1 }
     }
   }
 
-  if (typeof queryParams.isQuiet !== 'undefined') {
+  if (queryParams.isQuiet) {
     const isQuiet = parseFloat(queryParams.isQuiet) === 1
     if (isQuiet) {
-      venuesQuery.isQuiet.yes = { $gte: 1 }
+      venuesQuery['isQuiet.yes'] = { $gte: 1 }
     } else {
-      venuesQuery.isQuiet.no = { $gte: 1 }
+      venuesQuery['isQuiet.no'] = { $gte: 1 }
     }
   }
 
-  if (typeof queryParams.isSpacious !== 'undefined') {
+  if (queryParams.isSpacious) {
     const isSpacious = parseFloat(queryParams.isSpacious) === 1
     if (isSpacious) {
-      venuesQuery.isSpacious.yes = { $gte: 1 }
+      venuesQuery['isSpacious.yes'] = { $gte: 1 }
     } else {
-      venuesQuery.isSpacious.no = { $gte: 1 }
+      venuesQuery['isSpacious.no'] = { $gte: 1 }
     }
   }
 
-  if (typeof queryParams.steps !== 'undefined') {
+  if (queryParams.steps) {
     if (parseFloat(queryParams.steps) === 0) {
-      venuesQuery.steps.zero = { $gte: 1 }
+      venuesQuery['steps.zero'] = { $gte: 1 }
     } else if (parseFloat(queryParams.steps) === 1) {
-      venuesQuery.steps.one = { $gte: 1 }
+      venuesQuery['steps.one'] = { $gte: 1 }
     } else if (parseFloat(queryParams.steps) === 2) {
-      venuesQuery.steps.two = { $gte: 1 }
+      venuesQuery['steps.two'] = { $gte: 1 }
     } else if (parseFloat(queryParams.steps) === 3) {
-      venuesQuery.steps.moreThanTwo = { $gte: 1 }
+      venuesQuery['steps.moreThanTwo'] = { $gte: 1 }
     }
   }
 
@@ -120,7 +120,7 @@ module.exports = async (req, res, next) => {
           type: 'Point',
           coordinates: [coordinates[1], coordinates[0]]
         },
-        $maxDistance: 5000
+        $maxDistance: 50000
       }
     }
 
@@ -135,7 +135,7 @@ module.exports = async (req, res, next) => {
       page = queryParams.page
     }
 
-    const pageLimit = 6
+    const pageLimit = 20
 
     if (page > 0) {
       page -= 1
@@ -149,10 +149,10 @@ module.exports = async (req, res, next) => {
     let venues
     try {
       ;[venues, total] = await Promise.all([
-        Venue.find(venuesQuery)
-          .select(
-            '-__v -bathroomReviews -createdAt -entryReviews -isArchived -reviews -updatedAt'
-          )
+        Venue.find(
+          venuesQuery,
+          'address bathroomScore entryScore location name photos placeId types'
+        )
           .skip(page * pageLimit)
           .limit(pageLimit),
         Venue.find(venuesQuery).count()
@@ -166,23 +166,30 @@ module.exports = async (req, res, next) => {
       return next(err)
     }
 
+    venues = venues.map(venue =>
+      Object.assign({}, venue.toObject(), {
+        id: venue._id,
+        _id: undefined,
+        coordinates: venue.coordinates,
+        location: undefined,
+        photo: venue.photo,
+        photos: undefined
+      })
+    )
+
     const lastPage = Math.ceil(total / pageLimit)
-    let last = `${process.env.API_URL}/venues?page=${lastPage}`
+    let nextPage
     if (lastPage > 0) {
       page += 1
-      if (page > lastPage) {
-        return res
-          .status(400)
-          .json({ page: `Should be equal to or less than ${lastPage}` })
+      if (page > lastPage || page > 3) {
+        return res.status(400).json({
+          page: `Should be equal to or less than ${lastPage > 3 ? 3 : lastPage}`
+        })
       }
-    } else {
-      last = null
-      page = null
     }
 
     dataResponse = {
-      last,
-      page,
+      nextPage,
       results: venues
     }
   } else {
@@ -193,12 +200,6 @@ module.exports = async (req, res, next) => {
 
       if (queryParams.keywords) {
         placesQuery = `${placesQuery}&keyword=${queryParams.keywords}`
-      }
-
-      if (queryParams.language) {
-        placesQuery = `${placesQuery}&language=${queryParams.language}`
-      } else {
-        placesQuery = `${placesQuery}&language=en`
       }
 
       if (queryParams.type) {
@@ -235,12 +236,8 @@ module.exports = async (req, res, next) => {
       }
 
       places.push({
-        generalScore: place.rating,
-        icon: place.icon,
-        location: {
-          latitude: place.geometry.location.lat,
-          longitude: place.geometry.location.lng
-        },
+        address: place.vicinity,
+        coordinates: [place.geometry.location.lat, place.geometry.location.lng],
         name: place.name,
         photo,
         placeId: place.place_id,
@@ -264,7 +261,7 @@ module.exports = async (req, res, next) => {
       if (venue) {
         let photo = place.photo
         if (venue.photos) {
-          photo = venues.photos[0].url
+          photo = venue.photos[0].url
         }
 
         return Object.assign({}, place, {
