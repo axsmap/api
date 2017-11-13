@@ -5,7 +5,7 @@ const { mapKeys, pickBy } = require('lodash')
 const nodemailer = require('nodemailer')
 const { snakeCase } = require('lodash')
 
-const User = require('../models/user')
+const { User } = require('../models/user')
 
 const logger = require('./logger')
 
