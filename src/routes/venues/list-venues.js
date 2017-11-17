@@ -170,8 +170,7 @@ module.exports = async (req, res, next) => {
       Object.assign({}, venue.toObject(), {
         id: venue._id,
         _id: undefined,
-        coordinates: venue.coordinates,
-        location: undefined,
+        location: venue.coordinates,
         photo: venue.photo,
         photos: undefined
       })
@@ -237,7 +236,10 @@ module.exports = async (req, res, next) => {
 
       places.push({
         address: place.vicinity,
-        coordinates: [place.geometry.location.lat, place.geometry.location.lng],
+        location: {
+          lat: place.geometry.location.lat,
+          lng: place.geometry.location.lng
+        },
         name: place.name,
         photo,
         placeId: place.place_id,

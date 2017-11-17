@@ -217,7 +217,10 @@ venueSchema.index({
 })
 
 venueSchema.virtual('coordinates').get(function() {
-  return this.location.coordinates
+  return {
+    lat: this.location.coordinates[1],
+    lng: this.location.coordinates[0]
+  }
 })
 
 venueSchema.virtual('photo').get(function() {

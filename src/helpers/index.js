@@ -31,7 +31,12 @@ module.exports = {
 
       let user
       try {
-        user = await User.findOne({ _id: decoded.userId, isArchived: false })
+        user = await User.findOne({
+          _id: decoded.userId,
+          isArchived: false
+        }).select(
+          '-__v -createdAt -isAdmin -isArchived -isBlocked -hashedPassword -updatedAt'
+        )
       } catch (err) {
         logger.error(
           `User ${decoded.userId} failed to be found at authenticate`
