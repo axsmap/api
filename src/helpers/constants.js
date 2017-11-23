@@ -34,6 +34,7 @@ module.exports = {
     'electrician',
     'electronics_store',
     'embassy',
+    'establishment',
     'fire_station',
     'florist',
     'funeral_home',
