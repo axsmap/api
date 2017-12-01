@@ -170,9 +170,7 @@ module.exports = async (req, res, next) => {
       Object.assign({}, venue.toObject(), {
         id: venue._id,
         _id: undefined,
-        location: venue.coordinates,
-        photo: venue.photo,
-        photos: undefined
+        location: venue.coordinates
       })
     )
 
@@ -261,15 +259,9 @@ module.exports = async (req, res, next) => {
     places = places.map(place => {
       const venue = find(venues, venue => venue.placeId === place.placeId)
       if (venue) {
-        let photo = place.photo
-        if (venue.photos) {
-          photo = venue.photos[0].url
-        }
-
         return Object.assign({}, place, {
           bathroomScore: venue.bathroomScore,
-          entryScore: venue.entryScore,
-          photo
+          entryScore: venue.entryScore
         })
       }
 
