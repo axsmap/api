@@ -1,5 +1,3 @@
-// const aws = require('aws-sdk')
-const jimp = require('jimp')
 const { trim } = require('lodash')
 const mongoose = require('mongoose')
 const randomstring = require('randomstring')
@@ -7,8 +5,8 @@ const slugify = require('speakingurl')
 
 require('dotenv').config()
 
-const logger = require('../helpers/logger')
-const { userSchema } = require('../models/user')
+const logger = require('../../helpers/logger')
+const { userSchema } = require('../../models/user')
 
 const oldUserSchema = require('./old-schemas/user')
 
@@ -80,8 +78,6 @@ db.on('connected', async () => {
       const User = db.model('User', userSchema)
 
       const createUsers = []
-      const getUsersImages = []
-      const usersToUpdate = []
       for (let oldUser of oldUsers) {
         if (oldUser.isactive) {
           const userData = {
@@ -105,8 +101,7 @@ db.on('connected', async () => {
             )}-${randomstring.generate({
               length: 5,
               capitalization: 'lowercase'
-            })}`,
-            zip: oldUser.zip.length <= 32 ? oldUser.zip : ''
+            })}`
           }
 
           switch (oldUser.disabilitytype.toLowerCase()) {
@@ -155,15 +150,11 @@ db.on('connected', async () => {
               userData.gender = 'private'
           }
 
-          createUsers.push(User.create(userData))
-
-          if (
-            oldUser.image &&
-            !oldUser.image.includes('/images/icon_guy.png')
-          ) {
-            getUsersImages.push(jimp.read(encodeURI(oldUser.image)))
-            usersToUpdate.push(oldUser.id)
+          if (oldUser.zip && oldUser.zip.length <= 32) {
+            userData.zip = oldUser.zip
           }
+
+          createUsers.push(User.create(userData))
         }
       }
 
@@ -179,82 +170,6 @@ db.on('connected', async () => {
         logger.error(error)
         await closeConnections(db, oldDb)
       }
-
-      // if (getUsersImages.length > 0) {
-      //   let usersImages
-      //   try {
-      //     usersImages = await Promise.all(getUsersImages)
-      //   } catch (error) {
-      //     logger.info(
-      //       `Old users images failed to be found.\nData: ${JSON.stringify({
-      //         page,
-      //         i
-      //       })}`
-      //     )
-      //     logger.error(error)
-      //     await closeConnections(db, oldDb)
-      //   }
-
-      //   const getBase64Images = []
-      //   for (let userImage of usersImages) {
-      //     getBase64Images.push(
-      //       userImage.scaleToFit(400, 400).quality(60).getBase64(jimp.AUTO)
-      //     )
-      //   }
-
-      //   try {
-      //     usersImages = await Promise.all(getBase64Images)
-      //   } catch (error) {
-      //     logger.info(
-      //       `Users images failed to be converted.\nData: ${JSON.stringify({
-      //         page,
-      //         i
-      //       })}`
-      //     )
-      //     logger.error(error)
-      //     await closeConnections(db, oldDb)
-      //   }
-
-      //   const s3 = new aws.S3()
-      //   const uploadUsersImages = []
-      //   const updateUsersImages = []
-      //   for (let i = 0; i < usersImages.length; i++) {
-      //     let fileName = `${Date.now()}${randomstring.generate({
-      //       length: 5,
-      //       capitalization: 'lowercase'
-      //     })}}}`
-      //     uploadUsersImages.push(
-      //       s3.putObject({
-      //         ACL: 'public-read',
-      //         Body: usersImages[i],
-      //         Bucket: process.env.AWS_S3_BUCKET,
-      //         ContentType: usersImages[i].getMIME(),
-      //         Key: `users/avatars/${fileName}`
-      //       })
-      //     )
-
-      //     let avatar = `https://s3-sa-east-1.amazonaws.com/${process.env
-      //       .AWS_S3_BUCKET}/users/avatars/${fileName}`
-      //     updateUsersImages.push(
-      //       User.update({ _id: usersToUpdate[i] }, { $set: { avatar } })
-      //     )
-      //   }
-
-      //   try {
-      //     await Promise.all([...uploadUsersImages, ...updateUsersImages])
-      //   } catch (error) {
-      //     logger.info(
-      //       `Users images failed to be uploaded or updated.\nData: ${JSON.stringify(
-      //         {
-      //           page,
-      //           i
-      //         }
-      //       )}`
-      //     )
-      //     logger.error(error)
-      //     await closeConnections(db, oldDb)
-      //   }
-      // }
 
       page = page + 1
       i = i + oldUsers.length

@@ -96,7 +96,7 @@ module.exports = async (req, res, next) => {
 
   fs.unlink(req.file.path)
 
-  user.avatar = `https://s3-sa-east-1.amazonaws.com/${process.env
+  user.avatar = `https://s3.amazonaws.com/${process.env
     .AWS_S3_BUCKET}/users/avatars/${req.file.filename}`
   user.updatedAt = moment.utc().toDate()
 
