@@ -112,64 +112,6 @@ const venueSchema = new mongoose.Schema(
       type: String,
       maxlength: [255, 'Should be less than 256 characters']
     },
-    photos: [
-      {
-        banned: {
-          type: Boolean,
-          default: false,
-          required: [true, 'Is required']
-        },
-        complaints: [
-          {
-            comments: {
-              type: String,
-              maxlength: [250, 'Should be less than 251 characters']
-            },
-            createdAt: {
-              type: Date,
-              default: Date.now,
-              required: [true, 'Is required']
-            },
-            type: {
-              type: String,
-              enum: {
-                values: [
-                  'biased',
-                  'copyright',
-                  'inconsistent',
-                  'offensive',
-                  'offtopic',
-                  'other',
-                  'spam'
-                ],
-                general: 'Invalid type of complaint'
-              },
-              required: [true, 'Is required']
-            },
-            user: {
-              type: mongoose.Schema.Types.ObjectId,
-              ref: 'User',
-              required: [true, 'Is required']
-            }
-          }
-        ],
-        uploadedAt: {
-          type: Date,
-          default: Date.now,
-          required: [true, 'Is required']
-        },
-        url: {
-          type: String,
-          maxlength: [2000, 'Should be less than 2001 characters'],
-          required: [true, 'Is required']
-        },
-        user: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: 'User',
-          required: [true, 'Is required']
-        }
-      }
-    ],
     placeId: {
       type: String,
       maxlength: [255, 'Should be less than 256 characters'],
@@ -224,7 +166,7 @@ venueSchema.virtual('coordinates').get(function() {
 })
 
 venueSchema.virtual('photo').get(function() {
-  return this.photos[0] ? this.photos[0].url : undefined
+  return undefined
 })
 
 module.exports = {

@@ -162,7 +162,7 @@ db.on('connected', async () => {
         await Promise.all(createUsers)
       } catch (error) {
         logger.info(
-          `Old users failed to be created.\nData: ${JSON.stringify({
+          `Users failed to be created.\nData: ${JSON.stringify({
             page,
             i
           })}`
@@ -197,5 +197,3 @@ db.on('error', err => {
 db.on('disconnected', () => {
   logger.info('Connection from DB closed')
 })
-
-process.on('SIGINT', () => db.close())

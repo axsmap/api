@@ -2,6 +2,11 @@ const mongoose = require('mongoose')
 
 const reviewSchema = new mongoose.Schema(
   {
+    allowsGuideDog: {
+      type: Boolean,
+      default: false,
+      required: [true, 'Is required']
+    },
     bathroomScore: {
       type: Number,
       max: [5, 'Should be less than 6'],
@@ -9,13 +14,13 @@ const reviewSchema = new mongoose.Schema(
     },
     comments: {
       type: String,
-      maxlength: [250, 'Should be less than 251 characters']
+      maxlength: [300, 'Should be less than 301 characters']
     },
     complaints: [
       {
         comments: {
           type: String,
-          maxlength: [250, 'Should be less than 251 characters']
+          maxlength: [300, 'Should be less than 30 characters']
         },
         createdAt: {
           type: Date,
@@ -54,7 +59,22 @@ const reviewSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Event'
     },
-    guideDog: {
+    hasParking: {
+      type: Boolean,
+      default: false,
+      required: [true, 'Is required']
+    },
+    hasRamp: {
+      type: Boolean,
+      default: false,
+      required: [true, 'Is required']
+    },
+    hasSecondEntry: {
+      type: Boolean,
+      default: false,
+      required: [true, 'Is required']
+    },
+    hasWellLit: {
       type: Boolean,
       default: false,
       required: [true, 'Is required']
@@ -64,27 +84,12 @@ const reviewSchema = new mongoose.Schema(
       default: false,
       required: [true, 'Is required']
     },
-    parking: {
+    isQuiet: {
       type: Boolean,
       default: false,
       required: [true, 'Is required']
     },
-    quiet: {
-      type: Boolean,
-      default: false,
-      required: [true, 'Is required']
-    },
-    ramp: {
-      type: Boolean,
-      default: false,
-      required: [true, 'Is required']
-    },
-    secondEntry: {
-      type: Boolean,
-      default: false,
-      required: [true, 'Is required']
-    },
-    spacious: {
+    isSpacious: {
       type: Boolean,
       default: false,
       required: [true, 'Is required']
@@ -113,12 +118,7 @@ const reviewSchema = new mongoose.Schema(
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
       }
-    ],
-    wellLit: {
-      type: Boolean,
-      default: false,
-      required: [true, 'Is required']
-    }
+    ]
   },
   { timestamps: true }
 )
