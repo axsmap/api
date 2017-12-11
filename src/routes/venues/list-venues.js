@@ -260,8 +260,15 @@ module.exports = async (req, res, next) => {
       const venue = find(venues, venue => venue.placeId === place.placeId)
       if (venue) {
         return Object.assign({}, place, {
+          allowsGuideDog: venue.allowsGuideDog,
           bathroomScore: venue.bathroomScore,
-          entryScore: venue.entryScore
+          entryScore: venue.entryScore,
+          hasParking: venue.hasParking,
+          hasSecondEntry: venue.hasSecondEntry,
+          hasWellLit: venue.hasWellLit,
+          isQuiet: venue.isQuiet,
+          isSpacious: venue.isSpacious,
+          steps: venue.steps
         })
       }
 

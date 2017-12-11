@@ -1,57 +1,107 @@
 const axios = require('axios')
+const { isEqual } = require('lodash')
 
 const logger = require('../../helpers/logger')
 const { Venue } = require('../../models/venue')
 
 module.exports = async (req, res, next) => {
-  if (req.user.isBlocked) {
-    return res.status(423).json({ general: 'You are blocked' })
-  }
+  const placeId = req.params.placeId
 
-  const venueId = req.params.venueId
-
-  let venue
+  let response
   try {
-    venue = await Venue.findOne({ _id: venueId, isArchived: false }).select(
-      '-__v -createdAt -updatedAt'
-    )
-  } catch (err) {
-    if (err.name === 'CastError') {
-      return res.status(404).json({ general: 'Venue not found' })
-    }
-
-    logger.error(`Venue ${venueId} failed to be found at get-venue`)
-    return next(err)
-  }
-
-  if (!venue) {
-    return res.status(404).json({ general: 'Venue not found' })
-  }
-
-  let placeResponse
-  try {
-    placeResponse = await axios.get(
-      `https://maps.googleapis.com/maps/api/place/details/json?placeid=${venue.placeId}&key=${process
+    response = await axios.get(
+      `https://maps.googleapis.com/maps/api/place/details/json?placeid=${placeId}&key=${process
         .env.PLACES_API_KEY}`
     )
   } catch (err) {
+    logger.error(`Place ${placeId} failed to be found at get-venue.`)
+    return next(err)
+  }
+
+  const statusResponse = response.data.status
+  if (statusResponse !== 'OK') {
+    return res.status(404).json({ general: 'Place not found' })
+  }
+
+  const placeData = response.data.result
+  const dataResponse = {}
+  dataResponse.address = placeData.formatted_address
+  if (placeData.photos && placeData.photos.length > 0) {
+    dataResponse.coverPhoto = `https://maps.googleapis.com/maps/api/place/photo?key=${process
+      .env.PLACES_API_KEY}&maxwidth=500&photoreference=${placeData.photos[0]
+      .photo_reference}`
+  }
+  dataResponse.googleRating = placeData.rating
+  dataResponse.googleUrl = placeData.url
+  dataResponse.location = {
+    lat: placeData.geometry.location.lat,
+    lng: placeData.geometry.location.lng
+  }
+  dataResponse.name = placeData.name
+  dataResponse.formattedPhone = placeData.formatted_phone_number
+  dataResponse.internationalPhone = placeData.international_phone_number
+  dataResponse.types = placeData.types
+  dataResponse.website = placeData.website
+
+  let venue
+  try {
+    venue = await Venue.findOne({ placeId, isArchived: false }).select(
+      '-__v -createdAt -updatedAt -isArchived'
+    )
+  } catch (err) {
     logger.error(
-      `Place with Id ${venue.placeId} failed to be found at get-venue.`
+      `Venue with placeId ${placeId} failed to be found at get-venue`
     )
     return next(err)
   }
 
-  const dataResponse = {
-    address: placeResponse.data.formatted_address,
-    googleUrl: placeResponse.data.url,
-    location: placeResponse.data.geometry.location,
-    name: placeResponse.data.name,
-    phone: placeResponse.data.formatted_phone_number,
-    placeId: placeResponse.data.place_id,
-    review: venue,
-    types: placeResponse.data.types,
-    vicinity: placeResponse.data.vicinity,
-    website: placeResponse.data.website
+  if (venue) {
+    let venueHasUpdates = false
+    if (venue.address !== dataResponse.address) {
+      venue.address = dataResponse.address
+      venueHasUpdates = true
+    }
+    if (
+      venue.location.coordinates[0] !== dataResponse.location.lng ||
+      venue.location.coordinates[1] !== dataResponse.location.lat
+    ) {
+      venue.location.coordinates = [
+        dataResponse.location.lng,
+        dataResponse.location.lat
+      ]
+      venueHasUpdates = true
+    }
+    if (venue.name !== dataResponse.name) {
+      venue.name = dataResponse.name
+      venueHasUpdates = true
+    }
+    if (!isEqual(venue.types, dataResponse.types)) {
+      venue.types = dataResponse.types
+      venueHasUpdates = true
+    }
+    if (venueHasUpdates) {
+      try {
+        await venue.save()
+      } catch (err) {
+        logger.error(
+          `Venue with id ${venue.id} failed to be updated at get-venue.`
+        )
+        return next(err)
+      }
+    }
+
+    dataResponse.id = venue._id
+    dataResponse.allowsGuideDog = venue.allowsGuideDog
+    dataResponse.bathroomReviews = venue.bathroomReviews
+    dataResponse.bathroomScore = venue.bathroomScore
+    dataResponse.entryReviews = venue.entryReviews
+    dataResponse.entryScore = venue.entryScore
+    dataResponse.hasParking = venue.hasParking
+    dataResponse.hasSecondEntry = venue.hasSecondEntry
+    dataResponse.hasWellLit = venue.hasWellLit
+    dataResponse.isQuiet = venue.isQuiet
+    dataResponse.isSpacious = venue.isSpacious
+    dataResponse.steps = venue.steps
   }
 
   return res.status(200).json(dataResponse)
