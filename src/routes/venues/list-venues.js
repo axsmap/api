@@ -272,7 +272,24 @@ module.exports = async (req, res, next) => {
         })
       }
 
-      return place
+      return Object.assign({}, place, {
+        allowsGuideDog: { yes: 0, no: 0 },
+        bathroomReviews: 0,
+        bathroomScore: null,
+        entryReviews: 0,
+        entryScore: null,
+        hasParking: { yes: 0, no: 0 },
+        hasSecondEntry: { yes: 0, no: 0 },
+        hasWellLit: { yes: 0, no: 0 },
+        isQuiet: { yes: 0, no: 0 },
+        isSpacious: { yes: 0, no: 0 },
+        steps: {
+          zero: 0,
+          one: 0,
+          two: 0,
+          moreThanTwo: 0
+        }
+      })
     })
 
     dataResponse = {

@@ -43,6 +43,23 @@ module.exports = async (req, res, next) => {
   dataResponse.types = placeData.types
   dataResponse.website = placeData.website
 
+  dataResponse.allowsGuideDog = { yes: 0, no: 0 }
+  dataResponse.bathroomReviews = 0
+  dataResponse.bathroomScore = null
+  dataResponse.entryReviews = 0
+  dataResponse.entryScore = null
+  dataResponse.hasParking = { yes: 0, no: 0 }
+  dataResponse.hasSecondEntry = { yes: 0, no: 0 }
+  dataResponse.hasWellLit = { yes: 0, no: 0 }
+  dataResponse.isQuiet = { yes: 0, no: 0 }
+  dataResponse.isSpacious = { yes: 0, no: 0 }
+  dataResponse.steps = {
+    zero: 0,
+    one: 0,
+    two: 0,
+    moreThanTwo: 0
+  }
+
   let venue
   try {
     venue = await Venue.findOne({ placeId, isArchived: false }).select(
