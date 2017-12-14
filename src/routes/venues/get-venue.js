@@ -31,15 +31,16 @@ module.exports = async (req, res, next) => {
       .env.PLACES_API_KEY}&maxwidth=500&photoreference=${placeData.photos[0]
       .photo_reference}`
   }
+  dataResponse.formattedPhone = placeData.formatted_phone_number
   dataResponse.googleRating = placeData.rating
   dataResponse.googleUrl = placeData.url
+  dataResponse.internationalPhone = placeData.international_phone_number
   dataResponse.location = {
     lat: placeData.geometry.location.lat,
     lng: placeData.geometry.location.lng
   }
   dataResponse.name = placeData.name
-  dataResponse.formattedPhone = placeData.formatted_phone_number
-  dataResponse.internationalPhone = placeData.international_phone_number
+  dataResponse.placeId = placeId
   dataResponse.types = placeData.types
   dataResponse.website = placeData.website
 
