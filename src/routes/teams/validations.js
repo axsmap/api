@@ -59,19 +59,15 @@ module.exports = {
   validateListTeams(queryParams) {
     const errors = {}
 
-    if (queryParams.creator && !isMongoId(queryParams.creator)) {
-      errors.creator = `${queryParams.creator} should be an user Id`
-    }
-
     if (queryParams.managers) {
       const managers = [...new Set(queryParams.managers.split(','))]
 
       if (managers.length === 0) {
-        errors.managers = 'Should have at least one user Id'
+        errors.managers = 'Should have at least one user id'
       } else {
         managers.forEach(m => {
           if (!m || !isMongoId(m)) {
-            errors.managers = `${m} should be an user Id`
+            errors.managers = `${m} should be an user id`
           }
         })
       }
