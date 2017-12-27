@@ -46,16 +46,6 @@ const venueSchema = new mongoose.Schema(
         default: 0
       }
     },
-    hasRamp: {
-      yes: {
-        type: Number,
-        default: 0
-      },
-      no: {
-        type: Number,
-        default: 0
-      }
-    },
     hasSecondEntry: {
       yes: {
         type: Number,

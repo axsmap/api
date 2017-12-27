@@ -2,11 +2,7 @@ const mongoose = require('mongoose')
 
 const reviewSchema = new mongoose.Schema(
   {
-    allowsGuideDog: {
-      type: Boolean,
-      default: false,
-      required: [true, 'Is required']
-    },
+    allowsGuideDog: Boolean,
     bathroomScore: {
       type: Number,
       max: [5, 'Should be less than 6'],
@@ -59,41 +55,16 @@ const reviewSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Event'
     },
-    hasParking: {
-      type: Boolean,
-      default: false,
-      required: [true, 'Is required']
-    },
-    hasRamp: {
-      type: Boolean,
-      default: false,
-      required: [true, 'Is required']
-    },
-    hasSecondEntry: {
-      type: Boolean,
-      default: false,
-      required: [true, 'Is required']
-    },
-    hasWellLit: {
-      type: Boolean,
-      default: false,
-      required: [true, 'Is required']
-    },
+    hasParking: Boolean,
+    hasSecondEntry: Boolean,
+    hasWellLit: Boolean,
     isBanned: {
       type: Boolean,
       default: false,
       required: [true, 'Is required']
     },
-    isQuiet: {
-      type: Boolean,
-      default: false,
-      required: [true, 'Is required']
-    },
-    isSpacious: {
-      type: Boolean,
-      default: false,
-      required: [true, 'Is required']
-    },
+    isQuiet: Boolean,
+    isSpacious: Boolean,
     steps: {
       type: Number,
       max: [3, 'Should be less than 4'],

@@ -2,11 +2,6 @@ const mongoose = require('mongoose')
 
 const photoSchema = new mongoose.Schema(
   {
-    banned: {
-      type: Boolean,
-      default: false,
-      required: [true, 'Is required']
-    },
     complaints: [
       {
         comments: {
@@ -41,6 +36,11 @@ const photoSchema = new mongoose.Schema(
         }
       }
     ],
+    isAllowed: {
+      type: Boolean,
+      default: true,
+      required: [true, 'Is required']
+    },
     review: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Review',

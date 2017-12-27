@@ -1,87 +1,99 @@
 const { isEmpty } = require('lodash')
-const { isInt, isMongoId } = require('validator')
+const { isBase64, isInt, isMongoId } = require('validator')
 
 module.exports = {
   validateCreateEditReview(data) {
     const errors = {}
 
-    if (data.bathroomScore) {
-      if (typeof data.bathroomScore !== 'string') {
-        errors.bathroomScore = 'Should be a string'
-      } else if (!isInt(data.bathroomScore, { min: 1, max: 5 })) {
-        errors.bathroomScore = 'Should an integer between 1 and 5'
+    if (
+      typeof data.allowsGuideDog !== 'undefined' &&
+      typeof data.allowsGuideDog !== 'boolean'
+    ) {
+      errors.allowsGuideDog = 'Should be a boolean'
+    }
+
+    if (typeof data.bathroomScore !== 'undefined') {
+      if (typeof data.bathroomScore !== 'number') {
+        errors.bathroomScore = 'Should be a number'
+      } else if (data.bathroomScore < 1 || data.bathroomScore > 5) {
+        errors.bathroomScore = 'Should be between 1 and 5'
       }
     }
 
-    if (data.entryScore) {
-      if (typeof data.entryScore !== 'string') {
-        errors.entryScore = 'Should be a string'
-      } else if (!isInt(data.entryScore, { min: 1, max: 5 })) {
-        errors.entryScore = 'Should an integer between 1 and 5'
-      }
+    if (data.comments && typeof data.comments !== 'string') {
+      errors.comments = 'Should be a string'
+    }
+
+    if (typeof data.entryScore === 'undefined') {
+      errors.entryScore = 'Is required'
+    } else if (typeof data.entryScore !== 'number') {
+      errors.entryScore = 'Should be a number'
+    } else if (data.entryScore < 1 || data.entryScore > 5) {
+      errors.entryScore = 'Should be between 1 and 5'
     }
 
     if (data.event) {
       if (typeof data.event !== 'string') {
         errors.event = 'Should be a string'
       } else if (!isMongoId(data.event)) {
-        errors.event = 'Should be a valid Id'
+        errors.event = 'Should be a valid id'
       }
     }
 
-    if (data.guideDog) {
-      if (typeof data.guideDog !== 'string') {
-        errors.guideDog = 'Should be a string'
-      } else if (!isInt(data.guideDog, { min: 0, max: 1 })) {
-        errors.entryScore = 'Should an integer between 0 and 1'
+    if (
+      typeof data.hasParking !== 'undefined' &&
+      typeof data.hasParking !== 'boolean'
+    ) {
+      errors.hasParking = 'Should be a boolean'
+    }
+
+    if (
+      typeof data.hasSecondEntry !== 'undefined' &&
+      typeof data.hasSecondEntry !== 'boolean'
+    ) {
+      errors.hasSecondEntry = 'Should be a boolean'
+    }
+
+    if (
+      typeof data.hasWellLit !== 'undefined' &&
+      typeof data.hasWellLit !== 'boolean'
+    ) {
+      errors.hasWellLit = 'Should be a boolean'
+    }
+
+    if (
+      typeof data.isQuiet !== 'undefined' &&
+      typeof data.isQuiet !== 'boolean'
+    ) {
+      errors.isQuiet = 'Should be a boolean'
+    }
+
+    if (
+      typeof data.isSpacious !== 'undefined' &&
+      typeof data.isSpacious !== 'boolean'
+    ) {
+      errors.isSpacious = 'Should be a boolean'
+    }
+
+    if (data.photo) {
+      if (typeof data.photo !== 'string') {
+        errors.photo = 'Should be a string'
+      } else if (!isBase64(data.photo.split(',')[1])) {
+        errors.photo = 'Should be a valid base 64 string'
       }
     }
 
-    if (data.parking) {
-      if (typeof data.parking !== 'string') {
-        errors.parking = 'Should be a string'
-      } else if (!isInt(data.parking, { min: 0, max: 1 })) {
-        errors.parking = 'Should an integer between 0 and 1'
-      }
+    if (!data.place) {
+      errors.place = 'Is required'
+    } else if (typeof data.place !== 'string') {
+      errors.place = 'Should be a string'
     }
 
-    if (data.quiet) {
-      if (typeof data.quiet !== 'string') {
-        errors.quiet = 'Should be a string'
-      } else if (!isInt(data.quiet, { min: 0, max: 1 })) {
-        errors.quiet = 'Should an integer between 0 and 1'
-      }
-    }
-
-    if (data.ramp) {
-      if (typeof data.ramp !== 'string') {
-        errors.ramp = 'Should be a string'
-      } else if (!isInt(data.ramp, { min: 0, max: 1 })) {
-        errors.ramp = 'Should an integer between 0 and 1'
-      }
-    }
-
-    if (data.secondEntry) {
-      if (typeof data.secondEntry !== 'string') {
-        errors.secondEntry = 'Should be a string'
-      } else if (!isInt(data.secondEntry, { min: 0, max: 1 })) {
-        errors.secondEntry = 'Should an integer between 0 and 1'
-      }
-    }
-
-    if (data.spacious) {
-      if (typeof data.spacious !== 'string') {
-        errors.spacious = 'Should be a string'
-      } else if (!isInt(data.spacious, { min: 0, max: 1 })) {
-        errors.spacious = 'Should an integer between 0 and 1'
-      }
-    }
-
-    if (data.steps) {
-      if (typeof data.steps !== 'string') {
-        errors.steps = 'Should be a string'
-      } else if (!isInt(data.steps, { min: 0, max: 3 })) {
-        errors.steps = 'Should an integer between 0 and 3'
+    if (typeof data.steps !== 'undefined') {
+      if (typeof data.steps !== 'number') {
+        errors.steps = 'Should be a number'
+      } else if (data.steps < 0 || data.steps > 3) {
+        errors.bathroomScore = 'Should be between 0 and 3'
       }
     }
 
@@ -89,23 +101,7 @@ module.exports = {
       if (typeof data.team !== 'string') {
         errors.team = 'Should be a string'
       } else if (!isMongoId(data.team)) {
-        errors.team = 'Should be a valid Id'
-      }
-    }
-
-    if (data.venue) {
-      if (typeof data.venue !== 'string') {
-        errors.venue = 'Should be a string'
-      } else if (!isMongoId(data.venue)) {
-        errors.venue = 'Should be a valid Id'
-      }
-    }
-
-    if (data.wellLit) {
-      if (typeof data.wellLit !== 'string') {
-        errors.wellLit = 'Should be a string'
-      } else if (!isInt(data.wellLit, { min: 0, max: 1 })) {
-        errors.wellLit = 'Should an integer between 0 and 1'
+        errors.team = 'Should be a valid id'
       }
     }
 

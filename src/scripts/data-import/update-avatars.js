@@ -105,7 +105,7 @@ db.on('connected', async () => {
 
         const usersAvatars = []
         for (let i = 0; i < usersImages.length; i++) {
-          usersImages[i].scaleToFit(400, 400).quality(60)
+          usersImages[i].cover(400, 400).quality(60)
           usersImages[i].getBuffer(
             usersImages[i].getMIME(),
             (error, bufferImage) => {
