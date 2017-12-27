@@ -9,14 +9,9 @@ const teamSchema = new mongoose.Schema(
       maxlength: [2000, 'Should be less than 2001 characters'],
       required: [true, 'Is required']
     },
-    creator: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: [true, 'Is required']
-    },
     description: {
       type: String,
-      maxlength: [250, 'Should be less than 251 characters']
+      maxlength: [300, 'Should be less than 301 characters']
     },
     events: [
       {
@@ -38,23 +33,15 @@ const teamSchema = new mongoose.Schema(
       ],
       required: [true, 'Is required']
     },
-    members: {
-      type: [
-        {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: 'User'
-        }
-      ],
-      required: [true, 'Is required']
-    },
+    members: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+      }
+    ],
     name: {
       type: String,
       maxlength: [35, 'Should be less than 36 characters'],
-      required: [true, 'Is required']
-    },
-    slug: {
-      type: String,
-      maxlength: [70, 'Should be less than 71 characters'],
       required: [true, 'Is required']
     }
   },
