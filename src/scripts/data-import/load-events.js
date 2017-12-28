@@ -48,13 +48,7 @@ db.on('connected', async () => {
 
     let totalOldEvents
     try {
-      totalOldEvents = await oldEvent
-        .find({
-          lngLat: { $exists: true },
-          place_id: { $exists: true, $ne: '' },
-          types: { $ne: [] }
-        })
-        .count()
+      totalOldEvents = await oldEvent.count()
     } catch (error) {
       logger.info('Old events failed to be count')
       logger.error(error)
@@ -72,11 +66,7 @@ db.on('connected', async () => {
       let oldEvents
       try {
         oldEvents = await oldEvent
-          .find({
-            lngLat: { $exists: true },
-            place_id: { $exists: true, $ne: '' },
-            types: { $ne: [] }
-          })
+          .find({})
           .skip(page * pageLimit)
           .limit(pageLimit)
       } catch (error) {
