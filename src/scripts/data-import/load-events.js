@@ -80,18 +80,28 @@ db.on('connected', async () => {
       const createEvents = []
       for (let oldEventItem of oldEvents) {
         const participants = oldEventItem.members.map(member => member.user)
+
         const eventData = {
           _id: oldEventItem.id,
           createdAt: oldEventItem.created_at,
           creator: oldEventItem.creator,
-          description: oldEventItem.description,
+          description: oldEventItem.description.substring(0, 300),
           endDate: oldEventItem.event_end,
           isApproved: oldEventItem.approved,
+          managers: [oldEventItem.creator],
           name: oldEventItem.name,
           participants,
-          participantsGoal: oldEventItem.participant_goal,
+          participantsGoal: oldEventItem.participant_goal
+            ? oldEventItem.participant_goal > 1000
+              ? 1000
+              : oldEventItem.participant_goal
+            : 1,
           poster: oldEventItem.image,
-          reviewsGoal: oldEventItem.mapping_goal,
+          reviewsGoal: oldEventItem.mapping_goal
+            ? oldEventItem.mapping_goal > 10000
+              ? 10000
+              : oldEventItem.mapping_goal
+            : 1,
           startDate: oldEventItem.event_start,
           teams: oldEventItem.teams,
           updatedAt: oldEventItem.updated_at

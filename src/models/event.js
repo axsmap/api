@@ -17,7 +17,7 @@ const eventSchema = new mongoose.Schema(
     },
     description: {
       type: String,
-      maxlength: [250, 'Should have less than 251 characters']
+      maxlength: [300, 'Should have less than 301 characters']
     },
     endDate: {
       type: Date,
@@ -44,13 +44,12 @@ const eventSchema = new mongoose.Schema(
     },
     name: {
       type: String,
-      maxlength: [100, 'Should have less than 101 characters'],
-      required: [true, 'Is required']
+      maxlength: [100, 'Should have less than 101 characters']
     },
     participantsGoal: {
       type: Number,
       max: [1000, 'Should be less than 1001'],
-      min: [2, 'Should be more than 1'],
+      min: [1, 'Should be more than 0'],
       required: [true, 'Is required']
     },
     participants: {
@@ -59,8 +58,7 @@ const eventSchema = new mongoose.Schema(
           type: mongoose.Schema.Types.ObjectId,
           ref: 'User'
         }
-      ],
-      required: [true, 'Is required']
+      ]
     },
     photos: [
       {
@@ -123,20 +121,17 @@ const eventSchema = new mongoose.Schema(
     point: {
       type: {
         type: String,
-        default: 'Point',
-        required: [true, 'Is required']
+        default: 'Point'
       },
       coordinates: {
-        type: [Number],
-        required: [true, 'Is required']
+        type: [Number]
       }
     },
     poster: {
       type: String,
       default: `https://s3-sa-east-1.amazonaws.com/${process.env
         .AWS_S3_BUCKET}/events/posters/default.png`,
-      maxlength: [2000, 'Should be less than 2001 characters'],
-      required: [true, 'Is required']
+      maxlength: [2000, 'Should be less than 2001 characters']
     },
     reviews: {
       type: Number,
@@ -146,12 +141,7 @@ const eventSchema = new mongoose.Schema(
     reviewsGoal: {
       type: Number,
       max: [10000, 'Should be less than 10001'],
-      min: [10, 'Should be more than 9']
-    },
-    slug: {
-      type: String,
-      maxlength: [200, 'Should be less than 201 characters'],
-      required: [true, 'Is required']
+      min: [1, 'Should be more than 0']
     },
     startDate: {
       type: Date,
