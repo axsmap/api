@@ -12,7 +12,7 @@ const uploadTeamAvatar = require('./upload-team-avatar')
 
 const router = new express.Router()
 
-router.get('', isAuthenticated, listTeams)
+router.get('', listTeams)
 router.post('', isAuthenticated, createTeam)
 router.get('/:teamId', isAuthenticated, getTeam)
 router.put('/:teamId', isAuthenticated, editTeam)

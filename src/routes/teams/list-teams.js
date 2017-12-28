@@ -4,10 +4,6 @@ const { Team } = require('../../models/team')
 const { validateListTeams } = require('./validations')
 
 module.exports = async (req, res, next) => {
-  if (req.user.isBlocked) {
-    return res.status(423).json({ general: 'You are blocked' })
-  }
-
   const queryParams = req.query
   const { errors, isValid } = validateListTeams(queryParams)
 
@@ -19,10 +15,6 @@ module.exports = async (req, res, next) => {
 
   if (queryParams.keywords) {
     teamsQuery.$text = { $search: queryParams.keywords }
-  }
-
-  if (queryParams.creator) {
-    teamsQuery.creator = queryParams.creator
   }
 
   if (queryParams.managers) {
