@@ -4,7 +4,7 @@ const teamSchema = new mongoose.Schema(
   {
     avatar: {
       type: String,
-      default: `https://s3-sa-east-1.amazonaws.com/${process.env
+      default: `https://s3.amazonaws.com/${process.env
         .AWS_S3_BUCKET}/teams/avatars/default.png`,
       maxlength: [2000, 'Should be less than 2001 characters'],
       required: [true, 'Is required']
