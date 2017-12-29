@@ -118,15 +118,6 @@ const eventSchema = new mongoose.Schema(
         }
       }
     ],
-    point: {
-      type: {
-        type: String,
-        default: 'Point'
-      },
-      coordinates: {
-        type: [Number]
-      }
-    },
     poster: {
       type: String,
       default: `https://s3-sa-east-1.amazonaws.com/${process.env
@@ -156,13 +147,6 @@ const eventSchema = new mongoose.Schema(
   },
   { timestamps: true }
 )
-
-eventSchema.index({
-  city: 'text',
-  country: 'text',
-  name: 'text',
-  point: '2dsphere'
-})
 
 module.exports = {
   Event: mongoose.model('Event', eventSchema),
