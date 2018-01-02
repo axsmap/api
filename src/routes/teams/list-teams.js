@@ -27,13 +27,13 @@ module.exports = async (req, res, next) => {
     teamsQuery.members = { $in: members }
   }
 
-  let sortField = '-reviewsAmount'
+  let sortBy = '-reviewsAmount'
   if (queryParams.sortBy) {
     const sort = queryParams.sortBy
     const sortOptions = ['name', '-name', 'reviewsAmount', '-reviewsAmount']
 
     if (sortOptions.includes(sort)) {
-      sortField = sort
+      sortBy = sort
     } else {
       return res.status(400).json({ sortBy: 'Invalid type of sort' })
     }
@@ -56,7 +56,7 @@ module.exports = async (req, res, next) => {
     ;[teams, total] = await Promise.all([
       Team.aggregate()
         .match(teamsQuery)
-        .sort(sortField)
+        .sort(sortBy)
         .skip(page * pageLimit)
         .limit(pageLimit),
       Team.find(teamsQuery).count()
@@ -66,9 +66,7 @@ module.exports = async (req, res, next) => {
     return next(err)
   }
 
-  let first = `${process.env.API_URL}/teams?page=1`
-  const lastPage = Math.ceil(total / pageLimit)
-  let last = `${process.env.API_URL}/teams?page=${lastPage}`
+  let lastPage = Math.ceil(total / pageLimit)
   if (lastPage > 0) {
     page += 1
     if (page > lastPage) {
@@ -77,17 +75,16 @@ module.exports = async (req, res, next) => {
         .json({ page: `Should be equal to or less than ${lastPage}` })
     }
   } else {
-    first = null
-    last = null
     page = null
+    lastPage = null
   }
 
   return res.status(200).json({
-    first,
-    last,
     page,
+    lastPage,
     pageLimit,
-    results: teams,
-    total: total
+    total,
+    sortBy,
+    results: teams
   })
 }
