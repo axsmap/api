@@ -14,7 +14,7 @@ const router = new express.Router()
 
 router.get('', listTeams)
 router.post('', isAuthenticated, createTeam)
-router.get('/:teamId', isAuthenticated, getTeam)
+router.get('/:teamId', getTeam)
 router.put('/:teamId', isAuthenticated, editTeam)
 router.delete('/:teamId', isAuthenticated, deleteTeam)
 router.put('/:teamId/avatar', isAuthenticated, uploadTeamAvatar)
