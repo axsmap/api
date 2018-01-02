@@ -27,17 +27,17 @@ module.exports = async (req, res, next) => {
     teamsQuery.members = { $in: members }
   }
 
-  // let sortField = 'reviews'
-  // if (queryParams.sortBy) {
-  //   const sort = queryParams.sortBy
-  //   const sortOptions = ['name', '-name', 'reviews', '-reviews']
+  let sortField = '-reviewsAmount'
+  if (queryParams.sortBy) {
+    const sort = queryParams.sortBy
+    const sortOptions = ['name', '-name', 'reviewsAmount', '-reviewsAmount']
 
-  //   if (sortOptions.includes(sort)) {
-  //     sortField = sort
-  //   } else {
-  //     return res.status(400).json({ sortBy: 'Invalid type of sort' })
-  //   }
-  // }
+    if (sortOptions.includes(sort)) {
+      sortField = sort
+    } else {
+      return res.status(400).json({ sortBy: 'Invalid type of sort' })
+    }
+  }
 
   let page = queryParams.page || 1
   const pageLimit = 18
@@ -56,7 +56,7 @@ module.exports = async (req, res, next) => {
     ;[teams, total] = await Promise.all([
       Team.aggregate()
         .match(teamsQuery)
-        .sort('-reviewsAmount')
+        .sort(sortField)
         .skip(page * pageLimit)
         .limit(pageLimit),
       Team.find(teamsQuery).count()
