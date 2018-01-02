@@ -42,11 +42,26 @@ module.exports = async (req, res, next) => {
         $unwind: '$managersObj'
       },
       {
+        $unwind: '$events'
+      },
+      {
+        $lookup: {
+          from: 'events',
+          localField: 'events',
+          foreignField: '_id',
+          as: 'eventsObj'
+        }
+      },
+      {
+        $unwind: '$eventsObj'
+      },
+      {
         $group: {
           _id: '$_id',
           avatar: { $first: '$avatar' },
           description: { $first: '$description' },
           name: { $first: '$name' },
+          events: { $push: '$eventsObj' },
           managers: { $push: '$managersObj' },
           members: { $push: '$membersObj' }
         }
