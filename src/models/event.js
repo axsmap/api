@@ -167,12 +167,7 @@ const eventSchema = new mongoose.Schema(
   { timestamps: true }
 )
 
-eventSchema.index({
-  city: 'text',
-  country: 'text',
-  name: 'text',
-  point: '2dsphere'
-})
+eventSchema.index({ point: '2dsphere' })
 
 module.exports = {
   Event: mongoose.model('Event', eventSchema),

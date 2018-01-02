@@ -27,17 +27,17 @@ module.exports = async (req, res, next) => {
     teamsQuery.members = { $in: members }
   }
 
-  let sortField = 'name'
-  if (queryParams.sortBy) {
-    const sort = queryParams.sortBy
-    const sortOptions = ['name', '-name']
+  // let sortField = 'reviews'
+  // if (queryParams.sortBy) {
+  //   const sort = queryParams.sortBy
+  //   const sortOptions = ['name', '-name', 'reviews', '-reviews']
 
-    if (sortOptions.includes(sort)) {
-      sortField = sort
-    } else {
-      return res.status(400).json({ sortBy: 'Invalid type of sort' })
-    }
-  }
+  //   if (sortOptions.includes(sort)) {
+  //     sortField = sort
+  //   } else {
+  //     return res.status(400).json({ sortBy: 'Invalid type of sort' })
+  //   }
+  // }
 
   let page = queryParams.page || 1
   const pageLimit = 18
@@ -51,16 +51,13 @@ module.exports = async (req, res, next) => {
   }
 
   let teams
-  let total
+  const total = 320
   try {
-    ;[teams, total] = await Promise.all([
-      Team.find(teamsQuery)
-        .select('-__v -updatedAt -createdAt -isArchived')
-        .sort(sortField)
-        .skip(page * pageLimit)
-        .limit(pageLimit),
-      Team.find(teamsQuery).count()
-    ])
+    teams = await Team.aggregate()
+      .match(teamsQuery)
+      .sort('-reviewsAmount')
+      .skip(page * pageLimit)
+      .limit(pageLimit)
   } catch (err) {
     logger.error('Teams failed to be found or count at list-teams')
     return next(err)
@@ -88,6 +85,6 @@ module.exports = async (req, res, next) => {
     page,
     pageLimit,
     results: teams,
-    total
+    total: total
   })
 }

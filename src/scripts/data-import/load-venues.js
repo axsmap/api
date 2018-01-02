@@ -96,6 +96,18 @@ db.on('connected', async () => {
           oldVenue.bathroom >= 1 ? oldVenue.bathroom : undefined
         const entryScore = oldVenue.entry >= 1 ? oldVenue.entry : undefined
 
+        let longitude
+        if (oldVenue.lngLat[1] >= -180 && oldVenue.lngLat[1] <= 180) {
+          longitude = oldVenue.lngLat[1]
+        }
+        let latitude
+        if (oldVenue.lngLat[0] >= -90 && oldVenue.lngLat[0] <= 90) {
+          latitude = oldVenue.lngLat[0]
+        } else {
+          longitude = oldVenue.lngLat[0]
+          latitude = oldVenue.lngLat[1]
+        }
+
         const venueData = {
           _id: oldVenue.id,
           address: oldVenue.addr1 ? address : '',
@@ -111,7 +123,7 @@ db.on('connected', async () => {
           hasWellLit: { yes: oldVenue.welllit },
           isQuiet: { yes: oldVenue.quiet },
           isSpacious: { yes: oldVenue.spacious },
-          location: { coordinates: oldVenue.lngLat },
+          location: { coordinates: [longitude, latitude] },
           name: oldVenue.name,
           placeId: oldVenue.place_id,
           reviews: oldVenue.reviewdata,

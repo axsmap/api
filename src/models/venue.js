@@ -141,12 +141,7 @@ const venueSchema = new mongoose.Schema(
   { timestamps: true }
 )
 
-venueSchema.index({
-  address: 'text',
-  name: 'text',
-  location: '2dsphere',
-  placeId: 1
-})
+venueSchema.index({ location: '2dsphere', placeId: 1 })
 
 venueSchema.virtual('coordinates').get(function() {
   return {

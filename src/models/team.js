@@ -43,12 +43,16 @@ const teamSchema = new mongoose.Schema(
       type: String,
       maxlength: [35, 'Should be less than 36 characters'],
       required: [true, 'Is required']
+    },
+    reviewsAmount: {
+      type: Number,
+      default: 0
     }
   },
   { timestamps: true }
 )
 
-teamSchema.index({ name: 'text' })
+teamSchema.index({ name: 'text', reviewsAmount: 1 })
 
 module.exports = {
   Team: mongoose.model('Team', teamSchema),

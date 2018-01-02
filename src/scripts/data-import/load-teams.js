@@ -3,9 +3,10 @@ const jimp = require('jimp')
 const mongoose = require('mongoose')
 const randomstring = require('randomstring')
 
-require('dotenv').config({ path: '../../../.env' })
+require('dotenv').config()
 
 const logger = require('../../helpers/logger')
+const { reviewSchema } = require('../../models/review')
 const { teamSchema } = require('../../models/team')
 
 const oldTeamSchema = require('./old-schemas/team')
@@ -62,11 +63,13 @@ db.on('connected', async () => {
 
     logger.info(`Total old teams: ${totalOldTeams}`)
 
+    const Team = db.model('Team', teamSchema)
+
     console.time('createTeams')
 
+    let i = 0
     let page = 0
     const pageLimit = 100
-    let i = 0
     do {
       let oldTeams
       try {
@@ -78,8 +81,6 @@ db.on('connected', async () => {
         logger.error(error)
         await closeConnections(db, oldDb)
       }
-
-      const Team = db.model('Team', teamSchema)
 
       const createTeams = []
       const uploadTeamsAvatars = []
@@ -101,8 +102,11 @@ db.on('connected', async () => {
             updatedAt: oldTeam.updated_at
           }
 
-          if (oldTeam.description && oldTeam.description.length <= 300) {
-            teamData.description = oldTeam.description
+          if (oldTeam.description) {
+            teamData.description =
+              oldTeam.description.length <= 300
+                ? oldTeam.description
+                : oldTeam.description.substring(0, 300)
           }
 
           if (oldTeam.image && !oldTeam.image.includes('icon_team.png')) {
@@ -182,6 +186,64 @@ db.on('connected', async () => {
     } while (i < totalOldTeams)
 
     console.timeEnd('createTeams')
+
+    const Review = db.model('Review', reviewSchema)
+
+    let totalTeams
+    try {
+      totalTeams = await Team.count()
+    } catch (error) {
+      logger.info('Teams failed to be count')
+      logger.error(error)
+      await closeConnections(db, oldDb)
+    }
+
+    logger.info(`Total teams: ${totalTeams}`)
+
+    i = 0
+    page = 0
+    do {
+      let teams
+      try {
+        teams = await Team.find({}).skip(page * pageLimit).limit(pageLimit)
+      } catch (error) {
+        logger.info('Teams failed to be found')
+        logger.error(error)
+        await closeConnections(db, oldDb)
+      }
+
+      const updateTeams = []
+      for (let team of teams) {
+        let teamReviews
+        try {
+          teamReviews = await Review.find({ team: team.id }).count()
+        } catch (err) {
+          logger.info('Team reviews failed to be count')
+          logger.error(err)
+          await closeConnections(db, oldDb)
+        }
+
+        team.reviewsAmount = teamReviews
+        updateTeams.push(team.save())
+      }
+
+      try {
+        await Promise.all(updateTeams)
+      } catch (err) {
+        logger.info(
+          `Teams failed to be updated.\nData: ${JSON.stringify({
+            page,
+            i
+          })}`
+        )
+        logger.error(err)
+        await closeConnections(db, oldDb)
+      }
+
+      page = page + 1
+      i = i + teams.length
+      logger.info(i)
+    } while (i < totalTeams)
 
     await closeConnections(db, oldDb)
   })
