@@ -51,13 +51,16 @@ module.exports = async (req, res, next) => {
   }
 
   let teams
-  const total = 320
+  let total
   try {
-    teams = await Team.aggregate()
-      .match(teamsQuery)
-      .sort('-reviewsAmount')
-      .skip(page * pageLimit)
-      .limit(pageLimit)
+    ;[teams, total] = await Promise.all([
+      Team.aggregate()
+        .match(teamsQuery)
+        .sort('-reviewsAmount')
+        .skip(page * pageLimit)
+        .limit(pageLimit),
+      Team.find(teamsQuery).count()
+    ])
   } catch (err) {
     logger.error('Teams failed to be found or count at list-teams')
     return next(err)
