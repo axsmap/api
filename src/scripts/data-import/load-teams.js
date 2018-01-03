@@ -125,8 +125,6 @@ db.on('connected', async () => {
                 length: 5,
                 capitalization: 'lowercase'
               })}.${avatarExtension}`
-              teamData.avatar = `https://s3.amazonaws.com/${process.env
-                .AWS_S3_BUCKET}/teams/avatars/${avatarFileName}`
 
               if (
                 avatarExtension === 'png' ||
@@ -134,6 +132,8 @@ db.on('connected', async () => {
                 avatarExtension === 'jpg' ||
                 avatarExtension === 'bmp'
               ) {
+                teamData.avatar = `https://s3.amazonaws.com/${process.env
+                  .AWS_S3_BUCKET}/teams/avatars/${avatarFileName}`
                 avatarImage
                   .cover(400, 400)
                   .quality(85)
