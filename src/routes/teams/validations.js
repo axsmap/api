@@ -1,9 +1,21 @@
 const { isEmpty } = require('lodash')
-const { isMongoId } = require('validator')
+const { isBase64, isMongoId } = require('validator')
 
 module.exports = {
   validateCreateTeam(data) {
     const errors = {}
+
+    if (data.avatar) {
+      if (typeof data.avatar !== 'string') {
+        errors.avatar = 'Should be a string'
+      } else if (!isBase64(data.avatar.split(',')[1])) {
+        errors.avatar = 'Should be a valid base 64 string'
+      }
+    }
+
+    if (data.description && typeof data.description !== 'string') {
+      errors.description = 'Should be a string'
+    }
 
     if (!data.name) {
       errors.name = 'Is required'

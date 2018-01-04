@@ -57,6 +57,13 @@ module.exports = {
   isNumber(number) {
     return !isNaN(parseFloat(number)) && isFinite(number)
   },
+  isUnblocked(req, res, next) {
+    if (req.user.isBlocked) {
+      return res.status(423).json({ general: 'You are blocked' })
+    }
+
+    return next()
+  },
   mapCamelCaseKeys(obj) {
     return mapKeys(obj, (value, key) => camelCase(key))
   },

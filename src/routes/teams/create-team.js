@@ -1,6 +1,7 @@
+const aws = require('aws-sdk')
+const jimp = require('jimp')
 const moment = require('moment')
-const { pick, trim } = require('lodash')
-const slugify = require('speakingurl')
+const randomstring = require('randomstring')
 
 const logger = require('../../helpers/logger')
 const { Team } = require('../../models/team')
@@ -8,35 +9,78 @@ const { Team } = require('../../models/team')
 const { validateCreateTeam } = require('./validations')
 
 module.exports = async (req, res, next) => {
-  if (req.user.isBlocked) {
-    return res.status(423).json({ general: 'You are blocked' })
-  }
-
   const { errors, isValid } = validateCreateTeam(req.body)
 
   if (!isValid) {
     return res.status(400).json(errors)
   }
 
-  const data = pick(req.body, ['description', 'name'])
-  data.name = trim(data.name)
-  data.slug = slugify(data.name)
-
-  let repeatedTeam
-  try {
-    repeatedTeam = await Team.findOne({ slug: data.slug, isArchived: false })
-  } catch (err) {
-    logger.error(`Team ${data.slug} failed to be found at create-team`)
-    return next(err)
-  }
-
-  if (repeatedTeam) {
-    return res.status(400).json({ name: 'Is already taken' })
-  }
-
-  data.creator = req.user.id
+  const data = Object.assign(
+    {},
+    {
+      avatar: req.body.avatar ? req.body.avatar : undefined,
+      description: req.body.description,
+      name: req.body.name
+    }
+  )
   data.managers = [req.user.id]
-  data.members = [req.user.id]
+  data.name = data.name.trim()
+
+  if (data.avatar) {
+    const avatarBuffer = Buffer.from(data.avatar.split(',')[1], 'base64')
+    let avatarImage
+    try {
+      avatarImage = await jimp.read(avatarBuffer)
+    } catch (err) {
+      logger.error('Avatar image failed to be read at create-team')
+      return next(err)
+    }
+
+    let uploadAvatar
+    avatarImage.cover(400, 400).quality(85)
+    avatarImage.getBuffer(avatarImage.getMIME(), (err, avatarBuffer) => {
+      if (err) {
+        return next(err)
+      }
+
+      const avatarExtension = avatarImage.getExtension()
+      if (
+        avatarExtension === 'png' ||
+        avatarExtension === 'jpeg' ||
+        avatarExtension === 'jpg' ||
+        avatarExtension === 'bmp'
+      ) {
+        const avatarFileName = `${Date.now()}${randomstring.generate({
+          length: 5,
+          capitalization: 'lowercase'
+        })}.${avatarExtension}`
+        const s3 = new aws.S3()
+        uploadAvatar = s3
+          .putObject({
+            ACL: 'public-read',
+            Body: avatarBuffer,
+            Bucket: process.env.AWS_S3_BUCKET,
+            ContentType: avatarImage.getMIME(),
+            Key: `teams/avatars/${avatarFileName}`
+          })
+          .promise()
+
+        data.avatar = `https://s3.amazonaws.com/${process.env
+          .AWS_S3_BUCKET}/teams/avatars/${avatarFileName}`
+      } else {
+        return res
+          .status(400)
+          .json({ avatar: 'Should have a .png, .jpeg, .jpg or .bmp extension' })
+      }
+    })
+
+    try {
+      await uploadAvatar
+    } catch (err) {
+      logger.error('Avatar failed to be uploaded at create-team')
+      return next(err)
+    }
+  }
 
   let team
   try {
@@ -52,7 +96,11 @@ module.exports = async (req, res, next) => {
       return res.status(400).json(validationErrors)
     }
 
-    logger.error(`Team ${data.slug} failed to be created at create-team`)
+    logger.error(
+      `Team ${data.name} failed to be created at create-team.\nData: ${JSON.stringify(
+        data
+      )}`
+    )
     return next(err)
   }
 
@@ -66,15 +114,22 @@ module.exports = async (req, res, next) => {
     return next(err)
   }
 
-  const dataResponse = pick(team, [
-    '_id',
-    'creator',
-    'description',
-    'managers',
-    'members',
-    'name',
-    'slug'
-  ])
+  const dataResponse = Object.assign(
+    {},
+    {
+      id: team.id.toString(),
+      avatar: team.avatar,
+      description: team.description,
+      managers: [
+        {
+          id: req.user.id.toString(),
+          avatar: req.user.avatar,
+          name: `${req.user.firstName} ${req.user.lastName}`
+        }
+      ],
+      name: team.name
+    }
+  )
 
   return res.status(201).json(dataResponse)
 }

@@ -1,6 +1,6 @@
 const express = require('express')
 
-const { isAuthenticated } = require('../../helpers')
+const { isAuthenticated, isUnblocked } = require('../../helpers')
 
 const createTeam = require('./create-team')
 const deleteTeam = require('./delete-team')
@@ -13,7 +13,7 @@ const uploadTeamAvatar = require('./upload-team-avatar')
 const router = new express.Router()
 
 router.get('', listTeams)
-router.post('', isAuthenticated, createTeam)
+router.post('', isAuthenticated, isUnblocked, createTeam)
 router.get('/:teamId', getTeam)
 router.put('/:teamId', isAuthenticated, editTeam)
 router.delete('/:teamId', isAuthenticated, deleteTeam)
