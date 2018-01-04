@@ -46,7 +46,8 @@ const teamSchema = new mongoose.Schema(
     },
     reviewsAmount: {
       type: Number,
-      default: 0
+      default: 0,
+      required: [true, 'Is required']
     }
   },
   { timestamps: true }
