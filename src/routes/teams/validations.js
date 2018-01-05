@@ -8,8 +8,13 @@ module.exports = {
     if (data.avatar) {
       if (typeof data.avatar !== 'string') {
         errors.avatar = 'Should be a string'
-      } else if (!isBase64(data.avatar.split(',')[1])) {
-        errors.avatar = 'Should be a valid base 64 string'
+      } else {
+        const avatarBase64 = data.avatar.split(',')[1]
+        if (!isBase64(avatarBase64)) {
+          errors.avatar = 'Should be a valid base 64 string'
+        } else if (avatarBase64.length > 8388608) {
+          errors.avatar = 'Should be less than 8MB'
+        }
       }
     }
 
