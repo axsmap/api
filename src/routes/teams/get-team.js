@@ -14,56 +14,107 @@ module.exports = async (req, res, next) => {
         $match: { _id: teamIdObj }
       },
       {
-        $unwind: '$members'
+        $lookup: {
+          from: 'users',
+          let: { members: '$members' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $in: ['$_id', '$$members']
+                }
+              }
+            },
+            {
+              $project: {
+                _id: 0,
+                id: '$_id',
+                firstName: 1,
+                lastName: 1
+              }
+            }
+          ],
+          as: 'members'
+        }
       },
       {
         $lookup: {
           from: 'users',
-          localField: 'members',
-          foreignField: '_id',
-          as: 'membersObj'
+          let: { managers: '$managers' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $in: ['$_id', '$$managers']
+                }
+              }
+            },
+            {
+              $project: {
+                _id: 0,
+                id: '$_id',
+                firstName: 1,
+                lastName: 1
+              }
+            }
+          ],
+          as: 'managers'
         }
-      },
-      {
-        $unwind: '$membersObj'
-      },
-      {
-        $unwind: '$managers'
-      },
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'managers',
-          foreignField: '_id',
-          as: 'managersObj'
-        }
-      },
-      {
-        $unwind: '$managersObj'
-      },
-      {
-        $unwind: '$events'
       },
       {
         $lookup: {
           from: 'events',
-          localField: 'events',
-          foreignField: '_id',
-          as: 'eventsObj'
+          let: { events: '$events' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $in: ['$_id', '$$events']
+                }
+              }
+            },
+            {
+              $project: {
+                _id: 0,
+                id: '$_id',
+                name: 1
+              }
+            }
+          ],
+          as: 'events'
         }
       },
       {
-        $unwind: '$eventsObj'
+        $lookup: {
+          from: 'teams',
+          let: { reviewsAmount: '$reviewsAmount' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $gt: ['$reviewsAmount', '$$reviewsAmount']
+                }
+              }
+            },
+            {
+              $count: 'ranking'
+            }
+          ],
+          as: 'ranking'
+        }
       },
       {
-        $group: {
-          _id: '$_id',
-          avatar: { $first: '$avatar' },
-          description: { $first: '$description' },
-          name: { $first: '$name' },
-          events: { $push: '$eventsObj' },
-          managers: { $push: '$managersObj' },
-          members: { $push: '$membersObj' }
+        $project: {
+          _id: 0,
+          id: '$_id',
+          avatar: 1,
+          description: 1,
+          reviewsAmount: 1,
+          name: 1,
+          members: 1,
+          events: 1,
+          managers: 1,
+          ranking: 1
         }
       }
     ])
@@ -77,7 +128,10 @@ module.exports = async (req, res, next) => {
   }
 
   if (team) {
-    return res.status(200).json(team)
+    const dataResponse = Object.assign({}, team[0], {
+      ranking: team[0].ranking.length ? team[0].ranking[0].ranking + 1 : 1
+    })
+    return res.status(200).json(dataResponse)
   }
 
   return res.status(404).json({ general: 'Team not found' })
