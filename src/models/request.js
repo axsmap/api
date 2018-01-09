@@ -6,6 +6,10 @@ const requestSchema = new mongoose.Schema(
       type: String,
       maxlength: [300, 'Should be less than 301 characters']
     },
+    event: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Event'
+    },
     sender: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
@@ -19,6 +23,10 @@ const requestSchema = new mongoose.Schema(
         message: 'Invalid type of state'
       },
       required: [true, 'Is required']
+    },
+    team: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Team'
     },
     teamReceiver: {
       type: mongoose.Schema.Types.ObjectId,
