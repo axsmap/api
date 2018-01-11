@@ -1,15 +1,11 @@
 const express = require('express')
 
-const { isAuthenticated } = require('../../helpers')
+const { isAuthenticated, isUnblocked } = require('../../helpers')
 
 const createPetition = require('./create-petition')
-const editPetition = require('./edit-petition')
-const listPetitions = require('./list-petitions')
 
 const router = new express.Router()
 
-router.get('', isAuthenticated, listPetitions)
-router.post('', isAuthenticated, createPetition)
-router.put('/:petitionId', isAuthenticated, editPetition)
+router.post('', isAuthenticated, isUnblocked, createPetition)
 
 module.exports = router

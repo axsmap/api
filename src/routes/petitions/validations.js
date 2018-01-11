@@ -7,27 +7,23 @@ module.exports = {
   validateCreatePetition(data) {
     const errors = {}
 
-    if (!data.entityId) {
-      errors.entityId = 'Is required'
-    } else if (typeof data.entityId !== 'string') {
-      errors.entityId = 'Should be a string'
-    } else if (!isMongoId(data.entityId)) {
-      errors.entityId = `${data.entityId} should be an Id`
-    }
-
-    if (data.receiverId) {
-      if (typeof data.receiverId !== 'string') {
-        errors.receiverId = 'Should be a string'
-      } else if (!isMongoId(data.receiverId)) {
-        errors.receiverId = `${data.receiverId} should be an Id`
+    if (data.event) {
+      if (typeof data.event !== 'string') {
+        errors.event = 'Should be a string'
+      } else if (!isMongoId(data.event)) {
+        errors.event = 'Should be a valid id'
       }
     }
 
-    if (data.senderId) {
-      if (typeof data.senderId !== 'string') {
-        errors.senderId = 'Should be a string'
-      } else if (!isMongoId(data.senderId)) {
-        errors.senderId = `${data.senderId} should be an Id`
+    if (data.message && typeof data.message !== 'string') {
+      errors.message = 'Should be a string'
+    }
+
+    if (data.team) {
+      if (typeof data.team !== 'string') {
+        errors.team = 'Should be a string'
+      } else if (!isMongoId(data.team)) {
+        errors.team = 'Should be a valid id'
       }
     }
 
@@ -37,7 +33,31 @@ module.exports = {
     } else if (typeof data.type !== 'string') {
       errors.type = 'Should be a string'
     } else if (!petitionTypes.includes(data.type)) {
-      errors.type = 'Invalid type of petition'
+      errors.type = 'Should be a valid type'
+    } else if (
+      data.type === 'invite-team-event' ||
+      data.type === 'request-team-event'
+    ) {
+      if (!data.event) errors.event = 'Is required'
+      if (!data.team) errors.team = 'Is required'
+    } else if (data.type === 'invite-user-event') {
+      if (!data.event) errors.event = 'Is required'
+      if (!data.user) errors.user = 'Is required'
+    } else if (data.type === 'request-user-event' && !data.event) {
+      errors.event = 'Is required'
+    } else if (data.type === 'invite-user-team') {
+      if (!data.team) errors.team = 'Is required'
+      if (!data.user) errors.user = 'Is required'
+    } else if (data.type === 'request-user-team' && !data.team) {
+      errors.team = 'Is required'
+    }
+
+    if (data.user) {
+      if (typeof data.user !== 'string') {
+        errors.user = 'Should be a string'
+      } else if (!isMongoId(data.user)) {
+        errors.user = 'Should be a valid id'
+      }
     }
 
     return { errors, isValid: isEmpty(errors) }
