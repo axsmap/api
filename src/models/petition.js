@@ -2,33 +2,31 @@ const mongoose = require('mongoose')
 
 const petitionSchema = new mongoose.Schema(
   {
-    entityId: {
-      type: String,
-      maxlength: [24, 'Should be less than 25 characters'],
-      required: [true, 'Is required']
+    event: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Event'
     },
-    general: {
+    message: {
       type: String,
-      maxlength: [250, 'Should be less than 251 characters']
+      maxlength: [300, 'Should be less than 301 characters']
     },
-    receiverId: {
-      type: String,
-      maxlength: [24, 'Should be less than 25 characters'],
-      required: [true, 'Is required']
-    },
-    senderId: {
-      type: String,
-      maxlength: [24, 'Should be less than 25 characters'],
+    sender: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
       required: [true, 'Is required']
     },
     state: {
       type: String,
       default: 'pending',
       enum: {
-        values: ['accepted', 'pending', 'rejected'],
-        general: 'Invalid type of state'
+        values: ['accepted', 'cancelled', 'pending', 'rejected'],
+        message: 'Should be a valid state'
       },
       required: [true, 'Is required']
+    },
+    team: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Team'
     },
     type: {
       type: String,
@@ -41,15 +39,19 @@ const petitionSchema = new mongoose.Schema(
           'request-user-event',
           'request-user-team'
         ],
-        general: 'Invalid type of petition'
+        message: 'Should be a valid type'
       },
       required: [true, 'Is required']
+    },
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
     }
   },
   { timestamps: true }
 )
 
-petitionSchema.index({ receiverId: 1, senderId: 1 })
+petitionSchema.index({ createdAt: -1 })
 
 module.exports = {
   Petition: mongoose.model('Petition', petitionSchema),
