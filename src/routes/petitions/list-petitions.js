@@ -1,11 +1,14 @@
+const mongoose = require('mongoose')
+
 const logger = require('../../helpers/logger')
 const { Petition } = require('../../models/petition')
 
 module.exports = async (req, res, next) => {
   const queryParams = req.query
+  const userIdObj = mongoose.Types.ObjectId(req.user.id)
 
   const petitionsQuery = {
-    $or: [{ sender: req.user.id }, { user: req.user.id }]
+    $or: [{ sender: userIdObj }, { user: userIdObj }]
   }
 
   const sortBy = '-createdAt'
@@ -20,15 +23,148 @@ module.exports = async (req, res, next) => {
       .json({ page: 'Should be equal to or greater than 1' })
   }
 
+  // Fetch data
+  const aggregateQuery = [
+    {
+      $match: petitionsQuery
+    },
+    {
+      $lookup: {
+        from: 'events',
+        let: { event: '$event' },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $eq: ['$_id', '$$event']
+              }
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              id: '$_id',
+              name: 1
+            }
+          }
+        ],
+        as: 'event'
+      }
+    },
+    {
+      $unwind: {
+        path: '$event',
+        preserveNullAndEmptyArrays: true
+      }
+    },
+    {
+      $lookup: {
+        from: 'users',
+        let: { sender: '$sender' },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $eq: ['$_id', '$$sender']
+              }
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              id: '$_id',
+              avatar: 1,
+              firstName: 1,
+              lastName: 1
+            }
+          }
+        ],
+        as: 'sender'
+      }
+    },
+    {
+      $unwind: {
+        path: '$sender',
+        preserveNullAndEmptyArrays: true
+      }
+    },
+    {
+      $lookup: {
+        from: 'teams',
+        let: { team: '$team' },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $eq: ['$_id', '$$team']
+              }
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              id: '$_id',
+              name: 1
+            }
+          }
+        ],
+        as: 'team'
+      }
+    },
+    {
+      $unwind: {
+        path: '$team',
+        preserveNullAndEmptyArrays: true
+      }
+    },
+    {
+      $lookup: {
+        from: 'users',
+        let: { user: '$user' },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $eq: ['$_id', '$$user']
+              }
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              id: '$_id',
+              avatar: 1,
+              firstName: 1,
+              lastName: 1
+            }
+          }
+        ],
+        as: 'user'
+      }
+    },
+    {
+      $unwind: {
+        path: '$user',
+        preserveNullAndEmptyArrays: true
+      }
+    }
+  ]
+
+  // paginate
+  aggregateQuery.push(
+    {
+      $skip: page * pageLimit
+    },
+    {
+      $limit: pageLimit
+    }
+  )
+
   let petitions
   let total
   try {
     ;[petitions, total] = await Promise.all([
-      Petition.find(petitionsQuery)
-        .select('-__v -updatedAt')
-        .sort(sortBy)
-        .skip(page * pageLimit)
-        .limit(pageLimit),
+      Petition.aggregate(aggregateQuery),
       Petition.find(petitionsQuery).count()
     ])
   } catch (err) {
