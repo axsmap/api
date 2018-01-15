@@ -29,8 +29,10 @@ module.exports = async (req, res, next) => {
               $project: {
                 _id: 0,
                 id: '$_id',
+                avatar: 1,
                 firstName: 1,
-                lastName: 1
+                lastName: 1,
+                username: 1
               }
             }
           ],
@@ -53,8 +55,10 @@ module.exports = async (req, res, next) => {
               $project: {
                 _id: 0,
                 id: '$_id',
+                avatar: 1,
                 firstName: 1,
-                lastName: 1
+                lastName: 1,
+                username: 1
               }
             }
           ],
@@ -77,7 +81,10 @@ module.exports = async (req, res, next) => {
               $project: {
                 _id: 0,
                 id: '$_id',
-                name: 1
+                endDate: 1,
+                name: 1,
+                poster: 1,
+                startDate: 1
               }
             }
           ],
