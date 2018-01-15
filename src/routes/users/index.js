@@ -1,6 +1,6 @@
 const express = require('express')
 
-const { isAuthenticated } = require('../../helpers')
+const { isAuthenticated, isUnblocked } = require('../../helpers')
 
 const archiveUser = require('./archive-user')
 const blockUser = require('./block-user')
@@ -16,7 +16,7 @@ const uploadUserAvatar = require('./upload-user-avatar')
 
 const router = new express.Router()
 
-router.get('/profile', isAuthenticated, getProfile)
+router.get('/profile', isAuthenticated, isUnblocked, getProfile)
 router.put('/password', isAuthenticated, changePassword)
 router.get('', isAuthenticated, listUsers)
 router.post('', isAuthenticated, createUser)
