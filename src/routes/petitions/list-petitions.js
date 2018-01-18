@@ -7,8 +7,12 @@ module.exports = async (req, res, next) => {
   const queryParams = req.query
   const userIdObj = mongoose.Types.ObjectId(req.user.id)
 
-  const petitionsQuery = {
-    $or: [{ sender: userIdObj }, { user: userIdObj }]
+  let petitionsQuery
+
+  if (queryParams.filter === 'sent') {
+    petitionsQuery = { sender: userIdObj }
+  } else {
+    petitionsQuery = { user: userIdObj }
   }
 
   const sortBy = '-createdAt'
@@ -29,6 +33,9 @@ module.exports = async (req, res, next) => {
       $match: petitionsQuery
     },
     {
+      $sort: { createdAt: -1 }
+    },
+    {
       $lookup: {
         from: 'events',
         let: { event: '$event' },
@@ -44,7 +51,8 @@ module.exports = async (req, res, next) => {
             $project: {
               _id: 0,
               id: '$_id',
-              name: 1
+              name: 1,
+              poster: 1
             }
           }
         ],
@@ -104,6 +112,7 @@ module.exports = async (req, res, next) => {
             $project: {
               _id: 0,
               id: '$_id',
+              avatar: 1,
               name: 1
             }
           }
@@ -146,6 +155,20 @@ module.exports = async (req, res, next) => {
       $unwind: {
         path: '$user',
         preserveNullAndEmptyArrays: true
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        id: '$_id',
+        createdAt: 1,
+        event: 1,
+        message: 1,
+        sender: 1,
+        state: 1,
+        team: 1,
+        type: 1,
+        user: 1
       }
     }
   ]

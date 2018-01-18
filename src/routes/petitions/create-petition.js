@@ -50,7 +50,7 @@ module.exports = async (req, res, next) => {
 
     if (
       petition &&
-      (petition.state === 'rejected' || petition.state === 'cancelled')
+      (petition.state === 'rejected' || petition.state === 'canceled')
     ) {
       try {
         await petition.remove()
@@ -121,7 +121,7 @@ module.exports = async (req, res, next) => {
 
     if (
       petition &&
-      (petition.state === 'rejected' || petition.state === 'cancelled')
+      (petition.state === 'rejected' || petition.state === 'canceled')
     ) {
       try {
         await petition.remove()
@@ -196,7 +196,7 @@ module.exports = async (req, res, next) => {
 
     if (
       petition &&
-      (petition.state === 'rejected' || petition.state === 'cancelled')
+      (petition.state === 'rejected' || petition.state === 'canceled')
     ) {
       try {
         await petition.remove()
@@ -266,7 +266,7 @@ module.exports = async (req, res, next) => {
 
     if (
       petition &&
-      (petition.state === 'rejected' || petition.state === 'cancelled')
+      (petition.state === 'rejected' || petition.state === 'canceled')
     ) {
       try {
         await petition.remove()
@@ -338,7 +338,7 @@ module.exports = async (req, res, next) => {
 
     if (
       petition &&
-      (petition.state === 'rejected' || petition.state === 'cancelled')
+      (petition.state === 'rejected' || petition.state === 'canceled')
     ) {
       try {
         await petition.remove()
@@ -397,7 +397,7 @@ module.exports = async (req, res, next) => {
 
     if (
       petition &&
-      (petition.state === 'rejected' || petition.state === 'cancelled')
+      (petition.state === 'rejected' || petition.state === 'canceled')
     ) {
       try {
         await petition.remove()

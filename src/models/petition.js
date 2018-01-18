@@ -19,7 +19,7 @@ const petitionSchema = new mongoose.Schema(
       type: String,
       default: 'pending',
       enum: {
-        values: ['accepted', 'cancelled', 'pending', 'rejected'],
+        values: ['accepted', 'canceled', 'pending', 'rejected'],
         message: 'Should be a valid state'
       },
       required: [true, 'Is required']

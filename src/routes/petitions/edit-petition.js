@@ -31,8 +31,8 @@ module.exports = async (req, res, next) => {
     return res.status(423).json({ general: 'Is already accepted' })
   }
 
-  if (petition.state === 'cancelled') {
-    return res.status(423).json({ general: 'Is already cancelled' })
+  if (petition.state === 'canceled') {
+    return res.status(423).json({ general: 'Is already canceled' })
   }
 
   if (petition.state === 'rejected') {
@@ -45,10 +45,10 @@ module.exports = async (req, res, next) => {
   let isSender = false
   if (petition.sender === req.user.id) {
     isSender = true
-    if (req.body.state === 'cancelled') {
-      petition.state = 'cancelled'
+    if (req.body.state === 'canceled') {
+      petition.state = 'canceled'
     } else {
-      return res.status(400).json({ state: 'Should only be cancelled' })
+      return res.status(400).json({ state: 'Should only be canceled' })
     }
   }
 
