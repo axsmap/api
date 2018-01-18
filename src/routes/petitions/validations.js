@@ -61,5 +61,19 @@ module.exports = {
     }
 
     return { errors, isValid: isEmpty(errors) }
+  },
+  validateEditPetition(data) {
+    const errors = {}
+
+    const petitionStates = Petition.schema.path('state').enumValues
+    if (!data.state) {
+      errors.state = 'Is required'
+    } else if (!petitionStates.includes(data.state)) {
+      errors.state = 'Should be a valid state'
+    } else if (data.state === 'pending') {
+      errors.state = 'Should be a different state'
+    }
+
+    return { errors, isValid: isEmpty(errors) }
   }
 }

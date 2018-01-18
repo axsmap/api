@@ -6,11 +6,9 @@ const { Petition } = require('../../models/petition')
 const { Team } = require('../../models/team')
 const { User } = require('../../models/user')
 
-module.exports = async (req, res, next) => {
-  if (req.user.isBlocked) {
-    return res.status(423).json({ general: 'You are blocked' })
-  }
+const { validateEditPetition } = require('./validations')
 
+module.exports = async (req, res, next) => {
   const petitionId = req.params.petitionId
 
   let petition
@@ -29,22 +27,43 @@ module.exports = async (req, res, next) => {
     return res.status(404).json({ general: 'Petition not found' })
   }
 
-  if (petition.state !== 'pending') {
-    return res.status(423).json({ general: `Is already ${petition.state}` })
+  if (petition.state === 'accepted') {
+    return res.status(423).json({ general: 'Is already accepted' })
+  }
+
+  if (petition.state === 'cancelled') {
+    return res.status(423).json({ general: 'Is already cancelled' })
+  }
+
+  if (petition.state === 'rejected') {
+    return res.status(423).json({ general: 'Is already rejected' })
+  }
+
+  const { errors, isValid } = validateEditPetition(req.body)
+  if (!isValid) return res.status(400).json(errors)
+
+  let isSender = false
+  if (petition.sender === req.user.id) {
+    isSender = true
+    if (req.body.state === 'cancelled') {
+      petition.state = 'cancelled'
+    } else {
+      return res.status(400).json({ state: 'Should only be cancelled' })
+    }
   }
 
   if (petition.type.endsWith('event')) {
-    let eventEntity
+    let event
     try {
-      eventEntity = await Event.findOne({ _id: petition.entityId })
+      event = await Event.findOne({ _id: petition.event })
     } catch (err) {
       logger.error(
-        `Event ${petition.entityId} failed to be found at edit-petition`
+        `Event ${petition.event} failed to be found at edit-petition`
       )
       return next(err)
     }
 
-    if (!eventEntity) {
+    if (!event) {
       try {
         await petition.remove()
       } catch (err) {
@@ -55,22 +74,22 @@ module.exports = async (req, res, next) => {
       }
 
       return res.status(400).json({
-        general: 'Event is already removed. This petition is being removed'
+        general: 'Event is already removed. Petition was removed'
       })
     }
 
     if (petition.type === 'invite-team-event') {
-      let teamReceiver
+      let team
       try {
-        teamReceiver = await Team.findOne({ _id: petition.receiverId })
+        team = await Team.findOne({ _id: petition.team })
       } catch (err) {
         logger.error(
-          `Team ${petition.receiverId} failed to be found at edit-petition`
+          `Team ${petition.team} failed to be found at edit-petition`
         )
         return next(err)
       }
 
-      if (!teamReceiver) {
+      if (!team) {
         try {
           await petition.remove()
         } catch (err) {
@@ -81,79 +100,11 @@ module.exports = async (req, res, next) => {
         }
 
         return res.status(400).json({
-          general: 'Team is already removed. This petition is being removed'
+          general: 'Team is already removed. Petition was removed'
         })
       }
 
-      if (!teamReceiver.managers.find(m => m.toString() === req.user.id)) {
-        return res.status(403).json({ general: 'Forbidden action' })
-      }
-
-      if (eventEntity.teams.find(t => t.toString() === teamReceiver.id)) {
-        try {
-          await petition.remove()
-        } catch (err) {
-          logger.error(
-            `Petition ${petition.id} failed to be removed at edit-petition`
-          )
-          return next(err)
-        }
-
-        return res.status(400).json({
-          general: `Team ${teamReceiver.id} is already a participant of the event. This petition is being removed`
-        })
-      }
-
-      if (req.body.state === 'accepted') {
-        eventEntity.teams = [...eventEntity.teams, teamReceiver.id]
-        eventEntity.updatedAt = moment.utc().toDate()
-
-        try {
-          await eventEntity.save()
-        } catch (err) {
-          logger.error(
-            `Event ${eventEntity.id} failed to be updated at edit-petition`
-          )
-          return next(err)
-        }
-
-        teamReceiver.events = [...teamReceiver.events, eventEntity.id]
-        teamReceiver.updatedAt = moment.utc().toDate()
-
-        try {
-          await teamReceiver.save()
-        } catch (err) {
-          logger.error(
-            `Team ${teamReceiver.id} failed to be updated at edit-petition`
-          )
-          return next(err)
-        }
-
-        petition.state = 'accepted'
-      } else if (req.body.state === 'rejected') {
-        petition.state = 'rejected'
-      } else {
-        return res.status(400).json({ state: 'Invalid type of state' })
-      }
-
-      petition.updatedAt = moment.utc().toDate()
-
-      try {
-        await petition.save()
-      } catch (err) {
-        logger.error(
-          `Petition ${petition.id} failed to be updated at edit-petition`
-        )
-        return next(err)
-      }
-
-      return res.status(200).json({ general: 'Success' })
-    } else if (petition.type === 'invite-user-event') {
-      if (petition.receiverId !== req.user.id) {
-        return res.status(403).json({ general: 'Forbidden action' })
-      }
-
-      if (eventEntity.participants.find(p => p.toString() === req.user.id)) {
+      if (event.teams.find(t => t.toString() === team.id)) {
         try {
           await petition.remove()
         } catch (err) {
@@ -165,70 +116,117 @@ module.exports = async (req, res, next) => {
 
         return res.status(400).json({
           general:
-            'You already are a participant of the event. This petition is being removed'
+            'Team is already a participant of event. Petition was removed'
         })
       }
 
-      if (req.body.state === 'accepted') {
-        eventEntity.participants = [...eventEntity.participants, req.user.id]
-        eventEntity.updatedAt = moment.utc().toDate()
-
-        try {
-          await eventEntity.save()
-        } catch (err) {
-          logger.error(
-            `Event ${eventEntity.id} failed to be updated at edit-petition`
-          )
-          return next(err)
+      if (isSender) {
+        if (!event.managers.find(m => m.toString() === req.user.id)) {
+          return res.status(403).json({ general: 'Forbidden action' })
         }
-
-        req.user.events = [...req.user.events, eventEntity.id]
-        req.user.updatedAt = moment.utc().toDate()
-
-        try {
-          await req.user.save()
-        } catch (err) {
-          logger.error(
-            `User ${req.user.id} failed to be updated at edit-petition`
-          )
-          return next(err)
-        }
-
-        petition.state = 'accepted'
-      } else if (req.body.state === 'rejected') {
-        petition.state = 'rejected'
       } else {
-        return res.status(400).json({ state: 'Invalid type of state' })
+        if (!team.managers.find(m => m.toString() === req.user.id)) {
+          return res.status(403).json({ general: 'Forbidden action' })
+        }
+
+        if (req.body.state === 'accepted') {
+          event.teams = [...event.teams, team.id]
+          event.updatedAt = moment.utc().toDate()
+
+          try {
+            await event.save()
+          } catch (err) {
+            logger.error(
+              `Event ${event.id} failed to be updated at edit-petition`
+            )
+            return next(err)
+          }
+
+          team.events = [...team.events, event.id]
+          team.updatedAt = moment.utc().toDate()
+
+          try {
+            await team.save()
+          } catch (err) {
+            logger.error(
+              `Team ${team.id} failed to be updated at edit-petition`
+            )
+            return next(err)
+          }
+
+          petition.state = 'accepted'
+        } else {
+          petition.state = 'rejected'
+        }
+      }
+    } else if (petition.type === 'invite-user-event') {
+      if (event.participants.find(p => p.toString() === petition.user)) {
+        try {
+          await petition.remove()
+        } catch (err) {
+          logger.error(
+            `Petition ${petition.id} failed to be removed at edit-petition`
+          )
+          return next(err)
+        }
+
+        return res.status(400).json({
+          general:
+            'User is already a participant of event. Petition was removed'
+        })
       }
 
-      petition.updatedAt = moment.utc().toDate()
+      if (isSender) {
+        if (!event.managers.find(m => m.toString() === req.user.id)) {
+          return res.status(403).json({ general: 'Forbidden action' })
+        }
+      } else {
+        if (petition.user !== req.user.id) {
+          return res.status(403).json({ general: 'Forbidden action' })
+        }
 
-      try {
-        await petition.save()
-      } catch (err) {
-        logger.error(
-          `Petition ${petition.id} failed to be updated at edit-petition`
-        )
-        return next(err)
+        if (req.body.state === 'accepted') {
+          event.participants = [...event.participants, req.user.id]
+          event.updatedAt = moment.utc().toDate()
+
+          try {
+            await event.save()
+          } catch (err) {
+            logger.error(
+              `Event ${event.id} failed to be updated at edit-petition`
+            )
+            return next(err)
+          }
+
+          req.user.events = [...req.user.events, event.id]
+          req.user.updatedAt = moment.utc().toDate()
+
+          try {
+            await req.user.save()
+          } catch (err) {
+            logger.error(
+              `User ${req.user.id} failed to be updated at edit-petition`
+            )
+            return next(err)
+          }
+
+          petition.state = 'accepted'
+        } else {
+          petition.state = 'rejected'
+        }
       }
-
-      return res.status(200).json({ general: 'Success' })
     } else if (petition.type === 'request-team-event') {
-      if (!eventEntity.managers.find(m => m.toString() === req.user.id)) {
-        return res.status(403).json({ general: 'Forbidden action' })
-      }
-
-      let teamSender
+      let team
       try {
-        teamSender = await Team.findOne({ _id: petition.senderId })
+        team = await Team.findOne({ _id: petition.team })
       } catch (err) {
         logger.error(
-          `Team ${petition.senderId} failed to be found at edit-petition`
+          `Team ${petition.team} failed to be found at edit-petition`
         )
         return next(err)
       }
 
-      if (!teamSender) {
+      if (!team) {
         try {
           await petition.remove()
         } catch (err) {
@@ -239,11 +237,11 @@ module.exports = async (req, res, next) => {
         }
 
         return res.status(400).json({
-          general: `Team ${teamSender.id} is already removed. This petition is being removed`
+          general: 'Team is already removed. Petition was removed'
         })
       }
 
-      if (eventEntity.teams.find(t => t.toString() === teamSender.id)) {
+      if (event.teams.find(t => t.toString() === team.id)) {
         try {
           await petition.remove()
         } catch (err) {
@@ -254,315 +252,290 @@ module.exports = async (req, res, next) => {
         }
 
         return res.status(400).json({
-          general: `Team ${teamSender.id} is already a participant of the event. This petition is being removed`
+          general:
+            'Team is already a participant of event. Petition was removed'
         })
       }
 
-      if (req.body.state === 'accepted') {
-        eventEntity.teams = [...eventEntity.teams, teamSender.id]
-        eventEntity.updatedAt = moment.utc().toDate()
-
-        try {
-          await eventEntity.save()
-        } catch (err) {
-          logger.error(
-            `Event ${eventEntity.id} failed to be updated at edit-petition`
-          )
-          return next(err)
+      if (isSender) {
+        if (!team.managers.find(m => m.toString() === req.user.id)) {
+          return res.status(403).json({ general: 'Forbidden action' })
         }
-
-        teamSender.events = [...teamSender.events, eventEntity.id]
-        teamSender.updatedAt = moment.utc().toDate()
-
-        try {
-          await teamSender.save()
-        } catch (err) {
-          logger.error(
-            `Team ${teamSender.id} failed to be updated at edit-petition`
-          )
-          return next(err)
-        }
-
-        petition.state = 'accepted'
-      } else if (req.body.state === 'rejected') {
-        petition.state = 'rejected'
       } else {
-        return res.status(400).json({ state: 'Invalid type of state' })
+        if (!event.managers.find(m => m.toString() === req.user.id)) {
+          return res.status(403).json({ general: 'Forbidden action' })
+        }
+
+        if (req.body.state === 'accepted') {
+          event.teams = [...event.teams, team.id]
+          event.updatedAt = moment.utc().toDate()
+
+          try {
+            await event.save()
+          } catch (err) {
+            logger.error(
+              `Event ${event.id} failed to be updated at edit-petition`
+            )
+            return next(err)
+          }
+
+          team.events = [...team.events, event.id]
+          team.updatedAt = moment.utc().toDate()
+
+          try {
+            await team.save()
+          } catch (err) {
+            logger.error(
+              `Team ${team.id} failed to be updated at edit-petition`
+            )
+            return next(err)
+          }
+
+          petition.state = 'accepted'
+        } else {
+          petition.state = 'rejected'
+        }
       }
-
-      petition.updatedAt = moment.utc().toDate()
-
-      try {
-        await petition.save()
-      } catch (err) {
-        logger.error(
-          `Petition ${petition.id} failed to be updated at edit-petition`
-        )
-        return next(err)
-      }
-
-      return res.status(200).json({ general: 'Success' })
-    }
-    // petition.type === 'request-user-event'
-
-    if (!eventEntity.managers.find(m => m.toString() === req.user.id)) {
-      return res.status(403).json({ general: 'Forbidden action' })
-    }
-
-    let userSender
-    try {
-      userSender = await User.findOne({ _id: petition.senderId })
-    } catch (err) {
-      logger.error(
-        `User ${petition.senderId} failed to be found at edit-petition`
-      )
-      return next(err)
-    }
-
-    if (!userSender) {
-      try {
-        await petition.remove()
-      } catch (err) {
-        logger.error(
-          `Petition ${petition.id} failed to be removed at edit-petition`
-        )
-        return next(err)
-      }
-
-      return res.status(400).json({
-        general: `User ${petition.senderId} is already removed. This petition is being removed`
-      })
-    }
-
-    if (eventEntity.participants.find(p => p.toString() === userSender.id)) {
-      try {
-        await petition.remove()
-      } catch (err) {
-        logger.error(
-          `Petition ${petition.id} failed to be removed at edit-petition`
-        )
-        return next(err)
-      }
-
-      return res.status(400).json({
-        general: `User ${userSender.id} is already a participant of the event. This petition is being removed`
-      })
-    }
-
-    if (req.body.state === 'accepted') {
-      eventEntity.participants = [...eventEntity.participants, userSender.id]
-      eventEntity.updatedAt = moment.utc().toDate()
-
-      try {
-        await eventEntity.save()
-      } catch (err) {
-        logger.error(
-          `Event ${eventEntity.id} failed to be updated at edit-petition`
-        )
-        return next(err)
-      }
-
-      userSender.events = [...userSender.events, eventEntity.id]
-      userSender.updatedAt = moment.utc().toDate()
-
-      try {
-        await userSender.save()
-      } catch (err) {
-        logger.error(
-          `User ${userSender.id} failed to be updated at edit-petition`
-        )
-        return next(err)
-      }
-
-      petition.state = 'accepted'
-    } else if (req.body.state === 'rejected') {
-      petition.state = 'rejected'
     } else {
-      return res.status(400).json({ state: 'Invalid type of state' })
-    }
-
-    petition.updatedAt = moment.utc().toDate()
-
-    try {
-      await petition.save()
-    } catch (err) {
-      logger.error(
-        `Petition ${petition.id} failed to be updated at edit-petition`
-      )
-      return next(err)
-    }
-
-    return res.status(200).json({ general: 'Success' })
-  }
-  // petition.type.endsWith('team')
-
-  let teamEntity
-  try {
-    teamEntity = await Team.findOne({ _id: petition.entityId })
-  } catch (err) {
-    logger.error(
-      `Team ${petition.entityId} failed to be found at edit-petition`
-    )
-    return next(err)
-  }
-
-  if (!teamEntity) {
-    try {
-      await petition.remove()
-    } catch (err) {
-      logger.error(
-        `Petition ${petition.id} failed to be removed at edit-petition`
-      )
-      return next(err)
-    }
-
-    return res.status(400).json({
-      general: 'Team is already removed. This petition is being removed'
-    })
-  }
-
-  if (petition.type === 'invite-user-team') {
-    if (petition.receiverId !== req.user.id) {
-      return res.status(403).json({ general: 'Forbidden action' })
-    }
-
-    if (teamEntity.members.find(m => m.toString() === petition.receiverId)) {
+      // petition.type === 'request-user-event'
+      let user
       try {
-        await petition.remove()
+        user = await User.findOne({ _id: petition.user })
       } catch (err) {
         logger.error(
-          `Petition ${petition.id} failed to be removed at edit-petition`
+          `User ${petition.user} failed to be found at edit-petition`
         )
         return next(err)
       }
 
-      return res.status(400).json({
-        general:
-          'You already are a member of the team. This petition is being removed'
-      })
-    }
+      if (!user) {
+        try {
+          await petition.remove()
+        } catch (err) {
+          logger.error(
+            `Petition ${petition.id} failed to be removed at edit-petition`
+          )
+          return next(err)
+        }
 
-    if (req.body.state === 'accepted') {
-      teamEntity.members = [...teamEntity.members, req.user.id]
-      teamEntity.updatedAt = moment.utc().toDate()
-
-      try {
-        await teamEntity.save()
-      } catch (err) {
-        logger.error(
-          `Team ${teamEntity.id} failed to be updated at edit-petition`
-        )
-        return next(err)
+        return res.status(400).json({
+          general: 'User is already removed. Petition was removed'
+        })
       }
 
-      req.user.teams = [...req.user.teams, teamEntity.id]
-      req.user.updatedAt = moment.utc().toDate()
+      if (event.participants.find(p => p.toString() === user.id)) {
+        try {
+          await petition.remove()
+        } catch (err) {
+          logger.error(
+            `Petition ${petition.id} failed to be removed at edit-petition`
+          )
+          return next(err)
+        }
 
-      try {
-        await req.user.save()
-      } catch (err) {
-        logger.error(
-          `User ${req.user.id} failed to be updated at edit-petition`
-        )
-        return next(err)
+        return res.status(400).json({
+          general:
+            'User is already a participant of event. Petition was removed'
+        })
       }
 
-      petition.state = 'accepted'
-    } else if (req.body.state === 'rejected') {
-      petition.state = 'rejected'
-    } else {
-      return res.status(400).json({ state: 'Invalid type of state' })
+      if (!isSender) {
+        if (!event.managers.find(m => m.toString() === req.user.id)) {
+          return res.status(403).json({ general: 'Forbidden action' })
+        }
+
+        if (req.body.state === 'accepted') {
+          event.participants = [...event.participants, user.id]
+          event.updatedAt = moment.utc().toDate()
+
+          try {
+            await event.save()
+          } catch (err) {
+            logger.error(
+              `Event ${event.id} failed to be updated at edit-petition`
+            )
+            return next(err)
+          }
+
+          user.events = [...user.events, event.id]
+          user.updatedAt = moment.utc().toDate()
+
+          try {
+            await user.save()
+          } catch (err) {
+            logger.error(
+              `User ${user.id} failed to be updated at edit-petition`
+            )
+            return next(err)
+          }
+
+          petition.state = 'accepted'
+        } else {
+          petition.state = 'rejected'
+        }
+      }
     }
-
-    petition.updatedAt = moment.utc().toDate()
-
-    try {
-      await petition.save()
-    } catch (err) {
-      logger.error(
-        `Petition ${petition.id} failed to be updated at edit-petition`
-      )
-      return next(err)
-    }
-
-    return res.status(200).json({ general: 'Success' })
-  }
-  // petition.type === 'request-user-team'
-
-  if (!teamEntity.managers.find(m => m.toString() === req.user.id)) {
-    return res.status(403).json({ general: 'Forbidden action' })
-  }
-
-  let userSender
-  try {
-    userSender = await User.findOne({ _id: petition.senderId })
-  } catch (err) {
-    logger.error(
-      `User ${petition.senderId} failed to be found at edit-petition`
-    )
-    return next(err)
-  }
-
-  if (!userSender) {
-    try {
-      await petition.remove()
-    } catch (err) {
-      logger.error(
-        `Petition ${petition.id} failed to be removed at edit-petition`
-      )
-      return next(err)
-    }
-
-    return res.status(400).json({
-      general: `User ${petition.senderId} is already removed. This petition is being removed`
-    })
-  }
-
-  if (teamEntity.members.find(m => m.toString() === userSender.id)) {
-    try {
-      await petition.remove()
-    } catch (err) {
-      logger.error(
-        `Petition ${petition.id} failed to be removed at edit-petition`
-      )
-      return next(err)
-    }
-
-    return res.status(400).json({
-      general: `User ${userSender.id} is already a member of the team. This petition is being removed`
-    })
-  }
-
-  if (req.body.state === 'accepted') {
-    teamEntity.members = [...teamEntity.members, userSender.id]
-    teamEntity.updatedAt = moment.utc().toDate()
-
-    try {
-      await teamEntity.save()
-    } catch (err) {
-      logger.error(
-        `Team ${teamEntity.id} failed to be updated at edit-petition`
-      )
-      return next(err)
-    }
-
-    userSender.teams = [...userSender.teams, teamEntity.id]
-    userSender.updatedAt = moment.utc().toDate()
-
-    try {
-      await userSender.save()
-    } catch (err) {
-      logger.error(
-        `User ${userSender.id} failed to be updated at edit-petition`
-      )
-      return next(err)
-    }
-
-    petition.state = 'accepted'
-  } else if (req.body.state === 'rejected') {
-    petition.state = 'rejected'
   } else {
-    return res.status(400).json({ state: 'Invalid type of state' })
+    // petition.type.endsWith('team')
+    let team
+    try {
+      team = await Team.findOne({ _id: petition.team })
+    } catch (err) {
+      logger.error(
+        `Team ${petition.entityId} failed to be found at edit-petition`
+      )
+      return next(err)
+    }
+
+    if (!team) {
+      try {
+        await petition.remove()
+      } catch (err) {
+        logger.error(
+          `Petition ${petition.id} failed to be removed at edit-petition`
+        )
+        return next(err)
+      }
+
+      return res.status(400).json({
+        general: 'Team is already removed. Petition was removed'
+      })
+    }
+
+    if (petition.type === 'invite-user-team') {
+      if (team.members.find(m => m.toString() === petition.user)) {
+        try {
+          await petition.remove()
+        } catch (err) {
+          logger.error(
+            `Petition ${petition.id} failed to be removed at edit-petition`
+          )
+          return next(err)
+        }
+
+        return res.status(400).json({
+          general: 'User is already a member of team. Petition was removed'
+        })
+      }
+
+      if (isSender) {
+        if (!team.managers.find(m => m.toString() === req.user.id)) {
+          return res.status(403).json({ general: 'Forbidden action' })
+        }
+      } else {
+        if (petition.user !== req.user.id) {
+          return res.status(403).json({ general: 'Forbidden action' })
+        }
+
+        if (req.body.state === 'accepted') {
+          team.members = [...team.members, req.user.id]
+          team.updatedAt = moment.utc().toDate()
+
+          try {
+            await team.save()
+          } catch (err) {
+            logger.error(
+              `Team ${team.id} failed to be updated at edit-petition`
+            )
+            return next(err)
+          }
+
+          req.user.teams = [...req.user.teams, team.id]
+          req.user.updatedAt = moment.utc().toDate()
+
+          try {
+            await req.user.save()
+          } catch (err) {
+            logger.error(
+              `User ${req.user.id} failed to be updated at edit-petition`
+            )
+            return next(err)
+          }
+
+          petition.state = 'accepted'
+        } else {
+          petition.state = 'rejected'
+        }
+      }
+    } else {
+      // petition.type === 'request-user-team'
+
+      let user
+      try {
+        user = await User.findOne({ _id: petition.user })
+      } catch (err) {
+        logger.error(
+          `User ${petition.senderId} failed to be found at edit-petition`
+        )
+        return next(err)
+      }
+
+      if (!user) {
+        try {
+          await petition.remove()
+        } catch (err) {
+          logger.error(
+            `Petition ${petition.id} failed to be removed at edit-petition`
+          )
+          return next(err)
+        }
+
+        return res.status(400).json({
+          general: 'User is already removed. Petition was removed'
+        })
+      }
+
+      if (team.members.find(m => m.toString() === user.id)) {
+        try {
+          await petition.remove()
+        } catch (err) {
+          logger.error(
+            `Petition ${petition.id} failed to be removed at edit-petition`
+          )
+          return next(err)
+        }
+
+        return res.status(400).json({
+          general: 'User is already a member of team. Petition was removed'
+        })
+      }
+
+      if (!isSender) {
+        if (!team.managers.find(m => m.toString() === req.user.id)) {
+          return res.status(403).json({ general: 'Forbidden action' })
+        }
+
+        if (req.body.state === 'accepted') {
+          team.members = [...team.members, user.id]
+          team.updatedAt = moment.utc().toDate()
+
+          try {
+            await team.save()
+          } catch (err) {
+            logger.error(
+              `Team ${team.id} failed to be updated at edit-petition`
+            )
+            return next(err)
+          }
+
+          user.teams = [...user.teams, team.id]
+          user.updatedAt = moment.utc().toDate()
+
+          try {
+            await user.save()
+          } catch (err) {
+            logger.error(
+              `User ${user.id} failed to be updated at edit-petition`
+            )
+            return next(err)
+          }
+
+          petition.state = 'accepted'
+        } else {
+          petition.state = 'rejected'
+        }
+      }
+    }
   }
 
   petition.updatedAt = moment.utc().toDate()
