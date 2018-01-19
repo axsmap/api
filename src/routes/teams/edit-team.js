@@ -1,6 +1,8 @@
-const { difference, intersection, pick, trim } = require('lodash')
+const aws = require('aws-sdk')
+const jimp = require('jimp')
+const { difference, intersection, last } = require('lodash')
 const moment = require('moment')
-const slugify = require('speakingurl')
+const randomstring = require('randomstring')
 
 const logger = require('../../helpers/logger')
 const { Team } = require('../../models/team')
@@ -8,10 +10,6 @@ const { Team } = require('../../models/team')
 const { validateEditTeam } = require('./validations')
 
 module.exports = async (req, res, next) => {
-  if (req.user.isBlocked) {
-    return res.status(423).json({ general: 'You are blocked' })
-  }
-
   const teamId = req.params.teamId
 
   let team
@@ -37,19 +35,88 @@ module.exports = async (req, res, next) => {
     return res.status(403).json({ general: 'Forbidden action' })
   }
 
-  const { errors, isValid } = validateEditTeam(req.body)
+  const data = req.body
+  const { errors, isValid } = validateEditTeam(data)
+  if (!isValid) return res.status(400).json(errors)
 
-  if (!isValid) {
-    return res.status(400).json(errors)
+  if (data.avatar) {
+    const avatarBuffer = Buffer.from(data.avatar.split(',')[1], 'base64')
+    let avatarImage
+    try {
+      avatarImage = await jimp.read(avatarBuffer)
+    } catch (err) {
+      logger.error('Avatar image failed to be read at edit-team')
+      return next(err)
+    }
+
+    const s3 = new aws.S3()
+    let uploadAvatar
+    avatarImage.cover(400, 400).quality(85)
+    avatarImage.getBuffer(avatarImage.getMIME(), (err, avatarBuffer) => {
+      if (err) {
+        return next(err)
+      }
+
+      const avatarExtension = avatarImage.getExtension()
+      if (
+        avatarExtension === 'png' ||
+        avatarExtension === 'jpeg' ||
+        avatarExtension === 'jpg' ||
+        avatarExtension === 'bmp'
+      ) {
+        const avatarFileName = `${Date.now()}${randomstring.generate({
+          length: 5,
+          capitalization: 'lowercase'
+        })}.${avatarExtension}`
+        uploadAvatar = s3
+          .putObject({
+            ACL: 'public-read',
+            Body: avatarBuffer,
+            Bucket: process.env.AWS_S3_BUCKET,
+            ContentType: avatarImage.getMIME(),
+            Key: `teams/avatars/${avatarFileName}`
+          })
+          .promise()
+
+        data.avatar = `https://s3.amazonaws.com/${process.env
+          .AWS_S3_BUCKET}/teams/avatars/${avatarFileName}`
+      } else {
+        return res
+          .status(400)
+          .json({ avatar: 'Should have a .png, .jpeg, .jpg or .bmp extension' })
+      }
+    })
+
+    try {
+      await uploadAvatar
+    } catch (err) {
+      logger.error('Avatar failed to be uploaded at edit-team')
+      return next(err)
+    }
+
+    const params = {
+      Bucket: process.env.AWS_S3_BUCKET,
+      Key: `teams/avatars/${last(team.avatar.split('/'))}`
+    }
+    if (!team.avatar.endsWith('default.png')) {
+      try {
+        await s3.deleteObject(params).promise()
+      } catch (err) {
+        logger.error(
+          `Team's avatar ${params.Key} failed to be deleted at edit-team`
+        )
+        return next(err)
+      }
+    }
   }
 
-  team.description = req.body.description || team.description
+  team.description = data.description || team.description
 
-  if (req.body.managers) {
+  if (data.managers) {
     let managersToAdd = []
     let managersToRemove = []
 
-    req.body.managers.forEach(m => {
+    data.managers.forEach(m => {
       if (m.startsWith('-')) {
         managersToRemove = [...managersToRemove, m.substring(1)]
       } else {
@@ -58,11 +125,8 @@ module.exports = async (req, res, next) => {
     })
 
     const teamManagers = team.managers.map(m => m.toString())
-    managersToAdd = [...new Set(difference(managersToAdd, teamManagers))]
-    managersToRemove = [
-      ...new Set(intersection(managersToRemove, teamManagers))
-    ]
 
+    managersToAdd = [...new Set(difference(managersToAdd, teamManagers))]
     if (managersToAdd.length > 0) {
       const teamMembers = team.members.map(m => m.toString())
       const notMember = managersToAdd.find(m => !teamMembers.includes(m))
@@ -74,61 +138,44 @@ module.exports = async (req, res, next) => {
       }
 
       team.managers = [...teamManagers, ...managersToAdd]
+      team.members = team.members.filter(
+        m => !managersToAdd.includes(m.toString())
+      )
     }
 
+    managersToRemove = [
+      ...new Set(intersection(managersToRemove, teamManagers))
+    ]
     if (managersToRemove.length === team.managers.length) {
       return res
         .status(400)
-        .json({ managers: 'Should not remove all the managers' })
+        .json({ managers: 'Should not remove all managers' })
     }
 
     team.managers = team.managers.filter(
       m => !managersToRemove.includes(m.toString())
     )
+    const teamMembers = team.members.map(m => m.toString())
+    team.members = [...teamMembers, ...managersToRemove]
   }
 
-  if (req.body.members) {
-    let membersToRemove = []
-
-    req.body.members.forEach(m => {
-      membersToRemove = [...membersToRemove, m.substring(1)]
-    })
-
+  if (data.members) {
     const teamMembers = team.members.map(m => m.toString())
+    let membersToRemove = data.members.map(m => m.substring(1))
     membersToRemove = [...new Set(intersection(membersToRemove, teamMembers))]
-
-    if (membersToRemove.length === team.members.length) {
-      return res
-        .status(400)
-        .json({ members: 'Should not remove all the members' })
-    }
-
-    const managersToRemove = team.managers.filter(m =>
-      membersToRemove.includes(m.toString())
-    )
-    if (managersToRemove.length === team.managers.length) {
-      return res
-        .status(400)
-        .json({ membersToRemove: 'Should not remove all the managers' })
-    }
-
-    const teamManagers = team.managers.map(m => m.toString())
-    team.managers = difference(teamManagers, managersToRemove)
-
     team.members = team.members.filter(
       m => !membersToRemove.includes(m.toString())
     )
   }
 
-  if (req.body.name && team.name !== trim(req.body.name)) {
-    team.name = trim(req.body.name)
-    team.slug = slugify(team.name)
+  if (data.name) {
+    team.name = data.name.trim()
 
     let repeatedTeam
     try {
-      repeatedTeam = await Team.findOne({ slug: team.slug, isArchived: false })
+      repeatedTeam = await Team.findOne({ name: team.name, isArchived: false })
     } catch (err) {
-      logger.error(`Team ${team.slug} failed to be found at edit-team`)
+      logger.error(`Team ${team.name} failed to be found at edit-team`)
       return next(err)
     }
 
@@ -156,16 +203,16 @@ module.exports = async (req, res, next) => {
     return next(err)
   }
 
-  const dataResponse = pick(team, [
-    '_id',
-    'creator',
-    'description',
-    'events',
-    'managers',
-    'members',
-    'name',
-    'slug'
-  ])
-
+  const dataResponse = Object.assign(
+    {},
+    {
+      id: team.id,
+      avatar: team.avatar,
+      description: team.description,
+      managers: team.managers,
+      members: team.members,
+      name: team.name
+    }
+  )
   return res.status(200).json(dataResponse)
 }

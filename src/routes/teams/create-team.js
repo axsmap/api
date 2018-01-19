@@ -23,8 +23,6 @@ module.exports = async (req, res, next) => {
       name: req.body.name
     }
   )
-  data.managers = [req.user.id]
-  data.name = data.name.trim()
 
   if (data.avatar) {
     const avatarBuffer = Buffer.from(data.avatar.split(',')[1], 'base64')
@@ -80,6 +78,22 @@ module.exports = async (req, res, next) => {
       logger.error('Avatar failed to be uploaded at create-team')
       return next(err)
     }
+  }
+
+  data.managers = [req.user.id]
+
+  data.name = data.name.trim()
+
+  let repeatedTeam
+  try {
+    repeatedTeam = await Team.findOne({ name: data.name, isArchived: false })
+  } catch (err) {
+    logger.error(`Team ${data.name} failed to be found at create-team`)
+    return next(err)
+  }
+
+  if (repeatedTeam) {
+    return res.status(400).json({ name: 'Is already taken' })
   }
 
   let team
