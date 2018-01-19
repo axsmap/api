@@ -314,18 +314,17 @@ module.exports = async (req, res, next) => {
     }
   } else if (data.type === 'request-user-event') {
     delete data.team
-    data.user = data.sender
 
     let petition
     try {
       petition = await Petition.findOne({
         event: data.event,
-        type: data.type,
-        user: data.user
+        sender: data.sender,
+        type: data.type
       })
     } catch (err) {
       logger.error(
-        `Petition from user ${data.user} to event ${data.event} failed to be found at create-petition`
+        `Petition from user ${data.sender} to event ${data.event} failed to be found at create-petition`
       )
       return next(err)
     }
@@ -360,7 +359,7 @@ module.exports = async (req, res, next) => {
 
     if (!event) return res.status(404).json({ general: 'Event not found' })
 
-    if (event.participants.find(p => p.toString() === data.user)) {
+    if (event.participants.find(p => p.toString() === data.sender)) {
       return res.status(400).json({
         general: 'User already is participant of event'
       })
@@ -373,18 +372,17 @@ module.exports = async (req, res, next) => {
   } else {
     // data.type === request-user-team
     delete data.event
-    data.user = data.sender
 
     let petition
     try {
       petition = await Petition.findOne({
         team: data.team,
-        type: data.type,
-        user: data.user
+        sender: data.sender,
+        type: data.type
       })
     } catch (err) {
       logger.error(
-        `Petition from user ${data.user} to team ${data.team} failed to be found at create-petition`
+        `Petition from user ${data.sender} to team ${data.team} failed to be found at create-petition`
       )
       return next(err)
     }
@@ -419,7 +417,7 @@ module.exports = async (req, res, next) => {
 
     if (!team) return res.status(404).json({ general: 'Team not found' })
 
-    if (team.members.find(m => m.toString() === data.user)) {
+    if (team.members.find(m => m.toString() === data.sender)) {
       return res.status(400).json({
         general: 'User already is member of team'
       })
