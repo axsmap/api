@@ -15,7 +15,7 @@ module.exports = async (req, res, next) => {
   const managedTeams = []
   userTeams.map(t => {
     const teamManagers = t.managers.map(m => m.toString())
-    if (teamManagers.includes(req.user.id.toString())) {
+    if (teamManagers.includes(req.user.id)) {
       managedTeams.push({
         id: t.id.toString(),
         avatar: t.avatar,
