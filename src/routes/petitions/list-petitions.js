@@ -1,18 +1,68 @@
 const mongoose = require('mongoose')
 
+const { compact } = require('lodash')
 const logger = require('../../helpers/logger')
 const { Petition } = require('../../models/petition')
+const { Team } = require('../../models/team')
+const { Event } = require('../../models/event')
 
 module.exports = async (req, res, next) => {
   const queryParams = req.query
   const userIdObj = mongoose.Types.ObjectId(req.user.id)
 
-  let petitionsQuery
+  const petitionsQuery = { state: { $in: ['accepted', 'pending', 'rejected'] } }
 
   if (queryParams.filter === 'sent') {
-    petitionsQuery = { sender: userIdObj }
+    petitionsQuery.sender = userIdObj
   } else {
-    petitionsQuery = { user: userIdObj }
+    // get the user's events
+    const getUserEvents = req.user.events.map(e => Event.findOne({ _id: e }))
+    // get the user's teams
+    const getUserTeams = req.user.teams.map(t => Team.findOne({ _id: t }))
+
+    let userEvents = []
+    let userTeams = []
+    try {
+      userEvents = await Promise.all(getUserEvents)
+      // remove null values from array
+      userEvents = compact(userEvents)
+      userTeams = await Promise.all(getUserTeams)
+      // remove null values from array
+      userTeams = compact(userTeams)
+    } catch (err) {
+      logger.error('Events/Teams failed to be found at list-petitions')
+      return next(err)
+    }
+
+    const managedEvents = []
+    userEvents.map(e => {
+      const eventManagers = e.managers.map(m => m.toString())
+      if (eventManagers.includes(req.user.id)) {
+        managedEvents.push(mongoose.Types.ObjectId(e.id))
+      }
+    })
+
+    const managedTeams = []
+    userTeams.map(t => {
+      const teamManagers = t.managers.map(m => m.toString())
+      if (teamManagers.includes(req.user.id)) {
+        managedTeams.push(mongoose.Types.ObjectId(t.id))
+      }
+    })
+
+    petitionsQuery.$or = [
+      { user: userIdObj },
+      {
+        event: {
+          $in: managedEvents
+        }
+      },
+      {
+        team: {
+          $in: managedTeams
+        }
+      }
+    ]
   }
 
   const sortBy = '-createdAt'

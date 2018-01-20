@@ -43,7 +43,8 @@ module.exports = async (req, res, next) => {
   if (!isValid) return res.status(400).json(errors)
 
   let isSender = false
-  if (petition.sender === req.user.id) {
+
+  if (petition.sender.equals(req.user.id)) {
     isSender = true
     if (req.body.state === 'canceled') {
       petition.state = 'canceled'
@@ -300,7 +301,7 @@ module.exports = async (req, res, next) => {
       // petition.type === 'request-user-event'
       let user
       try {
-        user = await User.findOne({ _id: petition.user })
+        user = await User.findOne({ _id: petition.sender })
       } catch (err) {
         logger.error(
           `User ${petition.user} failed to be found at edit-petition`
@@ -462,7 +463,7 @@ module.exports = async (req, res, next) => {
 
       let user
       try {
-        user = await User.findOne({ _id: petition.user })
+        user = await User.findOne({ _id: petition.sender })
       } catch (err) {
         logger.error(
           `User ${petition.senderId} failed to be found at edit-petition`
