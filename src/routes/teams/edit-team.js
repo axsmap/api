@@ -40,6 +40,7 @@ module.exports = async (req, res, next) => {
   const { errors, isValid } = validateEditTeam(data)
   if (!isValid) return res.status(400).json(errors)
 
+  const s3 = new aws.S3()
   if (data.avatar) {
     const avatarBuffer = Buffer.from(data.avatar.split(',')[1], 'base64')
     let avatarImage
@@ -50,7 +51,6 @@ module.exports = async (req, res, next) => {
       return next(err)
     }
 
-    const s3 = new aws.S3()
     let uploadAvatar
     avatarImage.cover(400, 400).quality(85)
     avatarImage.getBuffer(avatarImage.getMIME(), (err, avatarBuffer) => {
@@ -94,6 +94,24 @@ module.exports = async (req, res, next) => {
       logger.error('Avatar failed to be uploaded at edit-team')
       return next(err)
     }
+
+    const params = {
+      Bucket: process.env.AWS_S3_BUCKET,
+      Key: `teams/avatars/${last(team.avatar.split('/'))}`
+    }
+    if (!team.avatar.endsWith('default.png')) {
+      try {
+        await s3.deleteObject(params).promise()
+      } catch (err) {
+        logger.error(
+          `Team's avatar ${params.Key} failed to be deleted at edit-team`
+        )
+        return next(err)
+      }
+    }
+  } else if (data.avatar === '') {
+    data.avatar = `https://s3.amazonaws.com/${process.env
+      .AWS_S3_BUCKET}/teams/avatars/default.png`
 
     const params = {
       Bucket: process.env.AWS_S3_BUCKET,
