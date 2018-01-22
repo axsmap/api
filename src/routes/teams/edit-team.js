@@ -109,10 +109,9 @@ module.exports = async (req, res, next) => {
         return next(err)
       }
     }
-  } else if (data.avatar === '') {
-    data.avatar = `https://s3.amazonaws.com/${process.env
-      .AWS_S3_BUCKET}/teams/avatars/default.png`
 
+    team.avatar = data.avatar
+  } else if (data.avatar === '') {
     const params = {
       Bucket: process.env.AWS_S3_BUCKET,
       Key: `teams/avatars/${last(team.avatar.split('/'))}`
@@ -127,6 +126,9 @@ module.exports = async (req, res, next) => {
         return next(err)
       }
     }
+
+    team.avatar = `https://s3.amazonaws.com/${process.env
+      .AWS_S3_BUCKET}/teams/avatars/default.png`
   }
 
   team.description = data.description || team.description
