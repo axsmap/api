@@ -169,18 +169,25 @@ module.exports = async (req, res, next) => {
   }
 
   if (data.name) {
-    team.name = data.name.trim()
+    const teamName = data.name.trim()
 
-    let repeatedTeam
-    try {
-      repeatedTeam = await Team.findOne({ name: team.name, isArchived: false })
-    } catch (err) {
-      logger.error(`Team ${team.name} failed to be found at edit-team`)
-      return next(err)
-    }
+    if (teamName !== team.name) {
+      let repeatedTeam
+      try {
+        repeatedTeam = await Team.findOne({
+          name: teamName,
+          isArchived: false
+        })
+      } catch (err) {
+        logger.error(`Team ${teamName} failed to be found at edit-team`)
+        return next(err)
+      }
 
-    if (repeatedTeam) {
-      return res.status(400).json({ name: 'Is already taken' })
+      if (repeatedTeam) {
+        return res.status(400).json({ name: 'Is already taken' })
+      }
+
+      team.name = teamName
     }
   }
 
