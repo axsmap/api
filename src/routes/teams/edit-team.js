@@ -4,6 +4,7 @@ const { difference, intersection, last } = require('lodash')
 const moment = require('moment')
 const randomstring = require('randomstring')
 
+const { cleanSpaces } = require('../../helpers')
 const logger = require('../../helpers/logger')
 const { Team } = require('../../models/team')
 
@@ -169,7 +170,7 @@ module.exports = async (req, res, next) => {
   }
 
   if (data.name) {
-    const teamName = data.name.trim()
+    const teamName = cleanSpaces(data.name)
 
     if (teamName !== team.name) {
       let repeatedTeam

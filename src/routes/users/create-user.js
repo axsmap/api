@@ -1,10 +1,11 @@
 const crypto = require('crypto')
 
 const moment = require('moment')
-const { pick, trim } = require('lodash')
+const { pick } = require('lodash')
 const randomstring = require('randomstring')
 const slugify = require('speakingurl')
 
+const { cleanSpaces } = require('../../helpers')
 const logger = require('../../helpers/logger')
 const { RefreshToken } = require('../../models/refresh-token')
 const { User } = require('../../models/user')
@@ -37,8 +38,8 @@ module.exports = async (req, res, next) => {
     'username',
     'zip'
   ])
-  userData.firstName = trim(userData.firstName)
-  userData.lastName = trim(userData.lastName)
+  userData.firstName = cleanSpaces(userData.firstName)
+  userData.lastName = cleanSpaces(userData.lastName)
 
   let usernameSent = true
 

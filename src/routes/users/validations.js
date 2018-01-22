@@ -2,8 +2,8 @@ const freemail = require('freemail')
 const { isEmail } = require('validator')
 const { isEmpty } = require('lodash')
 const slugify = require('speakingurl')
-const { trim } = require('lodash')
 
+const { cleanSpaces } = require('../../helpers')
 const { User } = require('../../models/user')
 
 module.exports = {
@@ -34,7 +34,7 @@ module.exports = {
     if (data.description) {
       if (typeof data.description !== 'string') {
         errors.description = 'Should be a string'
-      } else if (trim(data.description).length > 2000) {
+      } else if (cleanSpaces(data.description).length > 2000) {
         errors.description = 'Should have less than 2001 characters'
       }
     }
@@ -43,7 +43,7 @@ module.exports = {
       errors.email = 'Is required'
     } else if (typeof data.email !== 'string') {
       errors.email = 'Should be a string'
-    } else if (trim(data.email).length > 254) {
+    } else if (cleanSpaces(data.email).length > 254) {
       errors.email = 'Should have less than 255 characters'
     } else if (!isEmail(data.email) || freemail.isDisposable(data.email)) {
       errors.email = 'Is not a valid email'
@@ -55,10 +55,10 @@ module.exports = {
       errors.firstName = 'Should be a string'
     } else if (/[~`!#$%^&*+=\-[\]\\';,./{}|\\":<>?\d]/g.test(data.firstName)) {
       errors.firstName = 'Should only have letters'
-    } else if (trim(data.firstName).length > 24) {
+    } else if (cleanSpaces(data.firstName).length > 24) {
       errors.firstName = 'Should have less than 25 characters'
     } else {
-      const firstName = trim(data.firstName)
+      const firstName = cleanSpaces(data.firstName)
 
       if (firstName.split(' ').length > 1) {
         errors.firstName = 'Should only be one name'
@@ -71,10 +71,10 @@ module.exports = {
       errors.lastName = 'Should be a string'
     } else if (/[~`!#$%^&*+=\-[\]\\';,./{}|\\":<>?\d]/g.test(data.lastName)) {
       errors.lastName = 'Should only have letters'
-    } else if (trim(data.lastName).length > 36) {
+    } else if (cleanSpaces(data.lastName).length > 36) {
       errors.lastName = 'Should have less than 37 characters'
     } else {
-      const lastName = trim(data.lastName)
+      const lastName = cleanSpaces(data.lastName)
 
       if (lastName.split(' ').length > 1) {
         errors.lastName = 'Should only be one last name'
@@ -94,7 +94,7 @@ module.exports = {
     if (data.phone) {
       if (typeof data.phone !== 'string') {
         errors.phone = 'Should be a string'
-      } else if (trim(data.phone).length > 50) {
+      } else if (cleanSpaces(data.phone).length > 50) {
         errors.phone = 'Should have less than 51 characters'
       }
     }
@@ -102,7 +102,7 @@ module.exports = {
     if (data.username) {
       if (typeof data.username !== 'string') {
         errors.username = 'Should be a string'
-      } else if (trim(data.username).length > 67) {
+      } else if (cleanSpaces(data.username).length > 67) {
         errors.username = 'Should have less than 68 characters'
       } else {
         const username = slugify(data.username)
@@ -116,7 +116,7 @@ module.exports = {
     if (data.zip) {
       if (typeof data.zip !== 'string') {
         errors.zip = 'Should be a string'
-      } else if (trim(data.zip).length > 32) {
+      } else if (cleanSpaces(data.zip).length > 32) {
         errors.zip = 'Should have less than 33 characters'
       }
     }
@@ -129,7 +129,7 @@ module.exports = {
     if (data.description) {
       if (typeof data.description !== 'string') {
         errors.description = 'Should be a string'
-      } else if (trim(data.description).length > 2000) {
+      } else if (cleanSpaces(data.description).length > 2000) {
         errors.description = 'Should have less than 2001 characters'
       }
     }
@@ -137,7 +137,7 @@ module.exports = {
     if (data.email) {
       if (typeof data.email !== 'string') {
         errors.email = 'Should be a string'
-      } else if (trim(data.email).length > 254) {
+      } else if (cleanSpaces(data.email).length > 254) {
         errors.email = 'Should have less than 255 characters'
       } else if (!isEmail(data.email) || freemail.isDisposable(data.email)) {
         errors.email = 'Is not a valid email'
@@ -151,10 +151,10 @@ module.exports = {
         /[~`!#$%^&*+=\-[\]\\';,./{}|\\":<>?\d]/g.test(data.firstName)
       ) {
         errors.firstName = 'Should only have letters'
-      } else if (trim(data.firstName).length > 24) {
+      } else if (cleanSpaces(data.firstName).length > 24) {
         errors.firstName = 'Should have less than 25 characters'
       } else {
-        const firstName = trim(data.firstName)
+        const firstName = cleanSpaces(data.firstName)
 
         if (firstName.split(' ').length > 1) {
           errors.firstName = 'Should only be one name'
@@ -167,10 +167,10 @@ module.exports = {
         errors.lastName = 'Should be a string'
       } else if (/[~`!#$%^&*+=\-[\]\\';,./{}|\\":<>?\d]/g.test(data.lastName)) {
         errors.lastName = 'Should only have letters'
-      } else if (trim(data.lastName).length > 36) {
+      } else if (cleanSpaces(data.lastName).length > 36) {
         errors.lastName = 'Should have less than 37 characters'
       } else {
-        const lastName = trim(data.lastName)
+        const lastName = cleanSpaces(data.lastName)
 
         if (lastName.split(' ').length > 1) {
           errors.lastName = 'Should only be one last name'
@@ -181,7 +181,7 @@ module.exports = {
     if (data.phone) {
       if (typeof data.phone !== 'string') {
         errors.phone = 'Should be a string'
-      } else if (trim(data.phone).length > 50) {
+      } else if (cleanSpaces(data.phone).length > 50) {
         errors.phone = 'Should have less than 51 characters'
       }
     }
@@ -189,7 +189,7 @@ module.exports = {
     if (data.username) {
       if (typeof data.username !== 'string') {
         errors.username = 'Should be a string'
-      } else if (trim(data.username).length > 67) {
+      } else if (cleanSpaces(data.username).length > 67) {
         errors.username = 'Should have less than 68 characters'
       } else {
         const username = slugify(data.username)
@@ -203,7 +203,7 @@ module.exports = {
     if (data.zip) {
       if (typeof data.zip !== 'string') {
         errors.zip = 'Should be a string'
-      } else if (trim(data.zip).length > 32) {
+      } else if (cleanSpaces(data.zip).length > 32) {
         errors.zip = 'Should have less than 33 characters'
       }
     }

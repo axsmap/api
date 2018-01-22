@@ -1,8 +1,9 @@
 const moment = require('moment')
-const { pick, trim } = require('lodash')
+const { pick } = require('lodash')
 const slugify = require('speakingurl')
 
 const { Event } = require('../../models/event')
+const { cleanSpaces } = require('../../helpers')
 const logger = require('../../helpers/logger')
 
 const { validateCreateEvent } = require('./validations')
@@ -29,7 +30,7 @@ module.exports = async (req, res, next) => {
     'reviewsGoal',
     'startDate'
   ])
-  data.name = trim(data.name)
+  data.name = cleanSpaces(data.name)
   data.slug = slugify(data.name).toLowerCase()
 
   let otherEvent

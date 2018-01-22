@@ -1,10 +1,10 @@
-const { trim } = require('lodash')
 const mongoose = require('mongoose')
 const randomstring = require('randomstring')
 const slugify = require('speakingurl')
 
 require('dotenv').config()
 
+const { cleanSpaces } = require('../../helpers')
 const logger = require('../../helpers/logger')
 const { userSchema } = require('../../models/user')
 
@@ -83,21 +83,21 @@ db.on('connected', async () => {
           const userData = {
             _id: oldUser.id,
             createdAt: oldUser.createdAt,
-            description: trim(oldUser.description),
+            description: cleanSpaces(oldUser.description),
             email: oldUser.email,
             events: oldUser.events,
             facebookId: oldUser.facebookAuth,
-            firstName: trim(oldUser.name.first) || 'first',
+            firstName: cleanSpaces(oldUser.name.first) || 'first',
             hashedPassword: oldUser.hash,
             isSubscribed: oldUser.newsletter,
-            lastName: trim(oldUser.name.last) || 'last',
-            phone: trim(oldUser.phone),
+            lastName: cleanSpaces(oldUser.name.last) || 'last',
+            phone: cleanSpaces(oldUser.phone),
             showEmail: oldUser.showEmail,
             showPhone: oldUser.showPhone,
             teams: oldUser.teams,
             updatedAt: oldUser.updatedAt,
-            username: `${slugify(trim(oldUser.name.first))}-${slugify(
-              trim(oldUser.name.last)
+            username: `${slugify(oldUser.name.first)}-${slugify(
+              oldUser.name.last
             )}-${randomstring.generate({
               length: 5,
               capitalization: 'lowercase'

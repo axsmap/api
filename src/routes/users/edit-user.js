@@ -1,6 +1,7 @@
 const moment = require('moment')
-const { pick, trim } = require('lodash')
+const { pick } = require('lodash')
 
+const { cleanSpaces } = require('../../helpers')
 const logger = require('../../helpers/logger')
 const { User } = require('../../models/user')
 
@@ -79,11 +80,13 @@ module.exports = async (req, res, next) => {
   }
 
   user.firstName = userData.firstName
-    ? trim(userData.firstName)
+    ? cleanSpaces(userData.firstName)
     : user.firstName
   user.gender = userData.gender || user.gender
   user.isSubscribed = userData.isSubscribed || user.isSubscribed
-  user.lastName = userData.lastName ? trim(userData.lastName) : user.lastName
+  user.lastName = userData.lastName
+    ? cleanSpaces(userData.lastName)
+    : user.lastName
   user.phone = userData.phone || user.phone
   user.showDisabilities = userData.showDisabilities || user.showDisabilities
   user.showEmail = userData.showEmail || user.showEmail

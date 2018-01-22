@@ -1,13 +1,13 @@
 const crypto = require('crypto')
 
 const moment = require('moment')
-const { pick, trim } = require('lodash')
+const { pick } = require('lodash')
 const randomstring = require('randomstring')
 const slugify = require('speakingurl')
 
 const { ActivationTicket } = require('../../models/activation-ticket')
 const logger = require('../../helpers/logger')
-const { sendEmail } = require('../../helpers')
+const { cleanSpaces, sendEmail } = require('../../helpers')
 const { User } = require('../../models/user')
 
 const { validateSignUp } = require('./validations')
@@ -25,8 +25,8 @@ module.exports = async (req, res, next) => {
     'lastName',
     'password'
   ])
-  data.firstName = trim(data.firstName)
-  data.lastName = trim(data.lastName)
+  data.firstName = cleanSpaces(data.firstName)
+  data.lastName = cleanSpaces(data.lastName)
   data.username = `${slugify(data.firstName)}-${slugify(data.lastName)}`
 
   let activationTicket

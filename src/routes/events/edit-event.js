@@ -1,8 +1,9 @@
-const { difference, intersection, pick, trim } = require('lodash')
+const { difference, intersection, pick } = require('lodash')
 const moment = require('moment')
 const slugify = require('speakingurl')
 
 const { Event } = require('../../models/event')
+const { cleanSpaces } = require('../../helpers')
 const logger = require('../../helpers/logger')
 const { Team } = require('../../models/team')
 const { User } = require('../../models/user')
@@ -120,8 +121,8 @@ module.exports = async (req, res, next) => {
     )
   }
 
-  if (req.body.name && event.name !== trim(req.body.name)) {
-    event.name = trim(req.body.name)
+  if (req.body.name && event.name !== cleanSpaces(req.body.name)) {
+    event.name = cleanSpaces(req.body.name)
     event.slug = slugify(event.name).toLowerCase()
 
     let otherEvent

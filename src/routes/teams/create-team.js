@@ -3,6 +3,7 @@ const jimp = require('jimp')
 const moment = require('moment')
 const randomstring = require('randomstring')
 
+const { cleanSpaces } = require('../../helpers')
 const logger = require('../../helpers/logger')
 const { Team } = require('../../models/team')
 
@@ -82,7 +83,7 @@ module.exports = async (req, res, next) => {
 
   data.managers = [req.user.id]
 
-  data.name = data.name.trim()
+  data.name = cleanSpaces(data.name)
 
   let repeatedTeam
   try {

@@ -10,6 +10,9 @@ const { User } = require('../models/user')
 const logger = require('./logger')
 
 module.exports = {
+  cleanSpaces(string) {
+    return string.replace(/\s+/g, ' ').trim()
+  },
   deleteUnusedProperties(obj) {
     return pickBy(obj, prop => prop)
   },
