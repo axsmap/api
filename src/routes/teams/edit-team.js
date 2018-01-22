@@ -7,6 +7,7 @@ const randomstring = require('randomstring')
 const { cleanSpaces } = require('../../helpers')
 const logger = require('../../helpers/logger')
 const { Team } = require('../../models/team')
+const { User } = require('../../models/user')
 
 const { validateEditTeam } = require('./validations')
 
@@ -184,6 +185,30 @@ module.exports = async (req, res, next) => {
     const teamMembers = team.members.map(m => m.toString())
     let membersToRemove = data.members.map(m => m.substring(1))
     membersToRemove = [...new Set(intersection(membersToRemove, teamMembers))]
+
+    const getMembers = membersToRemove.map(m =>
+      User.find({ _id: m, isArchived: false })
+    )
+    let members
+    try {
+      members = await Promise.all(getMembers)
+    } catch (err) {
+      logger.error(`Members failed to be found at edit-team`)
+      return next(err)
+    }
+
+    const updateMembers = members.map((m, i) => {
+      m[i].teams = m[i].teams.filter(t => t.toString() !== team.id)
+      return m[i].save()
+    })
+
+    try {
+      await Promise.all(updateMembers)
+    } catch (err) {
+      logger.error(`Members failed to be updated at edit-team`)
+      return next(err)
+    }
+
     team.members = team.members.filter(
       m => !membersToRemove.includes(m.toString())
     )
