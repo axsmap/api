@@ -8,12 +8,12 @@ const { Event } = require('../../models/event')
 
 module.exports = async (req, res, next) => {
   const queryParams = req.query
-  const userIdObj = mongoose.Types.ObjectId(req.user.id)
+  const userId = mongoose.Types.ObjectId(req.user.id)
 
   const petitionsQuery = { state: { $in: ['accepted', 'pending', 'rejected'] } }
 
   if (queryParams.filter === 'sent') {
-    petitionsQuery.sender = userIdObj
+    petitionsQuery.sender = userId
   } else {
     // get the user's events
     const getUserEvents = req.user.events.map(e => Event.findOne({ _id: e }))
@@ -51,16 +51,23 @@ module.exports = async (req, res, next) => {
     })
 
     petitionsQuery.$or = [
-      { user: userIdObj },
       {
-        event: {
-          $in: managedEvents
-        }
+        $and: [
+          { user: userId },
+          { type: { $in: ['invite-user-event', 'invite-user-team'] } }
+        ]
       },
       {
-        team: {
-          $in: managedTeams
-        }
+        $and: [
+          { event: { $in: managedEvents } },
+          { type: { $in: ['request-team-event', 'request-user-event'] } }
+        ]
+      },
+      {
+        $and: [
+          { team: { $in: managedTeams } },
+          { type: { $in: ['invite-team-event', 'request-user-team'] } }
+        ]
       }
     ]
   }

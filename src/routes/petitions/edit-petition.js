@@ -44,7 +44,7 @@ module.exports = async (req, res, next) => {
 
   let isSender = false
 
-  if (petition.sender.equals(req.user.id)) {
+  if (petition.sender.toString() === req.user.id) {
     isSender = true
     if (req.body.state === 'canceled') {
       petition.state = 'canceled'
@@ -161,7 +161,9 @@ module.exports = async (req, res, next) => {
         }
       }
     } else if (petition.type === 'invite-user-event') {
-      if (event.participants.find(p => p.toString() === petition.user)) {
+      if (
+        event.participants.find(p => p.toString() === petition.user.toString())
+      ) {
         try {
           await petition.remove()
         } catch (err) {
@@ -182,7 +184,7 @@ module.exports = async (req, res, next) => {
           return res.status(403).json({ general: 'Forbidden action' })
         }
       } else {
-        if (petition.user !== req.user.id) {
+        if (petition.user.toString() !== req.user.id) {
           return res.status(403).json({ general: 'Forbidden action' })
         }
 
@@ -404,7 +406,7 @@ module.exports = async (req, res, next) => {
     }
 
     if (petition.type === 'invite-user-team') {
-      if (team.members.find(m => m.toString() === petition.user)) {
+      if (team.members.find(m => m.toString() === petition.user.toString())) {
         try {
           await petition.remove()
         } catch (err) {
@@ -424,7 +426,7 @@ module.exports = async (req, res, next) => {
           return res.status(403).json({ general: 'Forbidden action' })
         }
       } else {
-        if (petition.user !== req.user.id) {
+        if (petition.user.toString() !== req.user.id) {
           return res.status(403).json({ general: 'Forbidden action' })
         }
 
