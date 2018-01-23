@@ -18,7 +18,7 @@ const router = new express.Router()
 
 router.get('/profile', isAuthenticated, isUnblocked, getProfile)
 router.put('/password', isAuthenticated, changePassword)
-router.get('', isAuthenticated, listUsers)
+router.get('', isAuthenticated, isUnblocked, listUsers)
 router.post('', isAuthenticated, createUser)
 router.get('/:userId', isAuthenticated, getUser)
 router.put('/:userId', isAuthenticated, editUser)

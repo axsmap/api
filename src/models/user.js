@@ -136,12 +136,15 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 )
 
-userSchema.index({
-  email: 'text',
-  firstName: 'text',
-  lastName: 'text',
-  username: 'text'
-})
+userSchema.index(
+  {
+    email: 'text',
+    firstName: 'text',
+    lastName: 'text',
+    username: 'text'
+  },
+  { weights: { email: 5, username: 5 } }
+)
 
 function hashPassword(password) {
   bcrypt.genSalt(10, (errorOnSaltGeneration, salt) => {

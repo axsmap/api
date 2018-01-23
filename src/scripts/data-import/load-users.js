@@ -83,15 +83,23 @@ db.on('connected', async () => {
           const userData = {
             _id: oldUser.id,
             createdAt: oldUser.createdAt,
-            description: cleanSpaces(oldUser.description),
+            description: oldUser.description
+              ? cleanSpaces(oldUser.description)
+              : '',
             email: oldUser.email,
             events: oldUser.events,
             facebookId: oldUser.facebookAuth,
-            firstName: cleanSpaces(oldUser.name.first) || 'first',
+            firstName:
+              oldUser.name.first && cleanSpaces(oldUser.name.first)
+                ? cleanSpaces(oldUser.name.first)
+                : 'first',
             hashedPassword: oldUser.hash,
             isSubscribed: oldUser.newsletter,
-            lastName: cleanSpaces(oldUser.name.last) || 'last',
-            phone: cleanSpaces(oldUser.phone),
+            lastName:
+              oldUser.name.last && cleanSpaces(oldUser.name.last)
+                ? cleanSpaces(oldUser.name.last)
+                : 'last',
+            phone: oldUser.phone ? cleanSpaces(oldUser.phone) : '',
             showEmail: oldUser.showEmail,
             showPhone: oldUser.showPhone,
             teams: oldUser.teams,

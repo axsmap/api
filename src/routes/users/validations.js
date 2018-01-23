@@ -1,10 +1,9 @@
 const freemail = require('freemail')
-const { isEmail } = require('validator')
+const { isEmail, isInt } = require('validator')
 const { isEmpty } = require('lodash')
 const slugify = require('speakingurl')
 
 const { cleanSpaces } = require('../../helpers')
-const { User } = require('../../models/user')
 
 module.exports = {
   validateChangePassword(data) {
@@ -213,50 +212,32 @@ module.exports = {
   validateListUsers(queryParams) {
     const errors = {}
 
-    if (queryParams.disabilities) {
-      const queryDisabilities = queryParams.disabilities.split(',')
-      const userDisabilities = User.schema.path('disability').enumValues
-
-      queryDisabilities.forEach(disability => {
-        if (!userDisabilities.includes(disability)) {
-          errors.disabilities = 'Invalid type of disability'
-        }
-      })
+    if (queryParams.page && !isInt(queryParams.page)) {
+      errors.page = 'Should be a integer'
+    } else if (parseInt(queryParams.page, 10) < 1) {
+      errors.page = 'Should be greater than or equal to 1'
     }
 
-    if (queryParams.genders) {
-      const queryGenders = queryParams.genders.split(',')
-      const userGenders = User.schema.path('gender').enumValues
-
-      queryGenders.forEach(gender => {
-        if (!userGenders.includes(gender)) {
-          errors.genders = 'Invalid type of gender'
-        }
-      })
+    if (queryParams.pageLimit && !isInt(queryParams.pageLimit)) {
+      errors.pageLimit = 'Should be a integer'
+    } else if (parseInt(queryParams.pageLimit, 10) < 1) {
+      errors.pageLimit = 'Should be greater than or equal to 1'
+    } else if (parseInt(queryParams.pageLimit, 10) > 12) {
+      errors.pageLimit = 'Should be less than or equal to 12'
     }
 
-    if (queryParams.isAdmin) {
-      const isAdmin = queryParams.isAdmin
-
-      if (isAdmin !== '0' && isAdmin !== '1') {
-        errors.isAdmin = 'Should be 0 or 1'
-      }
-    }
-
-    if (queryParams.isBlocked) {
-      const isBlocked = queryParams.isBlocked
-
-      if (isBlocked !== '0' && isBlocked !== '1') {
-        errors.isBlocked = 'Should be 0 or 1'
-      }
-    }
-
-    if (queryParams.isSubscribed) {
-      const isSubscribed = queryParams.isSubscribed
-
-      if (isSubscribed !== '0' && isSubscribed !== '1') {
-        errors.isSubscribed = 'Should be 0 or 1'
-      }
+    const sortOptions = [
+      'email',
+      '-email',
+      'firstName',
+      '-firstName',
+      'lastName',
+      '-lastName',
+      'username',
+      '-username'
+    ]
+    if (queryParams.sortBy && !sortOptions.includes(queryParams.sortBy)) {
+      errors.sortBy = 'Should be a valid sort'
     }
 
     return { errors, isValid: isEmpty(errors) }

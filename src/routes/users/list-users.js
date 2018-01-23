@@ -1,91 +1,45 @@
-const { toBoolean } = require('validator')
-
 const logger = require('../../helpers/logger')
 const { User } = require('../../models/user')
 
 const { validateListUsers } = require('./validations')
 
 module.exports = async (req, res, next) => {
-  if (!req.user.isAdmin) {
-    return res.status(403).json({ general: 'Forbidden action' })
-  }
+  const { errors, isValid } = validateListUsers(req.query)
+  if (!isValid) return res.status(400).json(errors)
 
   const queryParams = req.query
-  const { errors, isValid } = validateListUsers(queryParams)
-  if (!isValid) {
-    return res.status(400).json(errors)
-  }
 
   const usersQuery = { isArchived: false }
-
   if (queryParams.keywords) {
     usersQuery.$text = { $search: queryParams.keywords }
   }
 
-  if (queryParams.disabilities) {
-    const disabilities = queryParams.disabilities.split(',')
-    usersQuery.disability = { $in: disabilities }
+  const sort = queryParams.sortBy || {
+    score: { $meta: 'textScore' }
   }
-
-  if (queryParams.genders) {
-    const genders = queryParams.genders.split(',')
-    usersQuery.gender = { $in: genders }
-  }
-
-  if (queryParams.isAdmin) {
-    const isAdmin = toBoolean(queryParams.isAdmin)
-    usersQuery.isAdmin = { $eq: isAdmin }
-  }
-
-  if (queryParams.isBlocked) {
-    const isBlocked = toBoolean(queryParams.isBlocked)
-    usersQuery.isBlocked = { $eq: isBlocked }
-  }
-
-  if (queryParams.isSubscribed) {
-    const isSubscribed = toBoolean(queryParams.isSubscribed)
-    usersQuery.isSubscribed = { $eq: isSubscribed }
-  }
-
-  let sortField = 'email'
-  if (queryParams.sortBy) {
-    const sort = queryParams.sortBy
-    const sortOptions = [
-      'email',
-      '-email',
-      'firstName',
-      '-firstName',
-      'lastName',
-      '-lastName',
-      'username',
-      '-username'
-    ]
-
-    if (sortOptions.includes(sort)) {
-      sortField = sort
-    } else {
-      return res.status(400).json({ types: 'Invalid type of sort' })
-    }
-  }
-
-  let page = queryParams.page || 1
-  const pageLimit = 18
-
-  if (page > 0) {
-    page -= 1
-  } else {
-    return res
-      .status(400)
-      .json({ page: 'Should be equal to or greater than 1' })
-  }
+  let page = queryParams.page ? parseInt(queryParams.page, 10) - 1 : 1
+  const pageLimit = queryParams.pageLimit
+    ? parseInt(queryParams.pageLimit, 10)
+    : 12
 
   let total
   let users
   try {
     ;[users, total] = await Promise.all([
-      User.find(usersQuery)
-        .select('-__v -createdAt -hashedPassword -updatedAt')
-        .sort(sortField)
+      User.aggregate()
+        .match(usersQuery)
+        .project({
+          _id: 0,
+          id: '$_id',
+          avatar: 1,
+          email: 1,
+          firstName: 1,
+          lastName: 1,
+          score: { $meta: 'textScore' },
+          username: 1
+        })
+        .match({ score: { $gt: 1 } })
+        .sort(sort)
         .skip(page * pageLimit)
         .limit(pageLimit),
       User.find(usersQuery).count()
@@ -99,29 +53,26 @@ module.exports = async (req, res, next) => {
     return next(err)
   }
 
-  let first = `${process.env.API_URL}/users?page=1`
-  const lastPage = Math.ceil(total / pageLimit)
-  let last = `${process.env.API_URL}/users?page=${lastPage}`
+  let lastPage = Math.ceil(total / pageLimit)
   if (lastPage > 0) {
     page += 1
     if (page > lastPage) {
       return res
         .status(400)
-        .json({ page: `Should be equal to or less than ${lastPage}` })
+        .json({ page: `Should be less than or equal to ${lastPage}` })
     }
   } else {
-    first = null
-    last = null
     page = null
+    lastPage = null
   }
 
   const dataResponse = {
-    first,
-    last,
     page,
+    lastPage,
     pageLimit,
-    results: users,
-    total
+    total,
+    sortBy: queryParams.sortBy,
+    results: users
   }
   return res.status(200).json(dataResponse)
 }
