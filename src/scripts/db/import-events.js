@@ -1,6 +1,6 @@
 const mongoose = require('mongoose')
 
-require('dotenv').config({ path: '../../../.env' })
+require('dotenv').config()
 
 const logger = require('../../helpers/logger')
 const { eventSchema } = require('../../models/event')
@@ -84,10 +84,8 @@ db.on('connected', async () => {
         const eventData = {
           _id: oldEventItem.id,
           createdAt: oldEventItem.created_at,
-          creator: oldEventItem.creator,
           description: oldEventItem.description.substring(0, 300),
           endDate: oldEventItem.event_end,
-          isApproved: oldEventItem.approved,
           managers: [oldEventItem.creator],
           name: oldEventItem.name,
           participants,
@@ -104,7 +102,8 @@ db.on('connected', async () => {
             : 1,
           startDate: oldEventItem.event_start,
           teams: oldEventItem.teams,
-          updatedAt: oldEventItem.updated_at
+          updatedAt: oldEventItem.updated_at,
+          venue: oldEventItem.location
         }
 
         createEvents.push(Event.create(eventData))
