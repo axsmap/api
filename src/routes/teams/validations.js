@@ -1,5 +1,5 @@
 const { isEmpty } = require('lodash')
-const { isBase64, isMongoId } = require('validator')
+const { isBase64, isInt, isMongoId } = require('validator')
 
 module.exports = {
   validateCreateTeam(data) {
@@ -106,31 +106,26 @@ module.exports = {
   validateListTeams(queryParams) {
     const errors = {}
 
-    if (queryParams.managers) {
-      const managers = [...new Set(queryParams.managers.split(','))]
+    const sortOptions = ['name', '-name', 'reviewsAmount', '-reviewsAmount']
+    if (queryParams.sortBy && !sortOptions.includes(queryParams.sortBy)) {
+      errors.sortBy = 'Should be a valid sort'
+    }
 
-      if (managers.length === 0) {
-        errors.managers = 'Should have at least one user id'
-      } else {
-        managers.forEach(m => {
-          if (!m || !isMongoId(m)) {
-            errors.managers = `${m} should be an user id`
-          }
-        })
+    if (queryParams.page) {
+      if (!isInt(queryParams.page)) {
+        errors.page = 'Should be a integer'
+      } else if (parseInt(queryParams.page, 10) < 1) {
+        errors.page = 'Should be a positive integer'
       }
     }
 
-    if (queryParams.members) {
-      const members = [...new Set(queryParams.members.split(','))]
-
-      if (members.length === 0) {
-        errors.members = 'Should have at least one user Id'
-      } else {
-        members.forEach(m => {
-          if (!m || !isMongoId(m)) {
-            errors.members = `${m} should be an user Id`
-          }
-        })
+    if (queryParams.pageLimit) {
+      if (!isInt(queryParams.pageLimit)) {
+        errors.pageLimit = 'Should be a integer'
+      } else if (parseInt(queryParams.pageLimit, 10) < 1) {
+        errors.pageLimit = 'Should be a positive integer'
+      } else if (parseInt(queryParams.pageLimit, 10) > 12) {
+        errors.pageLimit = 'Should be less than 13'
       }
     }
 

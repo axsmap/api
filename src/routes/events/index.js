@@ -17,7 +17,7 @@ const uploadEventPoster = require('./upload-event-poster')
 
 const router = new express.Router()
 
-router.get('', isAuthenticated, listEvents)
+router.get('', listEvents)
 router.post('', isAuthenticated, createEvent)
 router.get('/:eventId', isAuthenticated, getEvent)
 router.put('/:eventId', isAuthenticated, editEvent)

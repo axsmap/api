@@ -14,6 +14,11 @@ const eventSchema = new mongoose.Schema(
       type: Date,
       required: [true, 'Is required']
     },
+    isArchived: {
+      type: Boolean,
+      default: false,
+      required: [true, 'Is required']
+    },
     isOpen: {
       type: Boolean,
       default: false,
@@ -87,7 +92,7 @@ const eventSchema = new mongoose.Schema(
   { timestamps: true }
 )
 
-eventSchema.index({ endDate: 1, name: 'text', reviewsAmount: 1, startDate: 1 })
+eventSchema.index({ name: 'text', endDate: 1, reviewsAmount: 1, startDate: 1 })
 
 module.exports = {
   Event: mongoose.model('Event', eventSchema),

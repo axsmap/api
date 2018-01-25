@@ -1,5 +1,5 @@
 const { isEmpty } = require('lodash')
-const { isMongoId } = require('validator')
+const { isInt, isMongoId } = require('validator')
 const moment = require('moment')
 
 const { isNumber } = require('../../helpers')
@@ -220,76 +220,26 @@ module.exports = {
     return { errors, isValid: isEmpty(errors) }
   },
   validateListEvents(queryParams) {
-    let isBeforeDateValid = false
     const errors = {}
-    let isAfterDateValid = false
 
+    let isAfterDateValid = false
     if (
       queryParams.afterDate &&
       !moment(queryParams.afterDate, 'YYYY-MM-DD', true).isValid()
     ) {
       errors.afterDate = 'Should have YYYY-MM-DD format'
+    } else {
+      isAfterDateValid = true
     }
 
+    let isBeforeDateValid = false
     if (
       queryParams.beforeDate &&
       !moment(queryParams.beforeDate, 'YYYY-MM-DD', true).isValid()
     ) {
       errors.beforeDate = 'Should have YYYY-MM-DD format'
-    }
-
-    if (queryParams.creator && !isMongoId(queryParams.creator)) {
-      errors.creator = `${queryParams.creator} should be an user Id`
-    }
-
-    if (queryParams.isApproved) {
-      if (!Number.isInteger(queryParams.isApproved)) {
-        errors.isApproved = 'Should be an integer'
-      } else if (queryParams.isApproved !== 1 && queryParams.isApproved !== 0) {
-        errors.isApproved = 'Should be 0 or 1'
-      }
-    }
-
-    if (queryParams.managers) {
-      const managers = [...new Set(queryParams.managers.split(','))]
-
-      if (managers.length === 0) {
-        errors.managers = 'Should have at least one user Id'
-      } else {
-        managers.forEach(m => {
-          if (!m || !isMongoId(m)) {
-            errors.managers = `${m} should be an user Id`
-          }
-        })
-      }
-    }
-
-    if (queryParams.participants) {
-      const participants = [...new Set(queryParams.participants.split(','))]
-
-      if (participants.length === 0) {
-        errors.participants = 'Should have at least one user Id'
-      } else {
-        participants.forEach(p => {
-          if (!p || !isMongoId(p)) {
-            errors.participants = `${p} should be an user Id`
-          }
-        })
-      }
-    }
-
-    if (queryParams.teams) {
-      const teams = [...new Set(queryParams.teams.split(','))]
-
-      if (teams.length === 0) {
-        errors.teams = 'Should have at least one team Id'
-      } else {
-        teams.forEach(t => {
-          if (!t || !isMongoId(t)) {
-            errors.teams = `${t} should be a team Id`
-          }
-        })
-      }
+    } else {
+      isBeforeDateValid = true
     }
 
     if (isAfterDateValid && isBeforeDateValid) {
@@ -298,6 +248,36 @@ module.exports = {
       if (afterDate.isAfter(beforeDate)) {
         errors.afterDate = 'Should be less than beforeDate'
         errors.beforeDate = 'Should be greater than afterDate'
+      }
+    }
+
+    const sortOptions = [
+      'name',
+      '-name',
+      'reviewsAmount',
+      '-reviewsAmount',
+      'startDate',
+      '-startDate'
+    ]
+    if (queryParams.sortBy && !sortOptions.includes(queryParams.sortBy)) {
+      errors.sortBy = 'Should be a valid sort'
+    }
+
+    if (queryParams.page) {
+      if (!isInt(queryParams.page)) {
+        errors.page = 'Should be a integer'
+      } else if (parseInt(queryParams.page, 10) < 1) {
+        errors.page = 'Should be a positive integer'
+      }
+    }
+
+    if (queryParams.pageLimit) {
+      if (!isInt(queryParams.pageLimit)) {
+        errors.pageLimit = 'Should be a integer'
+      } else if (parseInt(queryParams.pageLimit, 10) < 1) {
+        errors.pageLimit = 'Should be a positive integer'
+      } else if (parseInt(queryParams.pageLimit, 10) > 12) {
+        errors.pageLimit = 'Should be less than 13'
       }
     }
 

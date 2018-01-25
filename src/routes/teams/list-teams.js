@@ -5,11 +5,9 @@ const { validateListTeams } = require('./validations')
 
 module.exports = async (req, res, next) => {
   const queryParams = req.query
-  const { errors, isValid } = validateListTeams(queryParams)
 
-  if (!isValid) {
-    return res.status(400).json(errors)
-  }
+  const { errors, isValid } = validateListTeams(queryParams)
+  if (!isValid) return res.status(400).json(errors)
 
   const teamsQuery = { isArchived: false }
 
@@ -17,38 +15,9 @@ module.exports = async (req, res, next) => {
     teamsQuery.$text = { $search: queryParams.keywords }
   }
 
-  if (queryParams.managers) {
-    const managers = [...new Set(queryParams.managers.toString().split(','))]
-    teamsQuery.managers = { $in: managers }
-  }
-
-  if (queryParams.members) {
-    const members = [...new Set(queryParams.members.toString().split(','))]
-    teamsQuery.members = { $in: members }
-  }
-
-  let sortBy = '-reviewsAmount'
-  if (queryParams.sortBy) {
-    const sort = queryParams.sortBy
-    const sortOptions = ['name', '-name', 'reviewsAmount', '-reviewsAmount']
-
-    if (sortOptions.includes(sort)) {
-      sortBy = sort
-    } else {
-      return res.status(400).json({ sortBy: 'Invalid type of sort' })
-    }
-  }
-
-  let page = queryParams.page || 1
-  const pageLimit = 12
-
-  if (page > 0) {
-    page -= 1
-  } else {
-    return res
-      .status(400)
-      .json({ page: 'Should be equal to or greater than 1' })
-  }
+  let sortBy = queryParams.sortBy || '-reviewsAmount'
+  let page = queryParams.page ? queryParams.page - 1 : 1
+  const pageLimit = queryParams.pageLimit || 12
 
   let teams
   let total
@@ -56,13 +25,15 @@ module.exports = async (req, res, next) => {
     ;[teams, total] = await Promise.all([
       Team.aggregate()
         .match(teamsQuery)
-        .sort(sortBy)
         .project({
+          _id: 0,
+          id: '$_id',
           avatar: 1,
           description: 1,
           name: 1,
           reviewsAmount: 1
         })
+        .sort(sortBy)
         .skip(page * pageLimit)
         .limit(pageLimit),
       Team.find(teamsQuery).count()
@@ -84,19 +55,14 @@ module.exports = async (req, res, next) => {
     return next(err)
   }
 
-  teams = teams.map((t, i) =>
-    Object.assign(
-      {},
-      {
-        id: t._id,
-        avatar: t.avatar,
-        description: t.description,
-        name: t.name,
-        ranking: teamsRankings[i] + 1,
-        reviewsAmount: t.reviewsAmount
-      }
-    )
-  )
+  teams = teams.map((t, i) => ({
+    id: t.id,
+    avatar: t.avatar,
+    description: t.description,
+    name: t.name,
+    ranking: teamsRankings[i] + 1,
+    reviewsAmount: t.reviewsAmount
+  }))
 
   let lastPage = Math.ceil(total / pageLimit)
   if (lastPage > 0) {
