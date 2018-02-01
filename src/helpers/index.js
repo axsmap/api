@@ -16,7 +16,7 @@ module.exports = {
   deleteUnusedProperties(obj) {
     return pickBy(obj, prop => prop)
   },
-  isAuthenticated: async (req, res, next) => {
+  isAuthenticated: ({ isOptional = false }) => async (req, res, next) => {
     const authorizationHeader = req.headers.authorization
     let token
 
@@ -55,13 +55,20 @@ module.exports = {
       return res.status(404).json({ general: 'User not found' })
     }
 
+    if (isOptional) {
+      return next()
+    }
+
     return res.status(401).json({ general: 'No token provided' })
   },
   isNumber(number) {
     return !isNaN(parseFloat(number)) && isFinite(number)
   },
-  isUnblocked(req, res, next) {
-    if (req.user.isBlocked) {
+  isUnblocked: ({ isOptional = false }) => (req, res, next) => {
+    if (
+      (isOptional && req.user && req.user.isBlocked) ||
+      (!isOptional && req.user.isBlocked)
+    ) {
       return res.status(423).json({ general: 'You are blocked' })
     }
 

@@ -4,7 +4,8 @@ const eventSchema = new mongoose.Schema(
   {
     address: {
       type: String,
-      maxlength: [200, 'Should have less than 201 characters']
+      maxlength: [200, 'Should have less than 201 characters'],
+      required: [true, 'Is required']
     },
     description: {
       type: String,
@@ -60,7 +61,7 @@ const eventSchema = new mongoose.Schema(
     },
     poster: {
       type: String,
-      default: `https://s3-sa-east-1.amazonaws.com/${process.env
+      default: `https://s3.amazonaws.com/${process.env
         .AWS_S3_BUCKET}/events/posters/default.png`,
       maxlength: [2000, 'Should be less than 2001 characters']
     },
@@ -78,6 +79,10 @@ const eventSchema = new mongoose.Schema(
       type: Date,
       required: [true, 'Is required']
     },
+    teamManager: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Team'
+    },
     teams: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -92,7 +97,13 @@ const eventSchema = new mongoose.Schema(
   { timestamps: true }
 )
 
-eventSchema.index({ name: 'text', endDate: 1, reviewsAmount: 1, startDate: 1 })
+eventSchema.index({
+  address: 'text',
+  name: 'text',
+  endDate: 1,
+  reviewsAmount: 1,
+  startDate: 1
+})
 
 module.exports = {
   Event: mongoose.model('Event', eventSchema),

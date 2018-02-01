@@ -1,6 +1,6 @@
 const express = require('express')
 
-const { isAuthenticated } = require('../../helpers')
+const { isAuthenticated, isUnblocked } = require('../../helpers')
 
 const addEventPhoto = require('./add-event-photo')
 const banEventPhoto = require('./ban-event-photo')
@@ -18,7 +18,7 @@ const uploadEventPoster = require('./upload-event-poster')
 const router = new express.Router()
 
 router.get('', listEvents)
-router.post('', isAuthenticated, createEvent)
+router.post('', isAuthenticated, isUnblocked, createEvent)
 router.get('/:eventId', isAuthenticated, getEvent)
 router.put('/:eventId', isAuthenticated, editEvent)
 router.delete('/:eventId', isAuthenticated, deleteEvent)

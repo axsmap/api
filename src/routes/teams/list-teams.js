@@ -1,3 +1,6 @@
+const mongoose = require('mongoose')
+const { toBoolean } = require('validator')
+
 const logger = require('../../helpers/logger')
 const { Team } = require('../../models/team')
 
@@ -13,6 +16,21 @@ module.exports = async (req, res, next) => {
 
   if (queryParams.keywords) {
     teamsQuery.$text = { $search: queryParams.keywords }
+  }
+
+  if (queryParams.managed) {
+    if (!req.user) {
+      return res
+        .status(400)
+        .json({ general: 'You cannot use managed filter as anonymous' })
+    }
+
+    const managed = toBoolean(queryParams.managed)
+    if (managed) {
+      teamsQuery.managers = { $in: [mongoose.Types.ObjectId(req.user.id)] }
+    } else {
+      teamsQuery.managers = { $nin: [mongoose.Types.ObjectId(req.user.id)] }
+    }
   }
 
   let sortBy = queryParams.sortBy || '-reviewsAmount'
@@ -43,6 +61,8 @@ module.exports = async (req, res, next) => {
     return next(err)
   }
 
+  teams.map(t => console.log(JSON.stringify(t)))
+
   const getTeamsRankings = teams.map(t =>
     Team.find({ reviewsAmount: { $gt: t.reviewsAmount } }).count()
   )
@@ -66,7 +86,6 @@ module.exports = async (req, res, next) => {
 
   let lastPage = Math.ceil(total / pageLimit)
   if (lastPage > 0) {
-    page += 1
     if (page > lastPage) {
       return res
         .status(400)

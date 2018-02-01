@@ -1,5 +1,5 @@
 const { isEmpty } = require('lodash')
-const { isInt, isMongoId } = require('validator')
+const { isBase64, isInt, isMongoId } = require('validator')
 const moment = require('moment')
 
 const { isNumber } = require('../../helpers')
@@ -7,9 +7,21 @@ const { isNumber } = require('../../helpers')
 module.exports = {
   validateCreateEvent(data) {
     const errors = {}
-    let endDateIsValid = false
-    let startDateIsValid = false
 
+    if (typeof data.address === 'undefined') {
+      data.address = 'Is required'
+    } else if (typeof data.address !== 'string') {
+      errors.address = 'Should be a string'
+    }
+
+    if (
+      typeof data.description !== 'undefined' &&
+      typeof data.description !== 'string'
+    ) {
+      errors.description = 'Should be a string'
+    }
+
+    let endDateIsValid = false
     if (!data.endDate) {
       errors.endDate = 'Is required'
     } else if (typeof data.endDate !== 'string') {
@@ -27,38 +39,75 @@ module.exports = {
       }
     }
 
+    if (
+      typeof data.isOpen !== 'undefined' &&
+      typeof data.isOpen !== 'boolean'
+    ) {
+      errors.isOpen = 'Should be a boolean'
+    }
+
+    if (!data.locationCoordinates) {
+      errors.locationCoordinates = 'Is required'
+    } else if (!Array.isArray(data.locationCoordinates)) {
+      errors.locationCoordinates = 'Should be an array'
+    } else if (!data.locationCoordinates[0]) {
+      errors.locationCoordinates = 'Latitude is required'
+    } else if (!isNumber(data.locationCoordinates[0])) {
+      errors.locationCoordinates = 'Latitude should be a number'
+    } else if (
+      parseFloat(data.locationCoordinates[0]) < -90 ||
+      parseFloat(data.locationCoordinates[0]) > 90
+    ) {
+      errors.locationCoordinates = 'Latitude value is not valid'
+    } else if (!data.locationCoordinates[1]) {
+      errors.locationCoordinates = 'Longitude is required'
+    } else if (!isNumber(data.locationCoordinates[1])) {
+      errors.locationCoordinates = 'Longitude should be a number'
+    } else if (
+      parseFloat(data.locationCoordinates[1]) < -180 ||
+      parseFloat(data.locationCoordinates[1]) > 180
+    ) {
+      errors.locationCoordinates = 'Longitude value is not valid'
+    } else if (data.locationCoordinates.length > 2) {
+      errors.locationCoordinates = 'Should only have latitude and longitude'
+    }
+
     if (!data.name) {
       errors.name = 'Is required'
     } else if (typeof data.name !== 'string') {
       errors.name = 'Should be a string'
     }
 
-    if (!data.pointCoordinates) {
-      errors.pointCoordinates = 'Is required'
-    } else if (!Array.isArray(data.pointCoordinates)) {
-      errors.pointCoordinates = 'Should be an array of point coordinates'
-    } else if (!data.pointCoordinates[0]) {
-      errors.pointCoordinates = 'Latitude is required'
-    } else if (!isNumber(data.pointCoordinates[0])) {
-      errors.pointCoordinates = 'Latitude should be a number'
-    } else if (
-      parseFloat(data.pointCoordinates[0]) < -90 ||
-      parseFloat(data.pointCoordinates[0]) > 90
-    ) {
-      errors.pointCoordinates = 'Latitude value is not valid'
-    } else if (!data.pointCoordinates[1]) {
-      errors.pointCoordinates = 'Longitude is required'
-    } else if (!isNumber(data.pointCoordinates[1])) {
-      errors.pointCoordinates = 'Longitude should be a number'
-    } else if (
-      parseFloat(data.pointCoordinates[1]) < -180 ||
-      parseFloat(data.pointCoordinates[1]) > 180
-    ) {
-      errors.pointCoordinates = 'Longitude value is not valid'
-    } else if (data.pointCoordinates.length > 2) {
-      errors.pointCoordinates = 'Should only have latitude and longitude'
+    if (typeof data.participantsGoal === 'undefined') {
+      errors.participantsGoal = 'Is required'
+    } else if (typeof data.participantsGoal !== 'number') {
+      errors.participantsGoal = 'Should be a number'
+    } else if (!isInt(data.participantsGoal.toString())) {
+      errors.participantsGoal = 'Should be a integer'
     }
 
+    if (data.poster) {
+      if (typeof data.poster !== 'string') {
+        errors.poster = 'Should be a string'
+      } else {
+        const posterBase64 = data.poster.split(',')[1]
+        if (!isBase64(posterBase64)) {
+          errors.poster = 'Should be a valid base 64 string'
+        } else if (posterBase64.length > 8388608) {
+          errors.poster = 'Should be less than 8MB'
+        }
+      }
+    }
+
+    if (typeof data.reviewsGoal === 'undefined') {
+      errors.reviewsGoal = 'Is required'
+    } else if (typeof data.reviewsGoal !== 'number') {
+      errors.reviewsGoal = 'Should be a number'
+    } else if (!isInt(data.reviewsGoal.toString())) {
+      errors.reviewsGoal = 'Should be a integer'
+    }
+
+    let startDateIsValid = false
     if (!data.startDate) {
       errors.startDate = 'Is required'
     } else if (typeof data.startDate !== 'string') {
@@ -73,6 +122,14 @@ module.exports = {
         errors.startDate = 'Should be greater than or equal to today'
       } else {
         startDateIsValid = true
+      }
+    }
+
+    if (data.teamManager) {
+      if (typeof data.teamManager !== 'string') {
+        errors.teamManager = 'Should be a string'
+      } else if (!isMongoId(data.teamManager)) {
+        errors.teamManager = 'Should be a valid id'
       }
     }
 

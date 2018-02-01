@@ -106,6 +106,14 @@ module.exports = {
   validateListTeams(queryParams) {
     const errors = {}
 
+    if (
+      queryParams.managed &&
+      queryParams.managed !== '0' &&
+      queryParams.managed !== '1'
+    ) {
+      errors.managed = 'Should be 0 or 1'
+    }
+
     const sortOptions = ['name', '-name', 'reviewsAmount', '-reviewsAmount']
     if (queryParams.sortBy && !sortOptions.includes(queryParams.sortBy)) {
       errors.sortBy = 'Should be a valid sort'
