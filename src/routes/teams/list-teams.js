@@ -16,7 +16,7 @@ module.exports = async (req, res, next) => {
   }
 
   let sortBy = queryParams.sortBy || '-reviewsAmount'
-  let page = queryParams.page ? queryParams.page - 1 : 1
+  let page = queryParams.page ? queryParams.page - 1 : 0
   const pageLimit = queryParams.pageLimit || 12
 
   let teams
@@ -78,7 +78,7 @@ module.exports = async (req, res, next) => {
   }
 
   return res.status(200).json({
-    page,
+    page: page + 1,
     lastPage,
     pageLimit,
     total,
