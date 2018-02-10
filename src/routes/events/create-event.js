@@ -11,22 +11,19 @@ const { Team } = require('../../models/team')
 const { validateCreateEvent } = require('./validations')
 
 module.exports = async (req, res, next) => {
-  const data = Object.assign(
-    {},
-    {
-      address: req.body.address,
-      description: req.body.description,
-      endDate: req.body.endDate,
-      isOpen: req.body.isOpen,
-      locationCoordinates: req.body.locationCoordinates,
-      name: req.body.name,
-      participantsGoal: req.body.participantsGoal,
-      poster: req.body.poster,
-      reviewsGoal: req.body.reviewsGoal,
-      startDate: req.body.startDate,
-      teamManager: req.body.teamManager
-    }
-  )
+  const data = {
+    address: req.body.address,
+    description: req.body.description,
+    endDate: req.body.endDate,
+    isOpen: req.body.isOpen,
+    locationCoordinates: req.body.locationCoordinates,
+    name: req.body.name,
+    participantsGoal: req.body.participantsGoal,
+    poster: req.body.poster,
+    reviewsGoal: req.body.reviewsGoal,
+    startDate: req.body.startDate,
+    teamManager: req.body.teamManager
+  }
 
   const { errors, isValid } = validateCreateEvent(data)
   if (!isValid) return res.status(400).json(errors)
@@ -94,6 +91,8 @@ module.exports = async (req, res, next) => {
       logger.error('Poster failed to be uploaded at create-event')
       return next(err)
     }
+  } else {
+    data.poster = undefined
   }
 
   data.startDate = moment(data.startDate).utc().toDate()
@@ -117,6 +116,8 @@ module.exports = async (req, res, next) => {
     if (!teamManagers.includes(req.user.id)) {
       return res.status(403).json({ general: 'Forbidden action' })
     }
+  } else {
+    data.teamManager = undefined
   }
 
   let event
@@ -158,22 +159,19 @@ module.exports = async (req, res, next) => {
       lng: event.location.coordinates[0]
     }
   }
-  const dataResponse = Object.assign(
-    {},
-    {
-      address: event.address,
-      description: event.description,
-      endDate: event.description,
-      isOpen: event.isOpen,
-      location: eventLocation,
-      managers: event.managers,
-      name: event.name,
-      participantsGoal: event.participantsGoal,
-      poster: event.poster,
-      reviewsGoal: event.reviewsGoal,
-      teamManager: event.teamManager
-    }
-  )
+  const dataResponse = {
+    address: event.address,
+    description: event.description,
+    endDate: event.description,
+    isOpen: event.isOpen,
+    location: eventLocation,
+    managers: event.managers,
+    name: event.name,
+    participantsGoal: event.participantsGoal,
+    poster: event.poster,
+    reviewsGoal: event.reviewsGoal,
+    teamManager: event.teamManager
+  }
 
   return res.status(201).json(dataResponse)
 }

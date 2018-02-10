@@ -16,7 +16,7 @@ module.exports = {
   deleteUnusedProperties(obj) {
     return pickBy(obj, prop => prop)
   },
-  isAuthenticated: ({ isOptional = false }) => async (req, res, next) => {
+  isAuthenticated: ({ isOptional }) => async (req, res, next) => {
     const authorizationHeader = req.headers.authorization
     let token
 
@@ -64,7 +64,7 @@ module.exports = {
   isNumber(number) {
     return !isNaN(parseFloat(number)) && isFinite(number)
   },
-  isUnblocked: ({ isOptional = false }) => (req, res, next) => {
+  isUnblocked: ({ isOptional }) => (req, res, next) => {
     if (
       (isOptional && req.user && req.user.isBlocked) ||
       (!isOptional && req.user.isBlocked)

@@ -4,12 +4,12 @@ const eventSchema = new mongoose.Schema(
   {
     address: {
       type: String,
-      maxlength: [200, 'Should have less than 201 characters'],
+      maxlength: [200, 'Should be less than 201 characters'],
       required: [true, 'Is required']
     },
     description: {
       type: String,
-      maxlength: [300, 'Should have less than 301 characters']
+      maxlength: [300, 'Should be less than 301 characters']
     },
     endDate: {
       type: Date,
@@ -43,7 +43,8 @@ const eventSchema = new mongoose.Schema(
     },
     name: {
       type: String,
-      maxlength: [100, 'Should have less than 101 characters']
+      maxlength: [100, 'Should be less than 101 characters'],
+      required: [true, 'Is required']
     },
     participants: {
       type: [
@@ -56,7 +57,7 @@ const eventSchema = new mongoose.Schema(
     participantsGoal: {
       type: Number,
       max: [1000, 'Should be less than 1001'],
-      min: [1, 'Should be more than 0'],
+      min: [1, 'Should be greater than 0'],
       required: [true, 'Is required']
     },
     poster: {
@@ -73,7 +74,7 @@ const eventSchema = new mongoose.Schema(
     reviewsGoal: {
       type: Number,
       max: [10000, 'Should be less than 10001'],
-      min: [1, 'Should be more than 0']
+      min: [1, 'Should be greater than 0']
     },
     startDate: {
       type: Date,

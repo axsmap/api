@@ -16,16 +16,38 @@ const uploadUserAvatar = require('./upload-user-avatar')
 
 const router = new express.Router()
 
-router.get('/profile', isAuthenticated, isUnblocked, getProfile)
-router.put('/password', isAuthenticated, changePassword)
-router.get('', isAuthenticated, isUnblocked, listUsers)
-router.post('', isAuthenticated, createUser)
-router.get('/:userId', isAuthenticated, getUser)
-router.put('/:userId', isAuthenticated, editUser)
-router.delete('/:userId', isAuthenticated, deleteUser)
-router.put('/:userId/avatar', isAuthenticated, uploadUserAvatar)
-router.put('/:userId/archive', isAuthenticated, archiveUser)
-router.put('/:userId/block', isAuthenticated, blockUser)
-router.put('/:userId/unblock', isAuthenticated, unblockUser)
+router.get(
+  '/profile',
+  isAuthenticated({ isOptional: false }),
+  isUnblocked({ isOptional: false }),
+  getProfile
+)
+router.put('/password', isAuthenticated({ isOptional: false }), changePassword)
+router.get(
+  '',
+  isAuthenticated({ isOptional: false }),
+  isUnblocked({ isOptional: false }),
+  listUsers
+)
+router.post('', isAuthenticated({ isOptional: false }), createUser)
+router.get('/:userId', isAuthenticated({ isOptional: false }), getUser)
+router.put('/:userId', isAuthenticated({ isOptional: false }), editUser)
+router.delete('/:userId', isAuthenticated({ isOptional: false }), deleteUser)
+router.put(
+  '/:userId/avatar',
+  isAuthenticated({ isOptional: false }),
+  uploadUserAvatar
+)
+router.put(
+  '/:userId/archive',
+  isAuthenticated({ isOptional: false }),
+  archiveUser
+)
+router.put('/:userId/block', isAuthenticated({ isOptional: false }), blockUser)
+router.put(
+  '/:userId/unblock',
+  isAuthenticated({ isOptional: false }),
+  unblockUser
+)
 
 module.exports = router

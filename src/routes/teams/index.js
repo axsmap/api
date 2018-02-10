@@ -18,11 +18,25 @@ router.get(
   isUnblocked({ isOptional: true }),
   listTeams
 )
-router.post('', isAuthenticated, isUnblocked, createTeam)
+router.post(
+  '',
+  isAuthenticated({ isOptional: false }),
+  isUnblocked({ isOptional: false }),
+  createTeam
+)
 router.get('/:teamId', getTeam)
-router.put('/:teamId', isAuthenticated, isUnblocked, editTeam)
-router.delete('/:teamId', isAuthenticated, deleteTeam)
-router.put('/:teamId/avatar', isAuthenticated, uploadTeamAvatar)
-router.put('/:teamId/leave', isAuthenticated, leaveTeam)
+router.put(
+  '/:teamId',
+  isAuthenticated({ isOptional: false }),
+  isUnblocked({ isOptional: false }),
+  editTeam
+)
+router.delete('/:teamId', isAuthenticated({ isOptional: false }), deleteTeam)
+router.put(
+  '/:teamId/avatar',
+  isAuthenticated({ isOptional: false }),
+  uploadTeamAvatar
+)
+router.put('/:teamId/leave', isAuthenticated({ isOptional: false }), leaveTeam)
 
 module.exports = router

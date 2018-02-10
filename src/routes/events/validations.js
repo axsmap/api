@@ -8,8 +8,12 @@ module.exports = {
   validateCreateEvent(data) {
     const errors = {}
 
-    if (typeof data.address === 'undefined') {
-      data.address = 'Is required'
+    if (
+      typeof data.address === 'undefined' ||
+      data.address === '' ||
+      data.address === null
+    ) {
+      errors.address = 'Is required'
     } else if (typeof data.address !== 'string') {
       errors.address = 'Should be a string'
     }
@@ -22,14 +26,18 @@ module.exports = {
     }
 
     let endDateIsValid = false
-    if (!data.endDate) {
+    if (
+      typeof data.endDate === 'undefined' ||
+      data.endDate === '' ||
+      data.endDate === null
+    ) {
       errors.endDate = 'Is required'
     } else if (typeof data.endDate !== 'string') {
       errors.endDate = 'Should be a string'
-    } else if (!moment(data.endDate, 'YYYY-MM-DD', true).isValid()) {
-      errors.endDate = 'Should have YYYY-MM-DD format'
+    } else if (!moment(data.endDate).isValid()) {
+      errors.endDate = 'Should have a ISO-8601 format'
     } else {
-      const endDate = moment(data.endDate, 'YYYY-MM-DD').utc()
+      const endDate = moment(data.endDate).utc()
       const today = moment().utc()
 
       if (endDate.isBefore(today)) {
@@ -72,7 +80,11 @@ module.exports = {
       errors.locationCoordinates = 'Should only have latitude and longitude'
     }
 
-    if (!data.name) {
+    if (
+      typeof data.name === 'undefined' ||
+      data.name === '' ||
+      data.name === null
+    ) {
       errors.name = 'Is required'
     } else if (typeof data.name !== 'string') {
       errors.name = 'Should be a string'
@@ -108,14 +120,18 @@ module.exports = {
     }
 
     let startDateIsValid = false
-    if (!data.startDate) {
+    if (
+      typeof data.startDate === 'undefined' ||
+      data.startDate === '' ||
+      data.startDate === null
+    ) {
       errors.startDate = 'Is required'
     } else if (typeof data.startDate !== 'string') {
       errors.startDate = 'Should be a string'
-    } else if (!moment(data.startDate, 'YYYY-MM-DD', true).isValid()) {
-      errors.startDate = 'Should have YYYY-MM-DD format'
+    } else if (!moment(data.startDate).isValid()) {
+      errors.startDate = 'Should have a ISO-8601 format'
     } else {
-      const startDate = moment(data.startDate, 'YYYY-MM-DD').utc()
+      const startDate = moment(data.startDate).utc()
       const today = moment().utc()
 
       if (startDate.isBefore(today)) {
@@ -134,8 +150,8 @@ module.exports = {
     }
 
     if (endDateIsValid && startDateIsValid) {
-      const endDate = moment(data.endDate, 'YYYY-MM-DD').utc()
-      const startDate = moment(data.startDate, 'YYYY-MM-DD').utc()
+      const endDate = moment(data.endDate).utc()
+      const startDate = moment(data.startDate).utc()
 
       if (startDate.isAfter(endDate)) {
         errors.endDate = 'Should be greater than or equal to startDate'

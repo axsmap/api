@@ -10,6 +10,10 @@ const router = new express.Router()
 
 router.get('', listVenues)
 router.get('/:placeId', getVenue)
-router.put('/:venueId/archive', isAuthenticated, archiveVenue)
+router.put(
+  '/:venueId/archive',
+  isAuthenticated({ isOptional: false }),
+  archiveVenue
+)
 
 module.exports = router

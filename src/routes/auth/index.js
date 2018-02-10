@@ -29,7 +29,7 @@ router.post('/forgotten-password', bruteforce.prevent, forgottenPassword)
 router.post('/google', bruteforce.prevent, googleSignIn)
 router.put('/reset-password', bruteforce.prevent, resetPassword)
 router.post('/sign-in', bruteforce.prevent, signIn)
-router.delete('/sign-out', isAuthenticated, signOut)
+router.delete('/sign-out', isAuthenticated({ isOptional: false }), signOut)
 router.post('/sign-up', bruteforce.prevent, signUp)
 router.post('/token', bruteforce.prevent, generateToken)
 

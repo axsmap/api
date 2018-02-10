@@ -18,16 +18,49 @@ const uploadEventPoster = require('./upload-event-poster')
 const router = new express.Router()
 
 router.get('', listEvents)
-router.post('', isAuthenticated, isUnblocked, createEvent)
-router.get('/:eventId', isAuthenticated, getEvent)
-router.put('/:eventId', isAuthenticated, editEvent)
-router.delete('/:eventId', isAuthenticated, deleteEvent)
-router.put('/:eventId/poster', isAuthenticated, uploadEventPoster)
-router.put('/:eventId/leave', isAuthenticated, leaveEvent)
-router.post('/:eventId/photos', isAuthenticated, addEventPhoto)
-router.delete('/:eventId/photos/:photoId', isAuthenticated, removeEventPhoto)
-router.post('/:eventId/photos/:photoId/flag', isAuthenticated, flagEventPhoto)
-router.put('/:eventId/photos/:photoId/ban', isAuthenticated, banEventPhoto)
-router.put('/:eventId/participate', isAuthenticated, participateEvent)
+router.post(
+  '',
+  isAuthenticated({ isOptional: false }),
+  isUnblocked({ isOptional: false }),
+  createEvent
+)
+router.get('/:eventId', isAuthenticated({ isOptional: false }), getEvent)
+router.put('/:eventId', isAuthenticated({ isOptional: false }), editEvent)
+router.delete('/:eventId', isAuthenticated({ isOptional: false }), deleteEvent)
+router.put(
+  '/:eventId/poster',
+  isAuthenticated({ isOptional: false }),
+  uploadEventPoster
+)
+router.put(
+  '/:eventId/leave',
+  isAuthenticated({ isOptional: false }),
+  leaveEvent
+)
+router.post(
+  '/:eventId/photos',
+  isAuthenticated({ isOptional: false }),
+  addEventPhoto
+)
+router.delete(
+  '/:eventId/photos/:photoId',
+  isAuthenticated({ isOptional: false }),
+  removeEventPhoto
+)
+router.post(
+  '/:eventId/photos/:photoId/flag',
+  isAuthenticated({ isOptional: false }),
+  flagEventPhoto
+)
+router.put(
+  '/:eventId/photos/:photoId/ban',
+  isAuthenticated({ isOptional: false }),
+  banEventPhoto
+)
+router.put(
+  '/:eventId/participate',
+  isAuthenticated({ isOptional: false }),
+  participateEvent
+)
 
 module.exports = router

@@ -34,8 +34,8 @@ module.exports = async (req, res, next) => {
   }
 
   let sortBy = queryParams.sortBy || '-reviewsAmount'
-  let page = queryParams.page ? queryParams.page - 1 : 0
-  const pageLimit = queryParams.pageLimit || 12
+  let page = queryParams.page ? Number(queryParams.page) - 1 : 0
+  const pageLimit = Number(queryParams.pageLimit) || 12
 
   let teams
   let total
@@ -60,8 +60,6 @@ module.exports = async (req, res, next) => {
     logger.error('Teams failed to be found or count at list-teams')
     return next(err)
   }
-
-  teams.map(t => console.log(JSON.stringify(t)))
 
   const getTeamsRankings = teams.map(t =>
     Team.find({ reviewsAmount: { $gt: t.reviewsAmount } }).count()
