@@ -24,7 +24,7 @@ router.post(
   isUnblocked({ isOptional: false }),
   createEvent
 )
-router.get('/:eventId', isAuthenticated({ isOptional: false }), getEvent)
+router.get('/:eventId', getEvent)
 router.put('/:eventId', isAuthenticated({ isOptional: false }), editEvent)
 router.delete('/:eventId', isAuthenticated({ isOptional: false }), deleteEvent)
 router.put(
