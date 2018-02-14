@@ -20,6 +20,31 @@ module.exports = async (req, res, next) => {
       {
         $lookup: {
           from: 'users',
+          let: { managers: '$managers' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $in: ['$_id', '$$managers']
+                }
+              }
+            },
+            {
+              $project: {
+                _id: 0,
+                id: '$_id',
+                avatar: 1,
+                firstName: 1,
+                lastName: 1
+              }
+            }
+          ],
+          as: 'managers'
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
           let: { participants: '$participants' },
           pipeline: [
             {
@@ -34,7 +59,8 @@ module.exports = async (req, res, next) => {
                 _id: 0,
                 id: '$_id',
                 avatar: 1,
-                firstName: 1
+                firstName: 1,
+                lastName: 1
               }
             }
           ],
@@ -63,6 +89,36 @@ module.exports = async (req, res, next) => {
             }
           ],
           as: 'teams'
+        }
+      },
+      {
+        $lookup: {
+          from: 'teams',
+          let: { teamManager: '$teamManager' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $eq: ['$_id', '$$teamManager']
+                }
+              }
+            },
+            {
+              $project: {
+                _id: 0,
+                id: '$_id',
+                avatar: 1,
+                name: 1
+              }
+            }
+          ],
+          as: 'teamManager'
+        }
+      },
+      {
+        $unwind: {
+          path: '$teamManager',
+          preserveNullAndEmptyArrays: true
         }
       },
       {

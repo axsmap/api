@@ -116,8 +116,6 @@ module.exports = async (req, res, next) => {
     if (!teamManagers.includes(req.user.id)) {
       return res.status(403).json({ general: 'Forbidden action' })
     }
-
-    data.teams = [data.teamManager]
   } else {
     data.teamManager = undefined
   }

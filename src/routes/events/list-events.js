@@ -50,12 +50,10 @@ module.exports = async (req, res, next) => {
           address: 1,
           endDate: 1,
           name: 1,
-          participants: 1,
           poster: 1,
           reviewsAmount: 1,
           reviewsGoal: 1,
-          startDate: 1,
-          teams: 1
+          startDate: 1
         })
         .sort(sortBy)
         .skip(page * pageLimit)

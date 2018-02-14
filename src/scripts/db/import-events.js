@@ -48,7 +48,7 @@ db.on('connected', async () => {
 
     let totalOldEvents
     try {
-      totalOldEvents = await oldEvent.count()
+      totalOldEvents = await oldEvent.count({ name: { $ne: '' } })
     } catch (error) {
       logger.info('Old events failed to be count')
       logger.error(error)
@@ -66,7 +66,7 @@ db.on('connected', async () => {
       let oldEvents
       try {
         oldEvents = await oldEvent
-          .find({})
+          .find({ name: { $ne: '' } })
           .skip(page * pageLimit)
           .limit(pageLimit)
       } catch (error) {
@@ -79,7 +79,10 @@ db.on('connected', async () => {
 
       const createEvents = []
       for (let oldEventItem of oldEvents) {
-        const participants = oldEventItem.members.map(member => member.user)
+        let participants = oldEventItem.members.map(member => member.user)
+        participants = participants.filter(
+          p => p.toString() !== oldEventItem.creator.toString()
+        )
 
         const eventData = {
           _id: oldEventItem.id,
