@@ -8,11 +8,7 @@ module.exports = {
   validateCreateEvent(data) {
     const errors = {}
 
-    if (
-      typeof data.address === 'undefined' ||
-      data.address === '' ||
-      data.address === null
-    ) {
+    if (typeof data.address === 'undefined' || data.address === '') {
       errors.address = 'Is required'
     } else if (typeof data.address !== 'string') {
       errors.address = 'Should be a string'
@@ -26,11 +22,7 @@ module.exports = {
     }
 
     let endDateIsValid = false
-    if (
-      typeof data.endDate === 'undefined' ||
-      data.endDate === '' ||
-      data.endDate === null
-    ) {
+    if (typeof data.endDate === 'undefined' || data.endDate === '') {
       errors.endDate = 'Is required'
     } else if (typeof data.endDate !== 'string') {
       errors.endDate = 'Should be a string'
@@ -54,11 +46,11 @@ module.exports = {
       errors.isOpen = 'Should be a boolean'
     }
 
-    if (!data.locationCoordinates) {
+    if (typeof data.locationCoordinates === 'undefined') {
       errors.locationCoordinates = 'Is required'
     } else if (!Array.isArray(data.locationCoordinates)) {
       errors.locationCoordinates = 'Should be an array'
-    } else if (!data.locationCoordinates[0]) {
+    } else if (typeof data.locationCoordinates[0] === 'undefined') {
       errors.locationCoordinates = 'Latitude is required'
     } else if (!isNumber(data.locationCoordinates[0])) {
       errors.locationCoordinates = 'Latitude should be a number'
@@ -67,7 +59,7 @@ module.exports = {
       parseFloat(data.locationCoordinates[0]) > 90
     ) {
       errors.locationCoordinates = 'Latitude value is not valid'
-    } else if (!data.locationCoordinates[1]) {
+    } else if (typeof data.locationCoordinates[1] === 'undefined') {
       errors.locationCoordinates = 'Longitude is required'
     } else if (!isNumber(data.locationCoordinates[1])) {
       errors.locationCoordinates = 'Longitude should be a number'
@@ -80,11 +72,7 @@ module.exports = {
       errors.locationCoordinates = 'Should only have latitude and longitude'
     }
 
-    if (
-      typeof data.name === 'undefined' ||
-      data.name === '' ||
-      data.name === null
-    ) {
+    if (typeof data.name === 'undefined' || data.name === '') {
       errors.name = 'Is required'
     } else if (typeof data.name !== 'string') {
       errors.name = 'Should be a string'
@@ -98,7 +86,7 @@ module.exports = {
       errors.participantsGoal = 'Should be a integer'
     }
 
-    if (data.poster) {
+    if (typeof data.poster !== 'undefined') {
       if (typeof data.poster !== 'string') {
         errors.poster = 'Should be a string'
       } else {
@@ -120,11 +108,7 @@ module.exports = {
     }
 
     let startDateIsValid = false
-    if (
-      typeof data.startDate === 'undefined' ||
-      data.startDate === '' ||
-      data.startDate === null
-    ) {
+    if (typeof data.startDate === 'undefined' || data.startDate === '') {
       errors.startDate = 'Is required'
     } else if (typeof data.startDate !== 'string') {
       errors.startDate = 'Should be a string'
@@ -141,7 +125,7 @@ module.exports = {
       }
     }
 
-    if (data.teamManager) {
+    if (typeof data.teamManager !== 'undefined') {
       if (typeof data.teamManager !== 'string') {
         errors.teamManager = 'Should be a string'
       } else if (!isMongoId(data.teamManager)) {
@@ -165,16 +149,29 @@ module.exports = {
   },
   validateEditEvent(data) {
     const errors = {}
-    let endDateIsValid = false
-    let startDateIsValid = false
 
-    if (data.endDate) {
+    if (
+      typeof data.address !== 'undefined' &&
+      typeof data.address !== 'string'
+    ) {
+      errors.address = 'Should be a string'
+    }
+
+    if (
+      typeof data.description !== 'undefined' &&
+      typeof data.description !== 'string'
+    ) {
+      errors.description = 'Should be a string'
+    }
+
+    let endDateIsValid = false
+    if (typeof data.endDate !== 'undefined') {
       if (typeof data.endDate !== 'string') {
         errors.endDate = 'Should be a string'
-      } else if (!moment(data.endDate, 'YYYY-MM-DD', true).isValid()) {
-        errors.endDate = 'Should have YYYY-MM-DD format'
+      } else if (!moment(data.endDate).isValid()) {
+        errors.endDate = 'Should have a ISO-8601 format'
       } else {
-        const endDate = moment(data.endDate, 'YYYY-MM-DD').utc()
+        const endDate = moment(data.endDate).utc()
         const today = moment().utc()
 
         if (endDate.isBefore(today)) {
@@ -185,73 +182,127 @@ module.exports = {
       }
     }
 
-    if (data.managers) {
+    if (
+      typeof data.isOpen !== 'undefined' &&
+      typeof data.isOpen !== 'boolean'
+    ) {
+      errors.isOpen = 'Should be a boolean'
+    }
+
+    if (typeof data.locationCoordinates !== 'undefined') {
+      if (!Array.isArray(data.locationCoordinates)) {
+        errors.locationCoordinates = 'Should be an array'
+      } else if (typeof data.locationCoordinates[0] === 'undefined') {
+        errors.locationCoordinates = 'Latitude is required'
+      } else if (!isNumber(data.locationCoordinates[0])) {
+        errors.locationCoordinates = 'Latitude should be a number'
+      } else if (
+        parseFloat(data.locationCoordinates[0]) < -90 ||
+        parseFloat(data.locationCoordinates[0]) > 90
+      ) {
+        errors.locationCoordinates = 'Latitude value is not valid'
+      } else if (typeof data.locationCoordinates[1] === 'undefined') {
+        errors.locationCoordinates = 'Longitude is required'
+      } else if (!isNumber(data.locationCoordinates[1])) {
+        errors.locationCoordinates = 'Longitude should be a number'
+      } else if (
+        parseFloat(data.locationCoordinates[1]) < -180 ||
+        parseFloat(data.locationCoordinates[1]) > 180
+      ) {
+        errors.locationCoordinates = 'Longitude value is not valid'
+      } else if (data.locationCoordinates.length > 2) {
+        errors.locationCoordinates = 'Should only have latitude and longitude'
+      }
+    }
+
+    if (typeof data.managers !== 'undefined') {
       if (!Array.isArray(data.managers)) {
-        errors.managers = 'Should be an array of users Ids'
-      } else if (data.managers.length > 0) {
-        data.managers.forEach(m => {
-          if (m && m.toString().startsWith('-')) {
-            m = m.substring(1)
-          }
+        errors.managers = 'Should be an array'
+      } else {
+        data.managers.some(m => {
+          if (typeof m !== 'string') {
+            errors.managers = 'Should only have string values'
+            return true
+          } else if (!m) {
+            errors.managers = 'Should not have empty values'
+            return true
+          } else {
+            if (m.startsWith('-')) {
+              m = m.substring(1)
+            }
 
-          if (!m || !isMongoId(m.toString())) {
-            errors.managers = `${m} should be an user Id`
+            if (!isMongoId(m)) {
+              errors.managers = `${m} should be an id`
+              return true
+            }
           }
         })
       }
     }
 
-    if (data.participants) {
+    if (typeof data.name !== 'undefined' && typeof data.name !== 'string') {
+      errors.name = 'Should be a string'
+    }
+
+    if (typeof data.participants !== 'undefined') {
       if (!Array.isArray(data.participants)) {
-        errors.participants = 'Should be an array of users Ids'
-      } else if (data.participants.length > 0) {
-        data.participants.forEach(p => {
-          if (!p) {
-            errors.participants = `${p} should not be null`
-          } else if (!p.toString().startsWith('-')) {
+        errors.participants = 'Should be an array'
+      } else {
+        data.participants.some(p => {
+          if (typeof p !== 'string') {
+            errors.participants = 'Should only have string values'
+            return true
+          } else if (!p) {
+            errors.participants = 'Should not have empty values'
+            return true
+          } else if (!p.startsWith('-')) {
             errors.participants = `${p} should start with -`
+            return true
           } else if (!isMongoId(p.substring(1))) {
-            errors.participants = `${p} should be an user Id`
+            errors.participants = `${p} should be an id`
+            return true
           }
         })
       }
     }
 
-    if (data.pointCoordinates) {
-      if (!Array.isArray(data.pointCoordinates)) {
-        errors.pointCoordinates = 'Should be an array of point coordinates'
-      } else if (data.pointCoordinates.length > 0) {
-        if (!data.pointCoordinates[0]) {
-          errors.pointCoordinates = 'Latitude is required'
-        } else if (!isNumber(data.pointCoordinates[0])) {
-          errors.pointCoordinates = 'Latitude should be a number'
-        } else if (
-          parseFloat(data.pointCoordinates[0]) < -90 ||
-          parseFloat(data.pointCoordinates[0]) > 90
-        ) {
-          errors.pointCoordinates = 'Latitude value is not valid'
-        } else if (!data.pointCoordinates[1]) {
-          errors.pointCoordinates = 'Longitude is required'
-        } else if (!isNumber(data.pointCoordinates[1])) {
-          errors.pointCoordinates = 'Longitude should be a number'
-        } else if (
-          parseFloat(data.pointCoordinates[1]) < -180 ||
-          parseFloat(data.pointCoordinates[1]) > 180
-        ) {
-          errors.pointCoordinates = 'Longitude value is not valid'
-        } else if (data.pointCoordinates.length > 2) {
-          errors.pointCoordinates = 'Should only have latitude and longitude'
+    if (typeof data.participantsGoal !== 'undefined') {
+      if (typeof data.participantsGoal !== 'number') {
+        errors.participantsGoal = 'Should be a number'
+      } else if (!isInt(data.participantsGoal.toString())) {
+        errors.participantsGoal = 'Should be a integer'
+      }
+    }
+
+    if (typeof data.poster !== 'undefined') {
+      if (typeof data.poster !== 'string') {
+        errors.poster = 'Should be a string'
+      } else {
+        const posterBase64 = data.poster.split(',')[1]
+        if (!isBase64(posterBase64)) {
+          errors.poster = 'Should be a valid base 64 string'
+        } else if (posterBase64.length > 8388608) {
+          errors.poster = 'Should be less than 8MB'
         }
       }
     }
 
-    if (data.startDate) {
+    if (typeof data.reviewsGoal !== 'undefined') {
+      if (typeof data.reviewsGoal !== 'number') {
+        errors.reviewsGoal = 'Should be a number'
+      } else if (!isInt(data.reviewsGoal.toString())) {
+        errors.reviewsGoal = 'Should be a integer'
+      }
+    }
+
+    let startDateIsValid = false
+    if (typeof data.startDate !== 'undefined') {
       if (typeof data.startDate !== 'string') {
         errors.startDate = 'Should be a string'
-      } else if (!moment(data.startDate, 'YYYY-MM-DD', true).isValid()) {
-        errors.startDate = 'Should have YYYY-MM-DD format'
+      } else if (!moment(data.startDate).isValid()) {
+        errors.startDate = 'Should have a ISO-8601 format'
       } else {
-        const startDate = moment(data.startDate, 'YYYY-MM-DD').utc()
+        const startDate = moment(data.startDate).utc()
         const today = moment().utc()
 
         if (startDate.isBefore(today)) {
@@ -262,25 +313,39 @@ module.exports = {
       }
     }
 
-    if (data.teams) {
+    if (typeof data.teamManager !== 'undefined') {
+      if (typeof data.teamManager !== 'string') {
+        errors.teamManager = 'Should be a string'
+      } else if (!isMongoId(data.teamManager)) {
+        errors.teamManager = 'Should be a valid id'
+      }
+    }
+
+    if (typeof data.teams !== 'undefined') {
       if (!Array.isArray(data.teams)) {
-        errors.teams = 'Should be an array of teams Ids'
-      } else if (data.teams.length > 0) {
-        data.teams.forEach(t => {
-          if (!t) {
-            errors.teams = `${t} should not be null`
-          } else if (!t.toString().startsWith('-')) {
+        errors.teams = 'Should be an array'
+      } else {
+        data.teams.some(t => {
+          if (typeof t !== 'string') {
+            errors.teams = 'Should only have string values'
+            return true
+          } else if (!t) {
+            errors.teams = 'Should not have empty values'
+            return true
+          } else if (!t.startsWith('-')) {
             errors.teams = `${t} should start with -`
+            return true
           } else if (!isMongoId(t.substring(1))) {
-            errors.teams = `${t} should be an user Id`
+            errors.teams = `${t} should be an id`
+            return true
           }
         })
       }
     }
 
     if (endDateIsValid && startDateIsValid) {
-      const endDate = moment(data.endDate, 'YYYY-MM-DD').utc()
-      const startDate = moment(data.startDate, 'YYYY-MM-DD').utc()
+      const endDate = moment(data.endDate).utc()
+      const startDate = moment(data.startDate).utc()
 
       if (startDate.isAfter(endDate)) {
         errors.endDate = 'Should be greater than or equal to startDate'

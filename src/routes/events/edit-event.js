@@ -1,6 +1,8 @@
-const { difference, intersection, pick } = require('lodash')
+const aws = require('aws-sdk')
+const jimp = require('jimp')
+const { difference, intersection, last } = require('lodash')
 const moment = require('moment')
-const slugify = require('speakingurl')
+const randomstring = require('randomstring')
 
 const { Event } = require('../../models/event')
 const { cleanSpaces } = require('../../helpers')
@@ -11,10 +13,6 @@ const { User } = require('../../models/user')
 const { validateEditEvent } = require('./validations')
 
 module.exports = async (req, res, next) => {
-  if (req.user.isBlocked) {
-    return res.status(423).json({ general: 'You are blocked' })
-  }
-
   const eventId = req.params.eventId
 
   let event
@@ -33,10 +31,7 @@ module.exports = async (req, res, next) => {
     return res.status(404).json({ general: 'Event not found' })
   }
 
-  if (
-    !event.managers.find(m => m.toString() === req.user.id) &&
-    !req.user.isAdmin
-  ) {
+  if (!event.managers.find(m => m.toString() === req.user.id)) {
     return res.status(403).json({ general: 'Forbidden action' })
   }
 
@@ -49,20 +44,36 @@ module.exports = async (req, res, next) => {
       .json({ general: 'You cannot edit it because it already started' })
   }
 
-  const { errors, isValid } = validateEditEvent(req.body)
-
-  if (!isValid) {
-    return res.status(400).json(errors)
+  const data = {
+    address: req.body.address,
+    description: req.body.description,
+    endDate: req.body.endDate,
+    isOpen: req.body.isOpen,
+    locationCoordinates: req.body.locationCoordinates,
+    name: req.body.name,
+    participantsGoal: req.body.participantsGoal,
+    poster: req.body.poster,
+    reviewsGoal: req.body.reviewsGoal,
+    startDate: req.body.startDate,
+    teamManager: req.body.teamManager
   }
 
-  event.city = req.body.city || event.city
-  event.country = req.body.country || event.country
-  event.description = req.body.description || event.description
+  const { errors, isValid } = validateEditEvent(data)
+  if (!isValid) return res.status(400).json(errors)
 
-  if (req.body.endDate) {
-    const endDate = moment(req.body.endDate).utc()
+  event.address =
+    typeof data.address !== 'undefined'
+      ? cleanSpaces(data.address)
+      : event.address
+  event.description =
+    typeof data.description !== 'undefined'
+      ? data.description
+      : event.description
 
-    if (!req.body.startDate) {
+  if (data.endDate) {
+    const endDate = moment(data.endDate).utc()
+
+    if (!data.startDate) {
       if (endDate.isBefore(startDate)) {
         return res.status(400).json({
           endDate: 'Should be equal to or greater than startDate'
@@ -77,13 +88,18 @@ module.exports = async (req, res, next) => {
     event.endDate = endDate.toDate()
   }
 
-  event.isPublic = req.body.isPublic || event.isPublic
+  if (data.locationCoordinates && data.locationCoordinates.length > 0) {
+    event.location = {
+      coordinates: [data.locationCoordinates[1], data.locationCoordinates[0]],
+      type: 'Point'
+    }
+  }
 
-  if (req.body.managers) {
+  if (data.managers) {
     let managersToAdd = []
     let managersToRemove = []
 
-    req.body.managers.forEach(m => {
+    data.managers.forEach(m => {
       if (m.startsWith('-')) {
         managersToRemove = [...managersToRemove, m.substring(1)]
       } else {
@@ -92,129 +108,200 @@ module.exports = async (req, res, next) => {
     })
 
     const eventManagers = event.managers.map(m => m.toString())
-    managersToAdd = [...new Set(difference(managersToAdd, eventManagers))]
-    managersToRemove = [
-      ...new Set(intersection(managersToRemove, eventManagers))
-    ]
 
+    managersToAdd = [...new Set(difference(managersToAdd, eventManagers))]
     if (managersToAdd.length > 0) {
+      const eventParticipants = event.participants.map(p => p.toString())
       const notParticipant = managersToAdd.find(
-        m => !event.participants.find(p => p.toString() === m)
+        m => !eventParticipants.includes(m)
       )
+
       if (notParticipant) {
         return res.status(400).json({
           managers: `User ${notParticipant} is not a participant of this event`
         })
       }
 
-      event.managers = [...event.managers, ...managersToAdd]
+      event.managers = [...eventManagers, ...managersToAdd]
+      event.participants = event.participants.filter(
+        p => !managersToAdd.includes(p.toString())
+      )
     }
 
+    managersToRemove = [
+      ...new Set(intersection(managersToRemove, eventManagers))
+    ]
     if (managersToRemove.length === event.managers.length) {
-      return res.status(400).json({
-        managers: 'Should not remove all the managers'
-      })
+      return res
+        .status(400)
+        .json({ managers: 'Should not remove all managers' })
     }
 
     event.managers = event.managers.filter(
       m => !managersToRemove.includes(m.toString())
     )
-  }
-
-  if (req.body.name && event.name !== cleanSpaces(req.body.name)) {
-    event.name = cleanSpaces(req.body.name)
-    event.slug = slugify(event.name).toLowerCase()
-
-    let otherEvent
-    try {
-      otherEvent = await Event.findOne({ slug: event.slug })
-    } catch (err) {
-      logger.error(`Event ${event.slug} failed to be found at edit-event`)
-      return next(err)
-    }
-
-    if (otherEvent) {
-      return res.status(400).json({ name: 'Is already taken' })
-    }
-  }
-
-  event.participantsGoal = req.body.participantsGoal || event.participantsGoal
-
-  if (req.body.participants) {
-    let participantsToRemove = []
-
-    req.body.participants.forEach(p => {
-      participantsToRemove = [...participantsToRemove, p.substring(1)]
-    })
-
     const eventParticipants = event.participants.map(p => p.toString())
+    event.participants = [...eventParticipants, ...managersToRemove]
+  }
+
+  if (data.name) {
+    const eventName = cleanSpaces(data.name)
+
+    if (eventName !== event.name) {
+      let repeatedEvent
+      try {
+        repeatedEvent = await Event.findOne({
+          name: eventName,
+          isArchived: false
+        })
+      } catch (err) {
+        logger.error(`Event ${eventName} failed to be found at edit-event`)
+        return next(err)
+      }
+
+      if (repeatedEvent) {
+        return res.status(400).json({ name: 'Is already taken' })
+      }
+
+      event.name = eventName
+    }
+  }
+
+  if (data.participants) {
+    const eventParticipants = event.participants.map(p => p.toString())
+    let participantsToRemove = data.participants.map(p => p.substring(1))
     participantsToRemove = [
       ...new Set(intersection(participantsToRemove, eventParticipants))
     ]
 
-    if (participantsToRemove.length === event.participants.length) {
-      return res.status(400).json({
-        participants: 'Should not remove all the participants'
-      })
-    }
-
-    const managersToRemove = event.managers.filter(m =>
-      participantsToRemove.includes(m.toString())
+    const getParticipants = participantsToRemove.map(p =>
+      User.find({ _id: p, isArchived: false })
     )
-
-    if (managersToRemove.length === event.managers.length) {
-      return res.status(400).json({
-        participants: 'Should not remove all the managers'
-      })
+    let participants
+    try {
+      participants = await Promise.all(getParticipants)
+    } catch (err) {
+      logger.error('Participants failed to be found at edit-event')
+      return next(err)
     }
 
-    const eventManagers = event.managers.map(m => m.toString())
-    event.managers = difference(eventManagers, managersToRemove)
+    const updateParticipants = participants.map((p, i) => {
+      p[i].events = p[i].events.filter(e => e.toString() !== event.id)
+      return p[i].save()
+    })
+
+    try {
+      await Promise.all(updateParticipants)
+    } catch (err) {
+      logger.error('Participants failed to be updated at edit-event')
+      return next(err)
+    }
 
     event.participants = event.participants.filter(
       p => !participantsToRemove.includes(p.toString())
     )
+  }
 
-    const participantsPromises = participantsToRemove.map(p =>
-      User.findOne({ _id: p, isArchived: false })
-    )
+  event.participantsGoal = data.participantsGoal || event.participantsGoal
 
-    let participants
+  const s3 = new aws.S3()
+  if (data.poster) {
+    const posterBuffer = Buffer.from(data.poster.split(',')[1], 'base64')
+    let posterImage
     try {
-      participants = await Promise.all(participantsPromises)
+      posterImage = await jimp.read(posterBuffer)
     } catch (err) {
-      logger.error('A participant failed to be found at edit-event')
+      logger.error('Poster image failed to be read at edit-event')
       return next(err)
     }
 
-    for (const participant of participants) {
-      participant.events = participant.events.filter(
-        e => e.toString() !== event.id
-      )
-      participant.updatedAt = today.toDate()
+    let uploadPoster
+    posterImage.cover(400, 400).quality(85)
+    posterImage.getBuffer(posterImage.getMIME(), (err, posterBuffer) => {
+      if (err) {
+        return next(err)
+      }
 
+      const posterExtension = posterImage.getExtension()
+      if (
+        posterExtension === 'png' ||
+        posterExtension === 'jpeg' ||
+        posterExtension === 'jpg' ||
+        posterExtension === 'bmp'
+      ) {
+        const posterFileName = `${Date.now()}${randomstring.generate({
+          length: 5,
+          capitalization: 'lowercase'
+        })}.${posterExtension}`
+        uploadPoster = s3
+          .putObject({
+            ACL: 'public-read',
+            Body: posterBuffer,
+            Bucket: process.env.AWS_S3_BUCKET,
+            ContentType: posterImage.getMIME(),
+            Key: `events/posters/${posterFileName}`
+          })
+          .promise()
+
+        data.avatar = `https://s3.amazonaws.com/${process.env
+          .AWS_S3_BUCKET}/events/posters/${posterFileName}`
+      } else {
+        return res
+          .status(400)
+          .json({ avatar: 'Should have a .png, .jpeg, .jpg or .bmp extension' })
+      }
+    })
+
+    try {
+      await uploadPoster
+    } catch (err) {
+      logger.error('Poster failed to be uploaded at edit-event')
+      return next(err)
+    }
+
+    const params = {
+      Bucket: process.env.AWS_S3_BUCKET,
+      Key: `events/posters/${last(event.poster.split('/'))}`
+    }
+    if (!event.poster.endsWith('default.png')) {
       try {
-        await participant.save()
+        await s3.deleteObject(params).promise()
       } catch (err) {
         logger.error(
-          `Participant ${participant.id} failed to be updated at edit-event`
+          `Event's poster ${params.Key} failed to be deleted at edit-event`
         )
         return next(err)
       }
     }
+
+    event.poster = data.poster
+  } else if (data.poster === '') {
+    const params = {
+      Bucket: process.env.AWS_S3_BUCKET,
+      Key: `events/posters/${last(event.poster.split('/'))}`
+    }
+    if (!event.poster.endsWith('default.png')) {
+      try {
+        await s3.deleteObject(params).promise()
+      } catch (err) {
+        logger.error(
+          `Event's poster ${params.Key} failed to be deleted at edit-event`
+        )
+        return next(err)
+      }
+    }
+
+    event.poster = `https://s3.amazonaws.com/${process.env
+      .AWS_S3_BUCKET}/events/posters/default.png`
   }
 
-  if (req.body.pointCoordinates.length > 0) {
-    event.point = { coordinates: req.body.pointCoordinates, type: 'Point' }
-  }
+  event.reviewsGoal = data.reviewsGoal || event.reviewsGoal
 
-  event.reviewsGoal = req.body.reviewsGoal || event.reviewsGoal
-
-  if (req.body.startDate) {
-    const startDate = moment(req.body.startDate).utc()
+  if (data.startDate) {
+    const startDate = moment(data.startDate).utc()
     const endDate = moment(event.endDate).utc()
 
-    if (!req.body.endDate) {
+    if (!data.endDate) {
       if (startDate.isBefore(today)) {
         return res.status(400).json({
           startDate: 'Should be equal to or greater than the current time'
@@ -233,41 +320,54 @@ module.exports = async (req, res, next) => {
     event.startDate = startDate.toDate()
   }
 
-  if (req.body.teams) {
-    let teamsToRemove = []
-
-    req.body.teams.forEach(t => {
-      teamsToRemove = [...teamsToRemove, t.substring(1)]
-    })
-
-    const eventTeams = event.teams.map(t => t.toString())
-    teamsToRemove = [...new Set(intersection(teamsToRemove, eventTeams))]
-
-    event.teams = event.teams.filter(t => !teamsToRemove.includes(t.toString()))
-
-    const teamsPromises = teamsToRemove.map(t =>
-      Team.findOne({ _id: t, isArchived: false })
-    )
-
-    let teams
+  if (data.teamManager) {
+    let team
     try {
-      teams = await Promise.all(teamsPromises)
+      team = await Team.findOne({ _id: data.teamManager, isArchived: false })
     } catch (err) {
-      logger.error('A team failed to be found at edit-event')
+      logger.error(`Team ${data.teamManager} failed to be found at edit-event`)
       return next(err)
     }
 
-    for (const team of teams) {
-      team.events = team.events.filter(e => e.toString() !== event.id)
-      team.updatedAt = Date.now()
-
-      try {
-        await team.save()
-      } catch (err) {
-        logger.error(`Team ${team.id} failed to be updated at edit-event`)
-        return next(err)
-      }
+    if (!team) {
+      return res.status(404).json({ teamManager: 'Not found' })
     }
+
+    const teamManagers = team.managers.map(m => m.toString())
+    if (!teamManagers.includes(req.user.id)) {
+      return res.status(403).json({ general: 'Forbidden action' })
+    }
+  }
+
+  if (data.teams) {
+    const eventTeams = event.teams.map(t => t.toString())
+    let teamsToRemove = data.teams.map(t => t.substring(1))
+    teamsToRemove = [...new Set(intersection(teamsToRemove, eventTeams))]
+
+    const getTeams = teamsToRemove.map(t =>
+      Team.find({ _id: t, isArchived: false })
+    )
+    let teams
+    try {
+      teams = await Promise.all(getTeams)
+    } catch (err) {
+      logger.error('Teams failed to be found at edit-event')
+      return next(err)
+    }
+
+    const updateTeams = teams.map((t, i) => {
+      t[i].events = t[i].events.filter(e => e.toString() !== event.id)
+      return t[i].save()
+    })
+
+    try {
+      await Promise.all(updateTeams)
+    } catch (err) {
+      logger.error('Teams failed to be updated at edit-event')
+      return next(err)
+    }
+
+    event.teams = event.teams.filter(t => !teamsToRemove.includes(t.toString()))
   }
 
   event.updatedAt = today.toDate()
@@ -289,25 +389,26 @@ module.exports = async (req, res, next) => {
     return next(err)
   }
 
-  const dataResponse = pick(event, [
-    '_id',
-    'city',
-    'country',
-    'description',
-    'endDate',
-    'isApproved',
-    'managers',
-    'name',
-    'participantsGoal',
-    'participants',
-    'photos',
-    'point',
-    'poster',
-    'reviewsGoal',
-    'slug',
-    'startDate',
-    'teams'
-  ])
+  let eventLocation
+  if (event.location.coordinates) {
+    eventLocation = {
+      lat: event.location.coordinates[1],
+      lng: event.location.coordinates[0]
+    }
+  }
+  const dataResponse = {
+    address: event.address,
+    description: event.description,
+    endDate: event.description,
+    isOpen: event.isOpen,
+    location: eventLocation,
+    managers: event.managers,
+    name: event.name,
+    participantsGoal: event.participantsGoal,
+    poster: event.poster,
+    reviewsGoal: event.reviewsGoal,
+    teamManager: event.teamManager
+  }
 
   return res.status(200).json(dataResponse)
 }

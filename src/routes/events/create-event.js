@@ -29,13 +29,28 @@ module.exports = async (req, res, next) => {
   if (!isValid) return res.status(400).json(errors)
 
   data.address = cleanSpaces(data.address)
+
   data.endDate = moment(data.endDate).utc().toDate()
+
   data.location = {
     coordinates: [data.locationCoordinates[1], data.locationCoordinates[0]]
   }
   delete data.locationCoordinates
-  data.name = cleanSpaces(data.name)
+
   data.managers = [req.user.id]
+
+  data.name = cleanSpaces(data.name)
+  let repeatedEvent
+  try {
+    repeatedEvent = await Event.findOne({ name: data.name, isArchived: false })
+  } catch (err) {
+    logger.error(`Event ${data.name} failed to be found at create-event`)
+    return next(err)
+  }
+
+  if (repeatedEvent) {
+    return res.status(400).json({ name: 'Is already taken' })
+  }
 
   if (data.poster) {
     const posterBuffer = Buffer.from(data.poster.split(',')[1], 'base64')
