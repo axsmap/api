@@ -90,7 +90,7 @@ module.exports = {
       if (typeof data.poster !== 'string') {
         errors.poster = 'Should be a string'
       } else {
-        const posterBase64 = data.poster.split(',')[1]
+        const posterBase64 = data.poster.split(',')[1] || ''
         if (!isBase64(posterBase64)) {
           errors.poster = 'Should be a valid base 64 string'
         } else if (posterBase64.length > 8388608) {
@@ -125,12 +125,13 @@ module.exports = {
       }
     }
 
-    if (typeof data.teamManager !== 'undefined') {
-      if (typeof data.teamManager !== 'string') {
-        errors.teamManager = 'Should be a string'
-      } else if (!isMongoId(data.teamManager)) {
-        errors.teamManager = 'Should be a valid id'
-      }
+    if (
+      typeof data.teamManager !== 'undefined' &&
+      typeof data.teamManager !== 'string'
+    ) {
+      errors.teamManager = 'Should be a string'
+    } else if (data.teamManager && !isMongoId(data.teamManager)) {
+      errors.teamManager = 'Should be a valid id'
     }
 
     if (endDateIsValid && startDateIsValid) {
@@ -150,11 +151,12 @@ module.exports = {
   validateEditEvent(data) {
     const errors = {}
 
-    if (
-      typeof data.address !== 'undefined' &&
-      typeof data.address !== 'string'
-    ) {
-      errors.address = 'Should be a string'
+    if (typeof data.address !== 'undefined') {
+      if (typeof data.address !== 'string') {
+        errors.address = 'Should be a string'
+      } else if (data.address === '') {
+        errors.address = 'Is required'
+      }
     }
 
     if (
@@ -168,6 +170,8 @@ module.exports = {
     if (typeof data.endDate !== 'undefined') {
       if (typeof data.endDate !== 'string') {
         errors.endDate = 'Should be a string'
+      } else if (data.endDate === '') {
+        errors.endDate = 'Is required'
       } else if (!moment(data.endDate).isValid()) {
         errors.endDate = 'Should have a ISO-8601 format'
       } else {
@@ -240,8 +244,12 @@ module.exports = {
       }
     }
 
-    if (typeof data.name !== 'undefined' && typeof data.name !== 'string') {
-      errors.name = 'Should be a string'
+    if (typeof data.name !== 'undefined') {
+      if (typeof data.name !== 'string') {
+        errors.name = 'Should be a string'
+      } else if (data.address === '') {
+        errors.name = 'Is required'
+      }
     }
 
     if (typeof data.participants !== 'undefined') {
@@ -267,7 +275,9 @@ module.exports = {
     }
 
     if (typeof data.participantsGoal !== 'undefined') {
-      if (typeof data.participantsGoal !== 'number') {
+      if (data.participantsGoal === null) {
+        errors.participantsGoal = 'Is required'
+      } else if (typeof data.participantsGoal !== 'number') {
         errors.participantsGoal = 'Should be a number'
       } else if (!isInt(data.participantsGoal.toString())) {
         errors.participantsGoal = 'Should be a integer'
@@ -277,8 +287,8 @@ module.exports = {
     if (typeof data.poster !== 'undefined') {
       if (typeof data.poster !== 'string') {
         errors.poster = 'Should be a string'
-      } else {
-        const posterBase64 = data.poster.split(',')[1]
+      } else if (data.poster) {
+        const posterBase64 = data.poster.split(',')[1] || ''
         if (!isBase64(posterBase64)) {
           errors.poster = 'Should be a valid base 64 string'
         } else if (posterBase64.length > 8388608) {
@@ -288,7 +298,9 @@ module.exports = {
     }
 
     if (typeof data.reviewsGoal !== 'undefined') {
-      if (typeof data.reviewsGoal !== 'number') {
+      if (data.reviewsGoal === null) {
+        errors.reviewsGoal = 'Is required'
+      } else if (typeof data.reviewsGoal !== 'number') {
         errors.reviewsGoal = 'Should be a number'
       } else if (!isInt(data.reviewsGoal.toString())) {
         errors.reviewsGoal = 'Should be a integer'
@@ -299,6 +311,8 @@ module.exports = {
     if (typeof data.startDate !== 'undefined') {
       if (typeof data.startDate !== 'string') {
         errors.startDate = 'Should be a string'
+      } else if (data.startDate === '') {
+        errors.startDate = 'Is required'
       } else if (!moment(data.startDate).isValid()) {
         errors.startDate = 'Should have a ISO-8601 format'
       } else {
@@ -313,12 +327,13 @@ module.exports = {
       }
     }
 
-    if (typeof data.teamManager !== 'undefined') {
-      if (typeof data.teamManager !== 'string') {
-        errors.teamManager = 'Should be a string'
-      } else if (!isMongoId(data.teamManager)) {
-        errors.teamManager = 'Should be a valid id'
-      }
+    if (
+      typeof data.teamManager !== 'undefined' &&
+      typeof data.teamManager !== 'string'
+    ) {
+      errors.teamManager = 'Should be a string'
+    } else if (data.teamManager && !isMongoId(data.teamManager)) {
+      errors.teamManager = 'Should be a valid id'
     }
 
     if (typeof data.teams !== 'undefined') {

@@ -1,3 +1,4 @@
+const { Event } = require('../../models/event')
 const logger = require('../../helpers/logger')
 const { Team } = require('../../models/team')
 
@@ -14,43 +15,74 @@ module.exports = async (req, res, next) => {
   const teams = []
   const managedTeams = []
   userTeams.map(t => {
-    const teamManagers = t.managers.map(m => m.toString())
-    if (teamManagers.includes(req.user.id)) {
-      managedTeams.push({
-        id: t.id.toString(),
-        avatar: t.avatar,
-        name: t.name
-      })
-    } else {
-      teams.push({
-        id: t.id.toString(),
-        avatar: t.avatar,
-        name: t.name
-      })
+    if (t) {
+      const teamManagers = t.managers.map(m => m.toString())
+      if (teamManagers.includes(req.user.id)) {
+        managedTeams.push({
+          id: t.id.toString(),
+          avatar: t.avatar,
+          name: t.name
+        })
+      } else {
+        teams.push({
+          id: t.id.toString(),
+          avatar: t.avatar,
+          name: t.name
+        })
+      }
     }
   })
 
-  const userData = Object.assign(
-    {},
-    {
-      id: req.user.id.toString(),
-      avatar: req.user.avatar,
-      description: req.user.description,
-      disabilities: req.user.disabilities,
-      email: req.user.email,
-      firstName: req.user.firstName,
-      gender: req.user.gender,
-      isSubscribed: req.user.isSubscribed,
-      lastName: req.user.lastName,
-      managedTeams,
-      phone: req.user.phone,
-      showDisabilities: req.user.showDisabilities,
-      showEmail: req.user.showEmail,
-      showPhone: req.user.showPhone,
-      teams,
-      username: req.user.username,
-      zip: req.user.zip
+  const getUserEvents = req.user.events.map(e => Event.findOne({ _id: e }))
+  let userEvents
+  try {
+    userEvents = await Promise.all(getUserEvents)
+  } catch (err) {
+    logger.error('Events failed to be found at get-profile')
+    return next(err)
+  }
+
+  const events = []
+  const managedEvents = []
+  userEvents.map(e => {
+    if (e) {
+      const eventManagers = e.managers.map(m => m.toString())
+      if (eventManagers.includes(req.user.id)) {
+        managedEvents.push({
+          id: e.id.toString(),
+          poster: e.poster,
+          name: e.name
+        })
+      } else {
+        events.push({
+          id: e.id.toString(),
+          poster: e.poster,
+          name: e.name
+        })
+      }
     }
-  )
+  })
+
+  const userData = {
+    id: req.user.id,
+    avatar: req.user.avatar,
+    description: req.user.description,
+    disabilities: req.user.disabilities,
+    email: req.user.email,
+    events,
+    firstName: req.user.firstName,
+    gender: req.user.gender,
+    isSubscribed: req.user.isSubscribed,
+    lastName: req.user.lastName,
+    managedEvents,
+    managedTeams,
+    phone: req.user.phone,
+    showDisabilities: req.user.showDisabilities,
+    showEmail: req.user.showEmail,
+    showPhone: req.user.showPhone,
+    teams,
+    username: req.user.username,
+    zip: req.user.zip
+  }
   return res.status(200).json(userData)
 }

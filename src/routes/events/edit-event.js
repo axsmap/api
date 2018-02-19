@@ -61,14 +61,8 @@ module.exports = async (req, res, next) => {
   const { errors, isValid } = validateEditEvent(data)
   if (!isValid) return res.status(400).json(errors)
 
-  event.address =
-    typeof data.address !== 'undefined'
-      ? cleanSpaces(data.address)
-      : event.address
-  event.description =
-    typeof data.description !== 'undefined'
-      ? data.description
-      : event.description
+  event.address = data.address ? cleanSpaces(data.address) : event.address
+  event.description = data.description || event.description
 
   if (data.endDate) {
     const endDate = moment(data.endDate).utc()
@@ -243,12 +237,12 @@ module.exports = async (req, res, next) => {
           })
           .promise()
 
-        data.avatar = `https://s3.amazonaws.com/${process.env
+        event.poster = `https://s3.amazonaws.com/${process.env
           .AWS_S3_BUCKET}/events/posters/${posterFileName}`
       } else {
         return res
           .status(400)
-          .json({ avatar: 'Should have a .png, .jpeg, .jpg or .bmp extension' })
+          .json({ poster: 'Should have a .png, .jpeg, .jpg or .bmp extension' })
       }
     })
 
@@ -273,8 +267,6 @@ module.exports = async (req, res, next) => {
         return next(err)
       }
     }
-
-    event.poster = data.poster
   } else if (data.poster === '') {
     const params = {
       Bucket: process.env.AWS_S3_BUCKET,
@@ -336,6 +328,43 @@ module.exports = async (req, res, next) => {
     const teamManagers = team.managers.map(m => m.toString())
     if (!teamManagers.includes(req.user.id)) {
       return res.status(403).json({ general: 'Forbidden action' })
+    }
+
+    event.teamManager = data.teamManager
+
+    team.events = [...new Set([...team.events, event.id])]
+    try {
+      await team.save()
+    } catch (err) {
+      logger.error(`Team ${team.id} failed to be updated at edit-event`)
+      return next(err)
+    }
+  } else if (data.teamManager === '' && event.teamManager) {
+    let team
+    try {
+      team = await Team.findOne({ _id: event.teamManager, isArchived: false })
+    } catch (err) {
+      logger.error(`Team ${event.teamManager} failed to be found at edit-event`)
+      return next(err)
+    }
+
+    if (!team) {
+      return res.status(404).json({ teamManager: 'Not found' })
+    }
+
+    const teamManagers = team.managers.map(m => m.toString())
+    if (!teamManagers.includes(req.user.id)) {
+      return res.status(403).json({ general: 'Forbidden action' })
+    }
+
+    event.teamManager = null
+
+    team.events = team.events.filter(e => e.toString() !== event.id)
+    try {
+      await team.save()
+    } catch (err) {
+      logger.error(`Team ${team.id} failed to be updated at edit-event`)
+      return next(err)
     }
   }
 
