@@ -82,6 +82,8 @@ module.exports = async (req, res, next) => {
     event.endDate = endDate.toDate()
   }
 
+  event.isOpen = typeof data.isOpen !== 'undefined' ? data.isOpen : event.isOpen
+
   if (data.locationCoordinates && data.locationCoordinates.length > 0) {
     event.location = {
       coordinates: [data.locationCoordinates[1], data.locationCoordinates[0]],
