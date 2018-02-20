@@ -50,12 +50,15 @@ module.exports = async (req, res, next) => {
     endDate: req.body.endDate,
     isOpen: req.body.isOpen,
     locationCoordinates: req.body.locationCoordinates,
+    managers: req.body.managers,
     name: req.body.name,
+    participants: req.body.participants,
     participantsGoal: req.body.participantsGoal,
     poster: req.body.poster,
     reviewsGoal: req.body.reviewsGoal,
     startDate: req.body.startDate,
-    teamManager: req.body.teamManager
+    teamManager: req.body.teamManager,
+    teams: req.body.teams
   }
 
   const { errors, isValid } = validateEditEvent(data)

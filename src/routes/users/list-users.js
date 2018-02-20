@@ -10,9 +10,7 @@ module.exports = async (req, res, next) => {
   const queryParams = req.query
 
   const usersQuery = { isArchived: false }
-  if (queryParams.keywords) {
-    usersQuery.$text = { $search: queryParams.keywords }
-  }
+  usersQuery.$text = { $search: queryParams.keywords || '' }
 
   const sort = queryParams.sortBy || {
     score: { $meta: 'textScore' }
