@@ -1,7 +1,11 @@
+const util = require('util')
+
 const aws = require('aws-sdk')
 const jimp = require('jimp')
 const moment = require('moment')
 const randomstring = require('randomstring')
+
+jimp.prototype.getBufferAsync = util.promisify(jimp.prototype.getBuffer)
 
 const { Event } = require('../../models/event')
 const { cleanSpaces } = require('../../helpers')
@@ -14,6 +18,11 @@ module.exports = async (req, res, next) => {
   const data = {
     address: req.body.address,
     description: req.body.description,
+    donationAmounts: req.body.donationAmounts,
+    donationEnabled: req.body.donationEnabled,
+    donationGoal: req.body.donationGoal,
+    donationIntroMessage: req.body.donationIntroMessage,
+    donationThanksMessage: req.body.donationThanksMessage,
     endDate: req.body.endDate,
     isOpen: req.body.isOpen,
     locationCoordinates: req.body.locationCoordinates,
@@ -53,7 +62,7 @@ module.exports = async (req, res, next) => {
   }
 
   if (data.poster) {
-    const posterBuffer = Buffer.from(data.poster.split(',')[1], 'base64')
+    let posterBuffer = Buffer.from(data.poster.split(',')[1], 'base64')
     let posterImage
     try {
       posterImage = await jimp.read(posterBuffer)
@@ -64,41 +73,41 @@ module.exports = async (req, res, next) => {
 
     let uploadPoster
     posterImage.cover(400, 400).quality(85)
-    posterImage.getBuffer(posterImage.getMIME(), (err, posterBuffer) => {
-      if (err) {
-        return next(err)
-      }
+    try {
+      posterBuffer = await posterImage.getBufferAsync(posterImage.getMIME())
+    } catch (err) {
+      return next(err)
+    }
 
-      const posterExtension = posterImage.getExtension()
-      if (
-        posterExtension === 'png' ||
-        posterExtension === 'jpeg' ||
-        posterExtension === 'jpg' ||
-        posterExtension === 'bmp'
-      ) {
-        const posterFileName = `${Date.now()}${randomstring.generate({
-          length: 5,
-          capitalization: 'lowercase'
-        })}.${posterExtension}`
-        const s3 = new aws.S3()
-        uploadPoster = s3
-          .putObject({
-            ACL: 'public-read',
-            Body: posterBuffer,
-            Bucket: process.env.AWS_S3_BUCKET,
-            ContentType: posterImage.getMIME(),
-            Key: `events/posters/${posterFileName}`
-          })
-          .promise()
+    const posterExtension = posterImage.getExtension()
+    if (
+      posterExtension === 'png' ||
+      posterExtension === 'jpeg' ||
+      posterExtension === 'jpg' ||
+      posterExtension === 'bmp'
+    ) {
+      const posterFileName = `${Date.now()}${randomstring.generate({
+        length: 5,
+        capitalization: 'lowercase'
+      })}.${posterExtension}`
+      const s3 = new aws.S3()
+      uploadPoster = s3
+        .putObject({
+          ACL: 'public-read',
+          Body: posterBuffer,
+          Bucket: process.env.AWS_S3_BUCKET,
+          ContentType: posterImage.getMIME(),
+          Key: `events/posters/${posterFileName}`
+        })
+        .promise()
 
-        data.poster = `https://s3.amazonaws.com/${process.env
-          .AWS_S3_BUCKET}/events/posters/${posterFileName}`
-      } else {
-        return res
-          .status(400)
-          .json({ poster: 'Should have a .png, .jpeg, .jpg or .bmp extension' })
-      }
-    })
+      data.poster = `https://s3.amazonaws.com/${process.env
+        .AWS_S3_BUCKET}/events/posters/${posterFileName}`
+    } else {
+      return res
+        .status(400)
+        .json({ poster: 'Should have a .png, .jpeg, .jpg or .bmp extension' })
+    }
 
     try {
       await uploadPoster
@@ -109,6 +118,8 @@ module.exports = async (req, res, next) => {
   } else {
     data.poster = undefined
   }
+
+  console.log(data.poster)
 
   data.startDate = moment(data.startDate).utc().toDate()
 

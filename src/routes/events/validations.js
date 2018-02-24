@@ -21,6 +21,74 @@ module.exports = {
       errors.description = 'Should be a string'
     }
 
+    if (data.donationEnabled === true) {
+      if (typeof data.donationAmounts === 'undefined') {
+        errors.donationAmounts = 'Is required'
+      }
+      if (typeof data.donationGoal === 'undefined') {
+        errors.donationGoal = 'Is required'
+      }
+    }
+
+    if (typeof data.donationAmounts !== 'undefined') {
+      if (!Array.isArray(data.donationAmounts)) {
+        errors.donationAmounts = 'Should be an array'
+      } else {
+        data.donationAmounts.some(d => {
+          if (typeof d.value === 'undefined') {
+            errors.donationAmounts = 'All elements should have a value property'
+            return true
+          } else if (typeof d.value !== 'number') {
+            errors.donationAmounts = 'All value properties should be numbers'
+            return true
+          } else if (d < 5 || d > 10000) {
+            errors.donationAmounts =
+              'All value properties should be between 5 and 10000'
+            return true
+          } else if (typeof d.description !== 'undefined') {
+            if (typeof d.description !== 'string') {
+              errors.donationAmounts =
+                'All description properties should be strings'
+              return true
+            } else if (d.description.length > 100) {
+              errors.donationAmounts =
+                'All description properties should be less than 101 characters'
+              return true
+            }
+          }
+        })
+      }
+    }
+
+    if (
+      typeof data.donationEnabled !== 'undefined' &&
+      typeof data.donationEnabled !== 'boolean'
+    ) {
+      errors.donationEnabled = 'Should be a boolean'
+    }
+
+    if (typeof data.donationGoal !== 'undefined') {
+      if (typeof data.donationGoal !== 'number') {
+        errors.donationGoal = 'Should be a number'
+      } else if (!isInt(data.donationGoal.toString())) {
+        errors.donationGoal = 'Should be a integer'
+      }
+    }
+
+    if (
+      typeof data.donationIntroMessage !== 'undefined' &&
+      typeof data.donationIntroMessage !== 'string'
+    ) {
+      errors.donationIntroMessage = 'Should be a string'
+    }
+
+    if (
+      typeof data.donationThanksMessage !== 'undefined' &&
+      typeof data.donationThanksMessage !== 'string'
+    ) {
+      errors.donationThanksMessage = 'Should be a string'
+    }
+
     let endDateIsValid = false
     if (typeof data.endDate === 'undefined' || data.endDate === '') {
       errors.endDate = 'Is required'

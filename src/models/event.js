@@ -11,6 +11,42 @@ const eventSchema = new mongoose.Schema(
       type: String,
       maxlength: [300, 'Should be less than 301 characters']
     },
+    donationAmounts: {
+      type: [
+        {
+          value: {
+            type: Number,
+            default: 5,
+            max: [10000, 'Should be less than 10001'],
+            min: [5, 'Should be greater than 4']
+          },
+          description: {
+            type: String,
+            maxlength: [100, 'Should be less than 101 characters']
+          }
+        }
+      ]
+    },
+    donationEnabled: {
+      type: Boolean,
+      default: false,
+      required: [true, 'Is required']
+    },
+    donationGoal: {
+      type: Number,
+      default: 10,
+      max: [100000, 'Should be less than 100001'],
+      min: [10, 'Should be greater than 9']
+    },
+    donationIntroMessage: {
+      type: String,
+      maxlength: [100, 'Should be less than 101 characters']
+    },
+    donationScript: String,
+    donationThanksMessage: {
+      type: String,
+      maxlength: [100, 'Should be less than 101 characters']
+    },
     endDate: {
       type: Date,
       required: [true, 'Is required']
