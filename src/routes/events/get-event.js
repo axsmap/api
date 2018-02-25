@@ -146,6 +146,7 @@ module.exports = async (req, res, next) => {
           id: '$_id',
           address: 1,
           description: 1,
+          donationId: 1,
           endDate: 1,
           isOpen: 1,
           location: 1,
