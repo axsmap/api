@@ -75,20 +75,6 @@ module.exports = {
       }
     }
 
-    if (
-      typeof data.donationIntroMessage !== 'undefined' &&
-      typeof data.donationIntroMessage !== 'string'
-    ) {
-      errors.donationIntroMessage = 'Should be a string'
-    }
-
-    if (
-      typeof data.donationThanksMessage !== 'undefined' &&
-      typeof data.donationThanksMessage !== 'string'
-    ) {
-      errors.donationThanksMessage = 'Should be a string'
-    }
-
     let endDateIsValid = false
     if (typeof data.endDate === 'undefined' || data.endDate === '') {
       errors.endDate = 'Is required'

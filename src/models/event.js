@@ -42,14 +42,6 @@ const eventSchema = new mongoose.Schema(
       type: String,
       default: ''
     },
-    donationIntroMessage: {
-      type: String,
-      maxlength: [100, 'Should be less than 101 characters']
-    },
-    donationThanksMessage: {
-      type: String,
-      maxlength: [100, 'Should be less than 101 characters']
-    },
     endDate: {
       type: Date,
       required: [true, 'Is required']

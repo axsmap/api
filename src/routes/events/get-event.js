@@ -1,3 +1,4 @@
+const axios = require('axios')
 const mongoose = require('mongoose')
 const { isMongoId } = require('validator')
 
@@ -146,6 +147,7 @@ module.exports = async (req, res, next) => {
           id: '$_id',
           address: 1,
           description: 1,
+          donationAmounts: 1,
           donationId: 1,
           endDate: 1,
           isOpen: 1,
@@ -176,5 +178,30 @@ module.exports = async (req, res, next) => {
   const dataResponse = Object.assign({}, event[0], {
     ranking: event[0].ranking.length ? event[0].ranking[0].ranking + 1 : 1
   })
+
+  if (dataResponse.donationId) {
+    let options = {
+      method: 'GET',
+      url: `https://${process.env
+        .DONATELY_SUBDOMAIN}.dntly.com/api/v1/admin/campaigns/${dataResponse.donationId}`,
+      auth: {
+        username: process.env.DONATELY_TOKEN,
+        password: ''
+      }
+    }
+
+    let response
+    try {
+      response = await axios(options)
+    } catch (err) {
+      logger.error('Donation campaign failed to be found at get-event.')
+      return next(err)
+    }
+
+    dataResponse.donationAmountRaised = response.data.campaign.amount_raised
+    dataResponse.donationDonorsCount = response.data.campaign.donors_count
+    dataResponse.donationGoal = response.data.campaign.campaign_goal
+  }
+
   return res.status(200).json(dataResponse)
 }

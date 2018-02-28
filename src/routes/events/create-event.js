@@ -1,6 +1,8 @@
 const util = require('util')
 
 const aws = require('aws-sdk')
+const axios = require('axios')
+const FormData = require('form-data')
 const jimp = require('jimp')
 const moment = require('moment')
 const randomstring = require('randomstring')
@@ -21,8 +23,6 @@ module.exports = async (req, res, next) => {
     donationAmounts: req.body.donationAmounts,
     donationEnabled: req.body.donationEnabled,
     donationGoal: req.body.donationGoal,
-    donationIntroMessage: req.body.donationIntroMessage,
-    donationThanksMessage: req.body.donationThanksMessage,
     endDate: req.body.endDate,
     isOpen: req.body.isOpen,
     locationCoordinates: req.body.locationCoordinates,
@@ -119,8 +119,6 @@ module.exports = async (req, res, next) => {
     data.poster = undefined
   }
 
-  console.log(data.poster)
-
   data.startDate = moment(data.startDate).utc().toDate()
 
   if (data.teamManager) {
@@ -144,6 +142,36 @@ module.exports = async (req, res, next) => {
     }
   } else {
     data.teamManager = undefined
+  }
+
+  if (data.donationEnabled) {
+    const campaignData = new FormData()
+    campaignData.append('title', data.name)
+    campaignData.append('goal_in_cents', data.donationGoal * 100)
+
+    let options = {
+      method: 'POST',
+      url: `https://${process.env
+        .DONATELY_SUBDOMAIN}.dntly.com/api/v1/admin/campaigns`,
+      headers: {
+        'Content-Type': `multipart/form-data; boundary=${campaignData._boundary}`
+      },
+      auth: {
+        username: process.env.DONATELY_TOKEN,
+        password: ''
+      },
+      data: campaignData
+    }
+
+    let response
+    try {
+      response = await axios(options)
+    } catch (err) {
+      logger.error('Donation campaign failed to be created at create-event.')
+      return next(err)
+    }
+
+    data.donationId = response.data.campaign.id
   }
 
   let event
