@@ -489,14 +489,5 @@ module.exports = {
     }
 
     return { errors, isValid: isEmpty(errors) }
-  },
-  validateParticipateEvent(data) {
-    const errors = {}
-
-    if (data.t && !isMongoId(data.t.toString())) {
-      errors.t = `${data.t} should be a team Id`
-    }
-
-    return { errors, isValid: isEmpty(errors) }
   }
 }

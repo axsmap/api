@@ -8,7 +8,7 @@ const editEvent = require('./edit-event')
 const getEvent = require('./get-event')
 const leaveEvent = require('./leave-event')
 const listEvents = require('./list-events')
-const participateEvent = require('./participate-event')
+const joinEvent = require('./join-event')
 
 const router = new express.Router()
 
@@ -38,11 +38,11 @@ router.put(
   isUnblocked({ isOptional: false }),
   leaveEvent
 )
-router.put(
-  '/:eventId/participate',
+router.post(
+  '/:eventId/join',
   isAuthenticated({ isOptional: false }),
   isUnblocked({ isOptional: false }),
-  participateEvent
+  joinEvent
 )
 
 module.exports = router
