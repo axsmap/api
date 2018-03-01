@@ -12,7 +12,6 @@ const getUser = require('./get-user')
 const getProfile = require('./get-profile')
 const listUsers = require('./list-users')
 const unblockUser = require('./unblock-user')
-const uploadUserAvatar = require('./upload-user-avatar')
 
 const router = new express.Router()
 
@@ -33,11 +32,6 @@ router.post('', isAuthenticated({ isOptional: false }), createUser)
 router.get('/:userId', isAuthenticated({ isOptional: false }), getUser)
 router.put('/:userId', isAuthenticated({ isOptional: false }), editUser)
 router.delete('/:userId', isAuthenticated({ isOptional: false }), deleteUser)
-router.put(
-  '/:userId/avatar',
-  isAuthenticated({ isOptional: false }),
-  uploadUserAvatar
-)
 router.put(
   '/:userId/archive',
   isAuthenticated({ isOptional: false }),

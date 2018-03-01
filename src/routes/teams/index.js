@@ -6,9 +6,9 @@ const createTeam = require('./create-team')
 const deleteTeam = require('./delete-team')
 const editTeam = require('./edit-team')
 const getTeam = require('./get-team')
+const joinTeam = require('./join-team')
 const leaveTeam = require('./leave-team')
 const listTeams = require('./list-teams')
-const uploadTeamAvatar = require('./upload-team-avatar')
 
 const router = new express.Router()
 
@@ -31,12 +31,23 @@ router.put(
   isUnblocked({ isOptional: false }),
   editTeam
 )
-router.delete('/:teamId', isAuthenticated({ isOptional: false }), deleteTeam)
-router.put(
-  '/:teamId/avatar',
+router.delete(
+  '/:teamId',
   isAuthenticated({ isOptional: false }),
-  uploadTeamAvatar
+  isUnblocked({ isOptional: false }),
+  deleteTeam
 )
-router.put('/:teamId/leave', isAuthenticated({ isOptional: false }), leaveTeam)
+router.post(
+  '/:teamId/join',
+  isAuthenticated({ isOptional: false }),
+  isUnblocked({ isOptional: false }),
+  joinTeam
+)
+router.put(
+  '/:teamId/leave',
+  isAuthenticated({ isOptional: false }),
+  isUnblocked({ isOptional: false }),
+  leaveTeam
+)
 
 module.exports = router
