@@ -186,6 +186,16 @@ module.exports = async (req, res, next) => {
     return next(err)
   }
 
+  req.user.reviewsAmount = req.user.reviewsAmount + 1
+  req.user.updatedAt = moment.utc().toDate()
+
+  try {
+    await req.user.save()
+  } catch (err) {
+    logger.error(`User ${req.user.id} failed to be updated at create-review`)
+    return next(err)
+  }
+
   const photo = req.body.photo
   if (photo) {
     const photoBuffer = Buffer.from(photo.split(',')[1], 'base64')

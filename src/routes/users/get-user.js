@@ -1,24 +1,117 @@
-const { pick } = require('lodash')
+const mongoose = require('mongoose')
 
 const logger = require('../../helpers/logger')
 const { User } = require('../../models/user')
 
 module.exports = async (req, res, next) => {
-  if (req.user.isBlocked) {
-    return res.status(423).json({ general: 'You are blocked' })
-  }
-
   const userId = req.params.userId
 
+  const userIdObj = mongoose.Types.ObjectId(userId)
   let user
   try {
-    user = await User.findOne({ _id: userId, isArchived: false })
+    user = await User.aggregate([
+      {
+        $match: { _id: userIdObj }
+      },
+      {
+        $lookup: {
+          from: 'events',
+          let: { events: '$events' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $in: ['$_id', '$$events']
+                }
+              }
+            },
+            {
+              $project: {
+                _id: 0,
+                id: '$_id',
+                endDate: 1,
+                name: 1,
+                poster: 1,
+                startDate: 1
+              }
+            }
+          ],
+          as: 'events'
+        }
+      },
+      {
+        $lookup: {
+          from: 'teams',
+          let: { teams: '$teams' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $in: ['$_id', '$$teams']
+                }
+              }
+            },
+            {
+              $project: {
+                _id: 0,
+                id: '$_id',
+                avatar: 1,
+                name: 1
+              }
+            }
+          ],
+          as: 'teams'
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          let: { reviewsAmount: '$reviewsAmount' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $gt: ['$reviewsAmount', '$$reviewsAmount']
+                }
+              }
+            },
+            {
+              $count: 'ranking'
+            }
+          ],
+          as: 'ranking'
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          id: '$_id',
+          avatar: 1,
+          description: 1,
+          disabilities: 1,
+          email: 1,
+          events: 1,
+          firstName: 1,
+          gender: 1,
+          lastName: 1,
+          phone: 1,
+          ranking: 1,
+          reviewsAmount: 1,
+          showDisabilities: 1,
+          showEmail: 1,
+          showPhone: 1,
+          teams: 1,
+          username: 1,
+          zip: 1
+        }
+      }
+    ])
   } catch (err) {
     if (err.name === 'CastError') {
       return res.status(404).json({ general: 'User not found' })
     }
 
-    logger.error(`User with Id ${userId} failed to be found at get-user.`)
+    logger.error(`User ${userId} failed to be found at get-user`)
     return next(err)
   }
 
@@ -26,76 +119,8 @@ module.exports = async (req, res, next) => {
     return res.status(404).json({ general: 'User not found' })
   }
 
-  let visibleFields
-  if (req.user.isAdmin) {
-    visibleFields = [
-      '_id',
-      'avatar',
-      'description',
-      'disabilities',
-      'email',
-      'events',
-      'firstName',
-      'gender',
-      'isAdmin',
-      'isArchived',
-      'isBlocked',
-      'isSubscribed',
-      'lastName',
-      'phone',
-      'showDisabilities',
-      'showEmail',
-      'showPhone',
-      'teams',
-      'username',
-      'zip'
-    ]
-  } else if (req.user.id === user.id) {
-    visibleFields = [
-      '_id',
-      'avatar',
-      'description',
-      'disabilities',
-      'email',
-      'events',
-      'firstName',
-      'gender',
-      'isSubscribed',
-      'lastName',
-      'phone',
-      'showDisabilities',
-      'showEmail',
-      'showPhone',
-      'teams',
-      'username',
-      'zip'
-    ]
-  } else {
-    visibleFields = [
-      '_id',
-      'avatar',
-      'description',
-      'events',
-      'firstName',
-      'lastName',
-      'gender',
-      'lastName',
-      'teams',
-      'username',
-      'zip'
-    ]
-
-    if (user.showDisabilities) {
-      visibleFields.push('disabilities')
-    }
-    if (user.showEmail) {
-      visibleFields.push('email')
-    }
-    if (user.showPhone) {
-      visibleFields.push('phone')
-    }
-  }
-
-  const dataResponse = pick(user, visibleFields)
+  const dataResponse = Object.assign({}, user[0], {
+    ranking: user[0].ranking.length ? user[0].ranking[0].ranking + 1 : 1
+  })
   return res.status(200).json(dataResponse)
 }

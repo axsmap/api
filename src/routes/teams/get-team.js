@@ -134,12 +134,12 @@ module.exports = async (req, res, next) => {
     return next(err)
   }
 
-  if (team) {
-    const dataResponse = Object.assign({}, team[0], {
-      ranking: team[0].ranking.length ? team[0].ranking[0].ranking + 1 : 1
-    })
-    return res.status(200).json(dataResponse)
+  if (!team) {
+    return res.status(404).json({ general: 'Team not found' })
   }
 
-  return res.status(404).json({ general: 'Team not found' })
+  const dataResponse = Object.assign({}, team[0], {
+    ranking: team[0].ranking.length ? team[0].ranking[0].ranking + 1 : 1
+  })
+  return res.status(200).json(dataResponse)
 }

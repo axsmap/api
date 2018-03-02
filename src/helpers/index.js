@@ -49,6 +49,14 @@ module.exports = {
 
       if (user) {
         req.user = user
+
+        if (
+          (isOptional && req.user && req.user.isBlocked) ||
+          (!isOptional && req.user.isBlocked)
+        ) {
+          return res.status(423).json({ general: 'You are blocked' })
+        }
+
         return next()
       }
 
@@ -63,16 +71,6 @@ module.exports = {
   },
   isNumber(number) {
     return !isNaN(parseFloat(number)) && isFinite(number)
-  },
-  isUnblocked: ({ isOptional }) => (req, res, next) => {
-    if (
-      (isOptional && req.user && req.user.isBlocked) ||
-      (!isOptional && req.user.isBlocked)
-    ) {
-      return res.status(423).json({ general: 'You are blocked' })
-    }
-
-    return next()
   },
   mapCamelCaseKeys(obj) {
     return mapKeys(obj, (value, key) => camelCase(key))

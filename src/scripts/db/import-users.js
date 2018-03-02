@@ -6,6 +6,7 @@ require('dotenv').config()
 
 const { cleanSpaces } = require('../../helpers')
 const logger = require('../../helpers/logger')
+const { reviewSchema } = require('../../models/review')
 const { userSchema } = require('../../models/user')
 
 const oldUserSchema = require('./old-schemas/user')
@@ -60,6 +61,10 @@ db.on('connected', async () => {
 
     logger.info(`Total old users: ${totalOldUsers}`)
 
+    const User = db.model('User', userSchema)
+
+    console.time('createUsers')
+
     let page = 0
     const pageLimit = 100
     let i = 0
@@ -74,8 +79,6 @@ db.on('connected', async () => {
         logger.error(error)
         await closeConnections(db, oldDb)
       }
-
-      const User = db.model('User', userSchema)
 
       const createUsers = []
       for (let oldUser of oldUsers) {
@@ -183,6 +186,70 @@ db.on('connected', async () => {
       i = i + oldUsers.length
       logger.info(i)
     } while (i < totalOldUsers)
+
+    console.timeEnd('createUsers')
+
+    const Review = db.model('Review', reviewSchema)
+
+    let totalUsers
+    try {
+      totalUsers = await User.count()
+    } catch (error) {
+      logger.info('Users failed to be count')
+      logger.error(error)
+      await closeConnections(db, oldDb)
+    }
+
+    logger.info(`Total users: ${totalUsers}`)
+
+    console.time('updateReviewsAmount')
+
+    i = 0
+    page = 0
+    do {
+      let users
+      try {
+        users = await User.find({}).skip(page * pageLimit).limit(pageLimit)
+      } catch (error) {
+        logger.info('Users failed to be found')
+        logger.error(error)
+        await closeConnections(db, oldDb)
+      }
+
+      const updateUsers = []
+      for (let user of users) {
+        let userReviews
+        try {
+          userReviews = await Review.find({ user: user.id }).count()
+        } catch (err) {
+          logger.info('User reviews failed to be count')
+          logger.error(err)
+          await closeConnections(db, oldDb)
+        }
+
+        user.reviewsAmount = userReviews
+        updateUsers.push(user.save())
+      }
+
+      try {
+        await Promise.all(updateUsers)
+      } catch (err) {
+        logger.info(
+          `Users failed to be updated.\nData: ${JSON.stringify({
+            page,
+            i
+          })}`
+        )
+        logger.error(err)
+        await closeConnections(db, oldDb)
+      }
+
+      page = page + 1
+      i = i + users.length
+      logger.info(i)
+    } while (i < totalUsers)
+
+    console.timeEnd('updateReviewsAmount')
 
     await closeConnections(db, oldDb)
   })

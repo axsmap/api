@@ -1,6 +1,6 @@
 const express = require('express')
 
-const { isAuthenticated, isUnblocked } = require('../../helpers')
+const { isAuthenticated } = require('../../helpers')
 
 const archiveUser = require('./archive-user')
 const blockUser = require('./block-user')
@@ -15,21 +15,11 @@ const unblockUser = require('./unblock-user')
 
 const router = new express.Router()
 
-router.get(
-  '/profile',
-  isAuthenticated({ isOptional: false }),
-  isUnblocked({ isOptional: false }),
-  getProfile
-)
+router.get('/profile', isAuthenticated({ isOptional: false }), getProfile)
 router.put('/password', isAuthenticated({ isOptional: false }), changePassword)
-router.get(
-  '',
-  isAuthenticated({ isOptional: false }),
-  isUnblocked({ isOptional: false }),
-  listUsers
-)
+router.get('', isAuthenticated({ isOptional: false }), listUsers)
 router.post('', isAuthenticated({ isOptional: false }), createUser)
-router.get('/:userId', isAuthenticated({ isOptional: false }), getUser)
+router.get('/:userId', getUser)
 router.put('/:userId', isAuthenticated({ isOptional: false }), editUser)
 router.delete('/:userId', isAuthenticated({ isOptional: false }), deleteUser)
 router.put(

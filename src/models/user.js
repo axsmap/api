@@ -103,6 +103,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       maxlength: [50, 'Should have less than 51 characters']
     },
+    reviewsAmount: {
+      type: Number,
+      default: 0,
+      required: [true, 'Is required']
+    },
     showDisabilities: {
       type: Boolean,
       default: false,
@@ -141,7 +146,8 @@ userSchema.index(
     email: 'text',
     firstName: 'text',
     lastName: 'text',
-    username: 'text'
+    username: 'text',
+    reviewsAmount: 1
   },
   { weights: { email: 5, username: 5 } }
 )
