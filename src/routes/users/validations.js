@@ -1,9 +1,10 @@
 const freemail = require('freemail')
-const { isEmail, isInt } = require('validator')
+const { isBase64, isEmail, isInt } = require('validator')
 const { isEmpty } = require('lodash')
 const slugify = require('speakingurl')
 
 const { cleanSpaces } = require('../../helpers')
+const { User } = require('../../models/user')
 
 module.exports = {
   validateChangePassword(data) {
@@ -125,49 +126,98 @@ module.exports = {
   validateEditUser(data) {
     const errors = {}
 
-    if (data.description) {
-      if (typeof data.description !== 'string') {
-        errors.description = 'Should be a string'
-      } else if (cleanSpaces(data.description).length > 2000) {
-        errors.description = 'Should have less than 2001 characters'
-      }
-    }
-
-    if (data.email) {
-      if (typeof data.email !== 'string') {
-        errors.email = 'Should be a string'
-      } else if (cleanSpaces(data.email).length > 254) {
-        errors.email = 'Should have less than 255 characters'
-      } else if (!isEmail(data.email) || freemail.isDisposable(data.email)) {
-        errors.email = 'Is not a valid email'
-      }
-    }
-
-    if (data.firstName) {
-      if (typeof data.firstName !== 'string') {
-        errors.firstName = 'Should be a string'
-      } else if (
-        /[~`!#$%^&*+=\-[\]\\';,./{}|\\":<>?\d]/g.test(data.firstName)
-      ) {
-        errors.firstName = 'Should only have letters'
-      } else if (cleanSpaces(data.firstName).length > 24) {
-        errors.firstName = 'Should have less than 25 characters'
-      } else {
-        const firstName = cleanSpaces(data.firstName)
-
-        if (firstName.split(' ').length > 1) {
-          errors.firstName = 'Should only be one name'
+    if (typeof data.avatar !== 'undefined') {
+      if (typeof data.avatar !== 'string') {
+        errors.avatar = 'Should be a string'
+      } else if (data.avatar) {
+        const avatarBase64 = data.avatar.split(',')[1] || ''
+        if (!isBase64(avatarBase64)) {
+          errors.avatar = 'Should be a valid base 64 string'
+        } else if (avatarBase64.length > 8388608) {
+          errors.avatar = 'Should be less than 8MB'
         }
       }
     }
 
-    if (data.lastName) {
+    if (
+      typeof data.description !== 'undefined' &&
+      typeof data.description !== 'string'
+    ) {
+      errors.description = 'Should be a string'
+    }
+
+    if (typeof data.disabilities !== 'undefined') {
+      if (!Array.isArray(data.disabilities)) {
+        errors.disabilities = 'Should be an array'
+      } else {
+        const disabilitiesTypes = [
+          'brain',
+          'cognitive',
+          'hearing',
+          'invisible',
+          'none',
+          'other',
+          'physical',
+          'private',
+          'psychological',
+          'spinal-cord',
+          'vision'
+        ]
+        data.disabilities.some(d => {
+          if (typeof d !== 'string') {
+            errors.disabilities = 'All values should be strings'
+            return true
+          } else if (!disabilitiesTypes.includes(d)) {
+            errors.disabilities = 'All values should be valid disabilities'
+            return true
+          }
+        })
+      }
+    }
+
+    if (typeof data.firstName !== 'undefined') {
+      if (typeof data.firstName !== 'string') {
+        errors.firstName = 'Should be a string'
+      } else if (data.firstName === '') {
+        errors.firstName = 'Is required'
+      } else if (
+        /[~`!#$%^&*+=\-[\]\\';,./{}|\\":<>?\d]/g.test(data.firstName)
+      ) {
+        errors.firstName = 'Should only have letters'
+      } else {
+        const firstName = cleanSpaces(data.firstName)
+
+        if (firstName.split(' ').length > 1) {
+          errors.firstName = 'Should only be one first name'
+        }
+      }
+    }
+
+    if (typeof data.gender !== 'undefined') {
+      const gendersTypes = User.schema.path('gender').enumValues
+      if (typeof data.gender !== 'string') {
+        errors.gender = 'Should be a string'
+      } else if (data.gender === '') {
+        errors.gender = 'Is required'
+      } else if (!gendersTypes.includes(data.gender)) {
+        errors.gender = 'Should be a valid gender'
+      }
+    }
+
+    if (
+      typeof data.isSubscribed !== 'undefined' &&
+      typeof data.isSubscribed !== 'boolean'
+    ) {
+      errors.isSubscribed = 'Should be a boolean'
+    }
+
+    if (typeof data.lastName !== 'undefined') {
       if (typeof data.lastName !== 'string') {
         errors.lastName = 'Should be a string'
+      } else if (data.lastName === '') {
+        errors.lastName = 'Is required'
       } else if (/[~`!#$%^&*+=\-[\]\\';,./{}|\\":<>?\d]/g.test(data.lastName)) {
         errors.lastName = 'Should only have letters'
-      } else if (cleanSpaces(data.lastName).length > 36) {
-        errors.lastName = 'Should have less than 37 characters'
       } else {
         const lastName = cleanSpaces(data.lastName)
 
@@ -177,19 +227,36 @@ module.exports = {
       }
     }
 
-    if (data.phone) {
-      if (typeof data.phone !== 'string') {
-        errors.phone = 'Should be a string'
-      } else if (cleanSpaces(data.phone).length > 50) {
-        errors.phone = 'Should have less than 51 characters'
-      }
+    if (typeof data.phone !== 'undefined' && typeof data.phone !== 'string') {
+      errors.phone = 'Should be a string'
     }
 
-    if (data.username) {
+    if (
+      typeof data.showDisabilities !== 'undefined' &&
+      typeof data.showDisabilities !== 'boolean'
+    ) {
+      errors.showDisabilities = 'Should be a boolean'
+    }
+
+    if (
+      typeof data.showEmail !== 'undefined' &&
+      typeof data.showEmail !== 'boolean'
+    ) {
+      errors.showEmail = 'Should be a boolean'
+    }
+
+    if (
+      typeof data.showPhone !== 'undefined' &&
+      typeof data.showPhone !== 'boolean'
+    ) {
+      errors.showPhone = 'Should be a boolean'
+    }
+
+    if (typeof data.username !== 'undefined') {
       if (typeof data.username !== 'string') {
         errors.username = 'Should be a string'
-      } else if (cleanSpaces(data.username).length > 67) {
-        errors.username = 'Should have less than 68 characters'
+      } else if (data.username === '') {
+        errors.username = 'Is required'
       } else {
         const username = slugify(data.username)
 
@@ -199,12 +266,8 @@ module.exports = {
       }
     }
 
-    if (data.zip) {
-      if (typeof data.zip !== 'string') {
-        errors.zip = 'Should be a string'
-      } else if (cleanSpaces(data.zip).length > 32) {
-        errors.zip = 'Should have less than 33 characters'
-      }
+    if (typeof data.zip !== 'undefined' && typeof data.zip !== 'string') {
+      errors.zip = 'Should be a string'
     }
 
     return { errors, isValid: isEmpty(errors) }

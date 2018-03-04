@@ -7,12 +7,12 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: `https://s3.amazonaws.com/${process.env
         .AWS_S3_BUCKET}/users/avatars/default.png`,
-      maxlength: [2000, 'Should have less than 2001 characters'],
+      maxlength: [2000, 'Should be less than 2001 characters'],
       required: [true, 'Is required']
     },
     description: {
       type: String,
-      maxlength: [2000, 'Should have less than 2001 characters']
+      maxlength: [2000, 'Should be less than 2001 characters']
     },
     disabilities: {
       type: [String],
@@ -37,7 +37,7 @@ const userSchema = new mongoose.Schema(
     },
     email: {
       type: String,
-      maxlength: [254, 'Should have less than 255 characters']
+      maxlength: [254, 'Should be less than 255 characters']
     },
     events: [
       {
@@ -48,7 +48,7 @@ const userSchema = new mongoose.Schema(
     facebookId: String,
     firstName: {
       type: String,
-      maxlength: [24, 'Should have less than 25 characters'],
+      maxlength: [24, 'Should be less than 25 characters'],
       required: [true, 'Is required']
     },
     gender: {
@@ -63,7 +63,7 @@ const userSchema = new mongoose.Schema(
     googleId: String,
     hashedPassword: {
       type: String,
-      maxlength: [256, 'Should have less than 255 characters']
+      maxlength: [256, 'Should be less than 255 characters']
     },
     isAdmin: {
       type: Boolean,
@@ -87,7 +87,7 @@ const userSchema = new mongoose.Schema(
     },
     lastName: {
       type: String,
-      maxlength: [36, 'Should have less than 37 characters'],
+      maxlength: [36, 'Should be less than 37 characters'],
       required: [true, 'Is required']
     },
     language: {
@@ -101,7 +101,7 @@ const userSchema = new mongoose.Schema(
     },
     phone: {
       type: String,
-      maxlength: [50, 'Should have less than 51 characters']
+      maxlength: [50, 'Should be less than 51 characters']
     },
     reviewsAmount: {
       type: Number,
@@ -131,11 +131,11 @@ const userSchema = new mongoose.Schema(
     ],
     username: {
       type: String,
-      maxlength: [67, 'Should have less than 68 characters']
+      maxlength: [67, 'Should be less than 68 characters']
     },
     zip: {
       type: String,
-      maxlength: [32, 'Should have less than 33 characters']
+      maxlength: [32, 'Should be less than 33 characters']
     }
   },
   { timestamps: true }

@@ -17,11 +17,11 @@ router.post('', isAuthenticated({ isOptional: false }), createEvent)
 router.get('/:eventId', getEvent)
 router.put('/:eventId', isAuthenticated({ isOptional: false }), editEvent)
 router.delete('/:eventId', isAuthenticated({ isOptional: false }), deleteEvent)
+router.post('/:eventId/join', isAuthenticated({ isOptional: false }), joinEvent)
 router.put(
   '/:eventId/leave',
   isAuthenticated({ isOptional: false }),
   leaveEvent
 )
-router.post('/:eventId/join', isAuthenticated({ isOptional: false }), joinEvent)
 
 module.exports = router

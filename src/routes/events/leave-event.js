@@ -4,15 +4,11 @@ const { Event } = require('../../models/event')
 const logger = require('../../helpers/logger')
 
 module.exports = async (req, res, next) => {
-  if (req.user.isBlocked) {
-    return res.status(423).json({ general: 'You are blocked' })
-  }
-
   const eventId = req.params.eventId
 
   let event
   try {
-    event = await Event.findOne({ _id: eventId })
+    event = await Event.findOne({ _id: eventId, isArchived: false })
   } catch (err) {
     if (err.name === 'CastError') {
       return res.status(404).json({ general: 'Event not found' })
@@ -29,37 +25,26 @@ module.exports = async (req, res, next) => {
   const endDate = moment(event.endDate).utc()
   const today = moment.utc()
 
-  if (event.managers.find(m => m.toString() === req.user.id)) {
-    if (endDate.isBefore(today) && event.reviews > 0) {
-      return res.status(423).json({
-        general:
-          'You cannot leave this because it already ended and has one or more reviews'
-      })
-    }
+  if (endDate.isBefore(today)) {
+    return res.status(400).json({
+      general: 'You cannot leave because it already ended'
+    })
+  }
 
+  if (event.managers.find(m => m.toString() === req.user.id)) {
     event.managers = event.managers.filter(m => m.toString() !== req.user.id)
-    event.participants = event.participants.filter(
-      p => p.toString() !== req.user.id
-    )
 
     if (event.managers.length === 0) {
       return res.status(400).json({
-        general: 'You cannot leave this because there will not be more managers'
+        general: 'You cannot leave because you are the only manager'
       })
     }
   } else if (event.participants.find(p => p.toString() === req.user.id)) {
-    if (endDate.isBefore(today) && event.reviews > 0) {
-      return res.status(423).json({
-        general:
-          'You cannot leave this because it already ended and has one or more reviews'
-      })
-    }
-
     event.participants = event.participants.filter(
       p => p.toString() !== req.user.id
     )
   } else {
-    return res.status(400).json({ general: "You don't participate in this" })
+    return res.status(400).json({ general: 'You are not a participant' })
   }
 
   event.updatedAt = today.toDate()

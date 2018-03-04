@@ -93,6 +93,8 @@ module.exports = async (req, res, next) => {
           events: 1,
           firstName: 1,
           gender: 1,
+          isSubscribed: 1,
+          language: 1,
           lastName: 1,
           phone: 1,
           ranking: 1,

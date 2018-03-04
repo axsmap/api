@@ -4,10 +4,6 @@ const logger = require('../../helpers/logger')
 const { Team } = require('../../models/team')
 
 module.exports = async (req, res, next) => {
-  if (req.user.isBlocked) {
-    return res.status(423).json({ general: 'You are blocked' })
-  }
-
   const teamId = req.params.teamId
 
   let team
@@ -28,21 +24,20 @@ module.exports = async (req, res, next) => {
 
   if (team.managers.find(m => m.toString() === req.user.id)) {
     team.managers = team.managers.filter(m => m.toString() !== req.user.id)
-    team.members = team.members.filter(m => m.toString() !== req.user.id)
 
     if (team.managers.length === 0) {
       return res.status(400).json({
-        general:
-          'You cannot leave the team because there will not be more managers'
+        general: 'You cannot leave because you are the only manager'
       })
     }
   } else if (team.members.find(m => m.toString() === req.user.id)) {
     team.members = team.members.filter(m => m.toString() !== req.user.id)
   } else {
-    return res.status(400).json({ general: "You don't belong to this team" })
+    return res.status(400).json({ general: 'You are not a member' })
   }
 
-  team.updatedAt = moment.utc().toDate()
+  const today = moment.utc()
+  team.updatedAt = today.toDate()
 
   try {
     await team.save()
@@ -52,7 +47,7 @@ module.exports = async (req, res, next) => {
   }
 
   req.user.teams = req.user.teams.filter(t => t.toString() !== team.id)
-  req.user.updatedAt = moment.utc().toDate()
+  req.user.updatedAt = today.toDate()
 
   try {
     await req.user.save()
