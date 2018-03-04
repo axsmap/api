@@ -28,15 +28,15 @@ module.exports = async (req, res, next) => {
   }
 
   if (petition.state === 'accepted') {
-    return res.status(423).json({ general: 'Is already accepted' })
+    return res.status(400).json({ general: 'Is already accepted' })
   }
 
   if (petition.state === 'canceled') {
-    return res.status(423).json({ general: 'Is already canceled' })
+    return res.status(400).json({ general: 'Is already canceled' })
   }
 
   if (petition.state === 'rejected') {
-    return res.status(423).json({ general: 'Is already rejected' })
+    return res.status(400).json({ general: 'Is already rejected' })
   }
 
   const { errors, isValid } = validateEditPetition(req.body)

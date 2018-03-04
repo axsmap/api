@@ -84,7 +84,7 @@ module.exports = async (req, res, next) => {
 
     const endDate = moment(event.endDate).utc()
     if (endDate.isBefore(today)) {
-      return res.status(423).json({ general: 'Event has already finished' })
+      return res.status(400).json({ general: 'Event has already finished' })
     }
 
     let team
@@ -159,7 +159,7 @@ module.exports = async (req, res, next) => {
 
     const endDate = moment(event.endDate).utc()
     if (endDate.isBefore(today)) {
-      return res.status(423).json({ general: 'Event has already finished' })
+      return res.status(400).json({ general: 'Event has already finished' })
     }
 
     let user
@@ -296,7 +296,7 @@ module.exports = async (req, res, next) => {
 
     const endDate = moment(event.endDate).utc()
     if (endDate.isBefore(today)) {
-      return res.status(423).json({ general: 'Event has already finished' })
+      return res.status(400).json({ general: 'Event has already finished' })
     }
 
     let team
@@ -367,7 +367,7 @@ module.exports = async (req, res, next) => {
 
     const endDate = moment(event.endDate).utc()
     if (endDate.isBefore(today)) {
-      return res.status(423).json({ general: 'Event has already finished' })
+      return res.status(400).json({ general: 'Event has already finished' })
     }
   } else {
     // data.type === request-user-team
