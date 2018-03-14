@@ -1,12 +1,10 @@
-const aws = require('aws-sdk')
-const jimp = require('jimp')
-const { difference, intersection, last } = require('lodash')
+const { difference, intersection } = require('lodash')
 const moment = require('moment')
-const randomstring = require('randomstring')
 
 const { Event } = require('../../models/event')
 const { cleanSpaces } = require('../../helpers')
 const logger = require('../../helpers/logger')
+const { Photo } = require('../../models/photo')
 const { Team } = require('../../models/team')
 const { User } = require('../../models/user')
 
@@ -35,15 +33,6 @@ module.exports = async (req, res, next) => {
     return res.status(403).json({ general: 'Forbidden action' })
   }
 
-  const startDate = moment(event.startDate).utc()
-  const today = moment.utc()
-
-  if (startDate.isBefore(today)) {
-    return res
-      .status(400)
-      .json({ general: 'You cannot edit it because it already started' })
-  }
-
   const data = {
     address: req.body.address,
     description: req.body.description,
@@ -68,7 +57,8 @@ module.exports = async (req, res, next) => {
   event.description = data.description || event.description
 
   if (data.endDate) {
-    const endDate = moment(data.endDate).utc()
+    const endDate = moment(data.endDate).endOf('day').utc()
+    const startDate = moment(event.startDate).utc()
 
     if (!data.startDate) {
       if (endDate.isBefore(startDate)) {
@@ -203,91 +193,21 @@ module.exports = async (req, res, next) => {
 
   event.participantsGoal = data.participantsGoal || event.participantsGoal
 
-  const s3 = new aws.S3()
-  if (data.poster) {
-    const posterBuffer = Buffer.from(data.poster.split(',')[1], 'base64')
-    let posterImage
+  if (data.poster && !data.poster.includes('default')) {
+    let poster
     try {
-      posterImage = await jimp.read(posterBuffer)
+      poster = await Photo.findOne({ url: data.poster })
     } catch (err) {
-      logger.error('Poster image failed to be read at edit-event')
+      logger.error(`Poster ${data.poster} failed to be found at edit-event`)
       return next(err)
     }
 
-    let uploadPoster
-    posterImage.cover(400, 400).quality(85)
-    posterImage.getBuffer(posterImage.getMIME(), (err, posterBuffer) => {
-      if (err) {
-        return next(err)
-      }
-
-      const posterExtension = posterImage.getExtension()
-      if (
-        posterExtension === 'png' ||
-        posterExtension === 'jpeg' ||
-        posterExtension === 'jpg' ||
-        posterExtension === 'bmp'
-      ) {
-        const posterFileName = `${Date.now()}${randomstring.generate({
-          length: 5,
-          capitalization: 'lowercase'
-        })}.${posterExtension}`
-        uploadPoster = s3
-          .putObject({
-            ACL: 'public-read',
-            Body: posterBuffer,
-            Bucket: process.env.AWS_S3_BUCKET,
-            ContentType: posterImage.getMIME(),
-            Key: `events/posters/${posterFileName}`
-          })
-          .promise()
-
-        event.poster = `https://s3.amazonaws.com/${process.env
-          .AWS_S3_BUCKET}/events/posters/${posterFileName}`
-      } else {
-        return res
-          .status(400)
-          .json({ poster: 'Should have a .png, .jpeg, .jpg or .bmp extension' })
-      }
-    })
-
-    try {
-      await uploadPoster
-    } catch (err) {
-      logger.error('Poster failed to be uploaded at edit-event')
-      return next(err)
+    if (!poster) {
+      return res.status(404).json({ poster: 'Not found' })
     }
 
-    const params = {
-      Bucket: process.env.AWS_S3_BUCKET,
-      Key: `events/posters/${last(event.poster.split('/'))}`
-    }
-    if (!event.poster.endsWith('default.png')) {
-      try {
-        await s3.deleteObject(params).promise()
-      } catch (err) {
-        logger.error(
-          `Event's poster ${params.Key} failed to be deleted at edit-event`
-        )
-        return next(err)
-      }
-    }
+    event.poster = data.poster
   } else if (data.poster === '') {
-    const params = {
-      Bucket: process.env.AWS_S3_BUCKET,
-      Key: `events/posters/${last(event.poster.split('/'))}`
-    }
-    if (!event.poster.endsWith('default.png')) {
-      try {
-        await s3.deleteObject(params).promise()
-      } catch (err) {
-        logger.error(
-          `Event's poster ${params.Key} failed to be deleted at edit-event`
-        )
-        return next(err)
-      }
-    }
-
     event.poster = `https://s3.amazonaws.com/${process.env
       .AWS_S3_BUCKET}/events/posters/default.png`
   }
@@ -295,10 +215,12 @@ module.exports = async (req, res, next) => {
   event.reviewsGoal = data.reviewsGoal || event.reviewsGoal
 
   if (data.startDate) {
-    const startDate = moment(data.startDate).utc()
-    const endDate = moment(event.endDate).utc()
+    const startDate = moment(data.startDate).endOf('day').utc()
+    const endDate = moment(event.endDate).endOf('day').utc()
 
     if (!data.endDate) {
+      const today = moment.utc()
+
       if (startDate.isBefore(today)) {
         return res.status(400).json({
           startDate: 'Should be equal to or greater than the current time'
@@ -404,7 +326,7 @@ module.exports = async (req, res, next) => {
     event.teams = event.teams.filter(t => !teamsToRemove.includes(t.toString()))
   }
 
-  event.updatedAt = today.toDate()
+  event.updatedAt = moment.utc().toDate()
 
   try {
     await event.save()

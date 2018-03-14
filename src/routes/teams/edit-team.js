@@ -1,11 +1,9 @@
-const aws = require('aws-sdk')
-const jimp = require('jimp')
-const { difference, intersection, last } = require('lodash')
+const { difference, intersection } = require('lodash')
 const moment = require('moment')
-const randomstring = require('randomstring')
 
 const { cleanSpaces } = require('../../helpers')
 const logger = require('../../helpers/logger')
+const { Photo } = require('../../models/photo')
 const { Team } = require('../../models/team')
 const { User } = require('../../models/user')
 
@@ -37,97 +35,31 @@ module.exports = async (req, res, next) => {
     return res.status(403).json({ general: 'Forbidden action' })
   }
 
-  const data = req.body
+  const data = {
+    avatar: req.body.avatar,
+    description: req.body.description,
+    managers: req.body.managers,
+    members: req.body.members,
+    name: req.body.name
+  }
   const { errors, isValid } = validateEditTeam(data)
   if (!isValid) return res.status(400).json(errors)
 
-  const s3 = new aws.S3()
-  if (data.avatar) {
-    const avatarBuffer = Buffer.from(data.avatar.split(',')[1], 'base64')
-    let avatarImage
+  if (data.avatar && !data.avatar.includes('default')) {
+    let avatar
     try {
-      avatarImage = await jimp.read(avatarBuffer)
+      avatar = await Photo.findOne({ url: data.avatar })
     } catch (err) {
-      logger.error('Avatar image failed to be read at edit-team')
+      logger.error(`Avatar ${data.avatar} failed to be found at edit-team`)
       return next(err)
     }
 
-    let uploadAvatar
-    avatarImage.cover(400, 400).quality(85)
-    avatarImage.getBuffer(avatarImage.getMIME(), (err, avatarBuffer) => {
-      if (err) {
-        return next(err)
-      }
-
-      const avatarExtension = avatarImage.getExtension()
-      if (
-        avatarExtension === 'png' ||
-        avatarExtension === 'jpeg' ||
-        avatarExtension === 'jpg' ||
-        avatarExtension === 'bmp'
-      ) {
-        const avatarFileName = `${Date.now()}${randomstring.generate({
-          length: 5,
-          capitalization: 'lowercase'
-        })}.${avatarExtension}`
-        uploadAvatar = s3
-          .putObject({
-            ACL: 'public-read',
-            Body: avatarBuffer,
-            Bucket: process.env.AWS_S3_BUCKET,
-            ContentType: avatarImage.getMIME(),
-            Key: `teams/avatars/${avatarFileName}`
-          })
-          .promise()
-
-        data.avatar = `https://s3.amazonaws.com/${process.env
-          .AWS_S3_BUCKET}/teams/avatars/${avatarFileName}`
-      } else {
-        return res
-          .status(400)
-          .json({ avatar: 'Should have a .png, .jpeg, .jpg or .bmp extension' })
-      }
-    })
-
-    try {
-      await uploadAvatar
-    } catch (err) {
-      logger.error('Avatar failed to be uploaded at edit-team')
-      return next(err)
-    }
-
-    const params = {
-      Bucket: process.env.AWS_S3_BUCKET,
-      Key: `teams/avatars/${last(team.avatar.split('/'))}`
-    }
-    if (!team.avatar.endsWith('default.png')) {
-      try {
-        await s3.deleteObject(params).promise()
-      } catch (err) {
-        logger.error(
-          `Team's avatar ${params.Key} failed to be deleted at edit-team`
-        )
-        return next(err)
-      }
+    if (!avatar) {
+      return res.status(404).json({ avatar: 'Not found' })
     }
 
     team.avatar = data.avatar
   } else if (data.avatar === '') {
-    const params = {
-      Bucket: process.env.AWS_S3_BUCKET,
-      Key: `teams/avatars/${last(team.avatar.split('/'))}`
-    }
-    if (!team.avatar.endsWith('default.png')) {
-      try {
-        await s3.deleteObject(params).promise()
-      } catch (err) {
-        logger.error(
-          `Team's avatar ${params.Key} failed to be deleted at edit-team`
-        )
-        return next(err)
-      }
-    }
-
     team.avatar = `https://s3.amazonaws.com/${process.env
       .AWS_S3_BUCKET}/teams/avatars/default.png`
   }
@@ -256,16 +188,14 @@ module.exports = async (req, res, next) => {
     return next(err)
   }
 
-  const dataResponse = Object.assign(
-    {},
-    {
-      id: team.id,
-      avatar: team.avatar,
-      description: team.description,
-      managers: team.managers,
-      members: team.members,
-      name: team.name
-    }
-  )
+  const dataResponse = {
+    id: team.id,
+    avatar: team.avatar,
+    description: team.description,
+    managers: team.managers,
+    members: team.members,
+    name: team.name
+  }
+
   return res.status(200).json(dataResponse)
 }

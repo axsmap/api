@@ -1,17 +1,11 @@
-const util = require('util')
-
-const aws = require('aws-sdk')
 const axios = require('axios')
 const FormData = require('form-data')
-const jimp = require('jimp')
 const moment = require('moment')
-const randomstring = require('randomstring')
-
-jimp.prototype.getBufferAsync = util.promisify(jimp.prototype.getBuffer)
 
 const { Event } = require('../../models/event')
 const { cleanSpaces } = require('../../helpers')
 const logger = require('../../helpers/logger')
+const { Photo } = require('../../models/photo')
 const { Team } = require('../../models/team')
 
 const { validateCreateEvent } = require('./validations')
@@ -39,7 +33,7 @@ module.exports = async (req, res, next) => {
 
   data.address = cleanSpaces(data.address)
 
-  data.endDate = moment(data.endDate).utc().toDate()
+  data.endDate = moment(data.endDate).endOf('day').utc().toDate()
 
   data.location = {
     coordinates: [data.locationCoordinates[1], data.locationCoordinates[0]]
@@ -62,64 +56,20 @@ module.exports = async (req, res, next) => {
   }
 
   if (data.poster) {
-    let posterBuffer = Buffer.from(data.poster.split(',')[1], 'base64')
-    let posterImage
+    let poster
     try {
-      posterImage = await jimp.read(posterBuffer)
+      poster = await Photo.findOne({ url: data.poster })
     } catch (err) {
-      logger.error('Poster image failed to be read at create-event')
+      logger.error(`Poster ${data.poster} failed to be found at create-event`)
       return next(err)
     }
 
-    let uploadPoster
-    posterImage.cover(400, 400).quality(85)
-    try {
-      posterBuffer = await posterImage.getBufferAsync(posterImage.getMIME())
-    } catch (err) {
-      return next(err)
+    if (!poster) {
+      return res.status(404).json({ poster: 'Not found' })
     }
-
-    const posterExtension = posterImage.getExtension()
-    if (
-      posterExtension === 'png' ||
-      posterExtension === 'jpeg' ||
-      posterExtension === 'jpg' ||
-      posterExtension === 'bmp'
-    ) {
-      const posterFileName = `${Date.now()}${randomstring.generate({
-        length: 5,
-        capitalization: 'lowercase'
-      })}.${posterExtension}`
-      const s3 = new aws.S3()
-      uploadPoster = s3
-        .putObject({
-          ACL: 'public-read',
-          Body: posterBuffer,
-          Bucket: process.env.AWS_S3_BUCKET,
-          ContentType: posterImage.getMIME(),
-          Key: `events/posters/${posterFileName}`
-        })
-        .promise()
-
-      data.poster = `https://s3.amazonaws.com/${process.env
-        .AWS_S3_BUCKET}/events/posters/${posterFileName}`
-    } else {
-      return res
-        .status(400)
-        .json({ poster: 'Should have a .png, .jpeg, .jpg or .bmp extension' })
-    }
-
-    try {
-      await uploadPoster
-    } catch (err) {
-      logger.error('Poster failed to be uploaded at create-event')
-      return next(err)
-    }
-  } else {
-    data.poster = undefined
   }
 
-  data.startDate = moment(data.startDate).utc().toDate()
+  data.startDate = moment(data.startDate).endOf('day').utc().toDate()
 
   if (data.teamManager) {
     let team
@@ -214,6 +164,7 @@ module.exports = async (req, res, next) => {
     }
   }
   const dataResponse = {
+    id: event.id,
     address: event.address,
     description: event.description,
     endDate: event.description,

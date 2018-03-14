@@ -36,14 +36,14 @@ const photoSchema = new mongoose.Schema(
         }
       }
     ],
+    fileName: {
+      type: String,
+      maxlength: [25, 'Should be less than 26 characters'],
+      required: [true, 'Is required']
+    },
     isAllowed: {
       type: Boolean,
       default: true,
-      required: [true, 'Is required']
-    },
-    review: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Review',
       required: [true, 'Is required']
     },
     url: {
@@ -54,11 +54,6 @@ const photoSchema = new mongoose.Schema(
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: [true, 'Is required']
-    },
-    venue: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Venue',
       required: [true, 'Is required']
     }
   },

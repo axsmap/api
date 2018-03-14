@@ -21,7 +21,7 @@ function connectedToDB() {
   // Middlewares
   app.use(cors())
   app.use(morgan('combined', { stream: logger.stream }))
-  app.use(bodyParser.json({ limit: '9mb' }))
+  app.use(bodyParser.json())
   app.use(helmet())
 
   // Routes

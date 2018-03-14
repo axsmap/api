@@ -95,7 +95,8 @@ const eventSchema = new mongoose.Schema(
       type: String,
       default: `https://s3.amazonaws.com/${process.env
         .AWS_S3_BUCKET}/events/posters/default.png`,
-      maxlength: [2000, 'Should be less than 2001 characters']
+      maxlength: [2000, 'Should be less than 2001 characters'],
+      required: [true, 'Is required']
     },
     reviewsAmount: {
       type: Number,

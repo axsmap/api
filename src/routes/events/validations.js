@@ -1,5 +1,5 @@
 const { isEmpty } = require('lodash')
-const { isBase64, isInt, isMongoId } = require('validator')
+const { isInt, isMongoId } = require('validator')
 const moment = require('moment')
 
 const { isNumber } = require('../../helpers')
@@ -83,7 +83,7 @@ module.exports = {
     } else if (!moment(data.endDate).isValid()) {
       errors.endDate = 'Should have a ISO-8601 format'
     } else {
-      const endDate = moment(data.endDate).utc()
+      const endDate = moment(data.endDate).endOf('day').utc()
       const today = moment().utc()
 
       if (endDate.isBefore(today)) {
@@ -140,17 +140,8 @@ module.exports = {
       errors.participantsGoal = 'Should be a integer'
     }
 
-    if (typeof data.poster !== 'undefined') {
-      if (typeof data.poster !== 'string') {
-        errors.poster = 'Should be a string'
-      } else {
-        const posterBase64 = data.poster.split(',')[1] || ''
-        if (!isBase64(posterBase64)) {
-          errors.poster = 'Should be a valid base 64 string'
-        } else if (posterBase64.length > 8388608) {
-          errors.poster = 'Should be less than 8MB'
-        }
-      }
+    if (typeof data.poster !== 'undefined' && typeof data.poster !== 'string') {
+      errors.poster = 'Should be a string'
     }
 
     if (typeof data.reviewsGoal === 'undefined') {
@@ -169,7 +160,7 @@ module.exports = {
     } else if (!moment(data.startDate).isValid()) {
       errors.startDate = 'Should have a ISO-8601 format'
     } else {
-      const startDate = moment(data.startDate).utc()
+      const startDate = moment(data.startDate).endOf('day').utc()
       const today = moment().utc()
 
       if (startDate.isBefore(today)) {
@@ -229,7 +220,7 @@ module.exports = {
       } else if (!moment(data.endDate).isValid()) {
         errors.endDate = 'Should have a ISO-8601 format'
       } else {
-        const endDate = moment(data.endDate).utc()
+        const endDate = moment(data.endDate).endOf('day').utc()
         const today = moment().utc()
 
         if (endDate.isBefore(today)) {
@@ -301,7 +292,7 @@ module.exports = {
     if (typeof data.name !== 'undefined') {
       if (typeof data.name !== 'string') {
         errors.name = 'Should be a string'
-      } else if (data.address === '') {
+      } else if (data.name === '') {
         errors.name = 'Is required'
       }
     }
@@ -338,17 +329,8 @@ module.exports = {
       }
     }
 
-    if (typeof data.poster !== 'undefined') {
-      if (typeof data.poster !== 'string') {
-        errors.poster = 'Should be a string'
-      } else if (data.poster) {
-        const posterBase64 = data.poster.split(',')[1] || ''
-        if (!isBase64(posterBase64)) {
-          errors.poster = 'Should be a valid base 64 string'
-        } else if (posterBase64.length > 8388608) {
-          errors.poster = 'Should be less than 8MB'
-        }
-      }
+    if (typeof data.poster !== 'undefined' && typeof data.poster !== 'string') {
+      errors.poster = 'Should be a string'
     }
 
     if (typeof data.reviewsGoal !== 'undefined') {
@@ -370,7 +352,7 @@ module.exports = {
       } else if (!moment(data.startDate).isValid()) {
         errors.startDate = 'Should have a ISO-8601 format'
       } else {
-        const startDate = moment(data.startDate).utc()
+        const startDate = moment(data.startDate).endOf('day').utc()
         const today = moment().utc()
 
         if (startDate.isBefore(today)) {

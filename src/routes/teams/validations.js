@@ -1,28 +1,22 @@
 const { isEmpty } = require('lodash')
-const { isBase64, isInt, isMongoId } = require('validator')
+const { isInt, isMongoId } = require('validator')
 
 module.exports = {
   validateCreateTeam(data) {
     const errors = {}
 
-    if (data.avatar) {
-      if (typeof data.avatar !== 'string') {
-        errors.avatar = 'Should be a string'
-      } else {
-        const avatarBase64 = data.avatar.split(',')[1]
-        if (!isBase64(avatarBase64)) {
-          errors.avatar = 'Should be a valid base 64 string'
-        } else if (avatarBase64.length > 8388608) {
-          errors.avatar = 'Should be less than 8MB'
-        }
-      }
+    if (typeof data.avatar !== 'undefined' && typeof data.avatar !== 'string') {
+      errors.avatar = 'Should be a string'
     }
 
-    if (data.description && typeof data.description !== 'string') {
+    if (
+      typeof data.description !== 'undefined' &&
+      typeof data.description !== 'string'
+    ) {
       errors.description = 'Should be a string'
     }
 
-    if (!data.name) {
+    if (typeof data.name === 'undefined' || data.name === '') {
       errors.name = 'Is required'
     } else if (typeof data.name !== 'string') {
       errors.name = 'Should be a string'
@@ -33,25 +27,23 @@ module.exports = {
   validateEditTeam(data) {
     const errors = {}
 
-    if (data.avatar) {
-      if (typeof data.avatar !== 'string') {
-        errors.avatar = 'Should be a string'
-      } else {
-        const avatarBase64 = data.avatar.split(',')[1]
-        if (!isBase64(avatarBase64)) {
-          errors.avatar = 'Should be a valid base 64 string'
-        } else if (avatarBase64.length > 8388608) {
-          errors.avatar = 'Should be less than 8MB'
-        }
-      }
+    if (typeof data.avatar !== 'undefined' && typeof data.avatar !== 'string') {
+      errors.avatar = 'Should be a string'
     }
 
-    if (data.description && typeof data.description !== 'string') {
+    if (
+      typeof data.description !== 'undefined' &&
+      typeof data.description !== 'string'
+    ) {
       errors.description = 'Should be a string'
     }
 
-    if (data.name && typeof data.name !== 'string') {
-      errors.name = 'Should be a string'
+    if (typeof data.name !== 'undefined') {
+      if (typeof data.name !== 'string') {
+        errors.name = 'Should be a string'
+      } else if (data.name === '') {
+        errors.name = 'Is required'
+      }
     }
 
     if (data.managers) {
