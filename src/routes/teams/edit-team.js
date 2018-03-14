@@ -45,7 +45,11 @@ module.exports = async (req, res, next) => {
   const { errors, isValid } = validateEditTeam(data)
   if (!isValid) return res.status(400).json(errors)
 
-  if (data.avatar && !data.avatar.includes('default')) {
+  if (
+    data.avatar &&
+    !data.avatar.includes('default') &&
+    data.avatar !== team.avatar
+  ) {
     let avatar
     try {
       avatar = await Photo.findOne({ url: data.avatar })

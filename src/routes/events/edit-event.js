@@ -193,7 +193,11 @@ module.exports = async (req, res, next) => {
 
   event.participantsGoal = data.participantsGoal || event.participantsGoal
 
-  if (data.poster && !data.poster.includes('default')) {
+  if (
+    data.poster &&
+    !data.poster.includes('default') &&
+    data.poster !== event.poster
+  ) {
     let poster
     try {
       poster = await Photo.findOne({ url: data.poster })

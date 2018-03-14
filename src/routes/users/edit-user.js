@@ -1,15 +1,8 @@
-const util = require('util')
-
-const aws = require('aws-sdk')
-const jimp = require('jimp')
-const { last } = require('lodash')
 const moment = require('moment')
-const randomstring = require('randomstring')
-
-jimp.prototype.getBufferAsync = util.promisify(jimp.prototype.getBuffer)
 
 const { cleanSpaces } = require('../../helpers')
 const logger = require('../../helpers/logger')
+const { Photo } = require('../../models/photo')
 const { User } = require('../../models/user')
 
 const { validateEditUser } = require('./validations')
@@ -42,93 +35,25 @@ module.exports = async (req, res, next) => {
   const { errors, isValid } = validateEditUser(data)
   if (!isValid) return res.status(400).json(errors)
 
-  const s3 = new aws.S3()
-  if (data.avatar) {
-    let avatarBuffer = Buffer.from(data.avatar.split(',')[1], 'base64')
-    let avatarImage
+  if (
+    data.avatar &&
+    !data.avatar.includes('default') &&
+    data.avatar !== user.avatar
+  ) {
+    let avatar
     try {
-      avatarImage = await jimp.read(avatarBuffer)
+      avatar = await Photo.findOne({ url: data.avatar })
     } catch (err) {
-      logger.error('Avatar image failed to be read at edit-user')
+      logger.error(`Avatar ${data.avatar} failed to be found at edit-user`)
       return next(err)
     }
 
-    avatarImage.cover(400, 400).quality(85)
-    try {
-      avatarBuffer = await avatarImage.getBufferAsync(avatarImage.getMIME())
-    } catch (err) {
-      return next(err)
-    }
-
-    let uploadAvatar
-    const avatarExtension = avatarImage.getExtension()
-    if (
-      avatarExtension === 'png' ||
-      avatarExtension === 'jpeg' ||
-      avatarExtension === 'jpg' ||
-      avatarExtension === 'bmp'
-    ) {
-      const avatarFileName = `${Date.now()}${randomstring.generate({
-        length: 5,
-        capitalization: 'lowercase'
-      })}.${avatarExtension}`
-      uploadAvatar = s3
-        .putObject({
-          ACL: 'public-read',
-          Body: avatarBuffer,
-          Bucket: process.env.AWS_S3_BUCKET,
-          ContentType: avatarImage.getMIME(),
-          Key: `users/avatars/${avatarFileName}`
-        })
-        .promise()
-
-      data.avatar = `https://s3.amazonaws.com/${process.env
-        .AWS_S3_BUCKET}/users/avatars/${avatarFileName}`
-    } else {
-      return res
-        .status(400)
-        .json({ avatar: 'Should have a .png, .jpeg, .jpg or .bmp extension' })
-    }
-
-    try {
-      await uploadAvatar
-    } catch (err) {
-      logger.error('Avatar failed to be uploaded at edit-user')
-      return next(err)
-    }
-
-    const params = {
-      Bucket: process.env.AWS_S3_BUCKET,
-      Key: `users/avatars/${last(user.avatar.split('/'))}`
-    }
-    if (!user.avatar.endsWith('default.png')) {
-      try {
-        await s3.deleteObject(params).promise()
-      } catch (err) {
-        logger.error(
-          `User's avatar ${params.Key} failed to be deleted at edit-user`
-        )
-        return next(err)
-      }
+    if (!avatar) {
+      return res.status(404).json({ avatar: 'Not found' })
     }
 
     user.avatar = data.avatar
   } else if (data.avatar === '') {
-    const params = {
-      Bucket: process.env.AWS_S3_BUCKET,
-      Key: `users/avatars/${last(user.avatar.split('/'))}`
-    }
-    if (!user.avatar.endsWith('default.png')) {
-      try {
-        await s3.deleteObject(params).promise()
-      } catch (err) {
-        logger.error(
-          `User's avatar ${params.Key} failed to be deleted at edit-user`
-        )
-        return next(err)
-      }
-    }
-
     user.avatar = `https://s3.amazonaws.com/${process.env
       .AWS_S3_BUCKET}/users/avatars/default.png`
   }
