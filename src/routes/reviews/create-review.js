@@ -1,9 +1,6 @@
 const axios = require('axios')
-const aws = require('aws-sdk')
-const jimp = require('jimp')
 const moment = require('moment')
 const { pick } = require('lodash')
-const randomstring = require('randomstring')
 
 const { Event } = require('../../models/event')
 const logger = require('../../helpers/logger')
@@ -15,15 +12,8 @@ const { Venue } = require('../../models/venue')
 const { validateCreateEditReview } = require('./validations')
 
 module.exports = async (req, res, next) => {
-  if (req.user.isBlocked) {
-    return res.status(423).json({ general: 'You are blocked' })
-  }
-
   const { errors, isValid } = validateCreateEditReview(req.body)
-
-  if (!isValid) {
-    return res.status(400).json(errors)
-  }
+  if (!isValid) return res.status(400).json(errors)
 
   const reviewData = pick(req.body, [
     'allowsGuideDog',
@@ -196,63 +186,20 @@ module.exports = async (req, res, next) => {
     return next(err)
   }
 
-  const photo = req.body.photo
-  if (photo) {
-    const photoBuffer = Buffer.from(photo.split(',')[1], 'base64')
-    let photoImage
+  if (req.body.photo) {
+    let photo
     try {
-      photoImage = await jimp.read(photoBuffer)
+      photo = await Photo.findOne({ url: req.body.photo })
     } catch (err) {
-      logger.error('Photo image failed to be read at create-review')
+      logger.error(
+        `Photo ${req.body.photo} failed to be found at create-review`
+      )
       return next(err)
     }
 
-    photoImage.cover(640, 480).quality(85)
-    photoImage.getBuffer(photoImage.getMIME(), async (err, photoBuffer) => {
-      if (err) {
-        return next(err)
-      }
-
-      const photoExtension = photoImage.getExtension()
-      const photoFileName = `${Date.now()}${randomstring.generate({
-        length: 5,
-        capitalization: 'lowercase'
-      })}.${photoExtension}`
-      const s3 = new aws.S3()
-      try {
-        await s3
-          .putObject({
-            ACL: 'public-read',
-            Body: photoBuffer,
-            Bucket: process.env.AWS_S3_BUCKET,
-            ContentType: photoImage.getMIME(),
-            Key: `photos/${photoFileName}`
-          })
-          .promise()
-      } catch (err) {
-        logger.error('Photo buffer failed to be uploaded at create-review')
-        return next(err)
-      }
-
-      const photoData = {
-        isAllowed: false,
-        review: review.id,
-        url: `https://s3.amazonaws.com/${process.env
-          .AWS_S3_BUCKET}/photos/${photoFileName}`,
-        user: req.user.id,
-        venue: venue.id
-      }
-      try {
-        await Photo.create(photoData)
-      } catch (err) {
-        logger.error(
-          `Photo failed to be created at create-review.\nData: ${JSON.stringify(
-            photoData
-          )}`
-        )
-        return next(err)
-      }
-    })
+    if (!photo) {
+      return res.status(404).json({ photo: 'Not found' })
+    }
   }
 
   if (typeof review.allowsGuideDog !== 'undefined') {

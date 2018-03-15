@@ -9,21 +9,13 @@ const randomstring = require('randomstring')
 const logger = require('../../helpers/logger')
 const { Photo } = require('../../models/photo')
 
-const { validateCreatePhoto } = require('./validations')
-
 jimp.prototype.getBufferAsync = util.promisify(jimp.prototype.getBuffer)
 
 module.exports = async (req, res, next) => {
-  const data = {
-    isWide: req.body.isWide
-  }
-  const { errors, isValid } = validateCreatePhoto(data)
-  if (!isValid) return res.status(400).json(errors)
-
   const uploadPhoto = util.promisify(
     multer({
       dest: '/tmp',
-      limits: { fields: 0, fieldSize: 0, fileSize: 8388608 },
+      limits: { fileSize: 8388608 },
       fileFilter: (req, file, cb) => {
         if (/^image\/(jpe?g|png)$/i.test(file.mimetype)) {
           cb(null, true)
@@ -51,7 +43,7 @@ module.exports = async (req, res, next) => {
     return next(err)
   }
 
-  if (data.isWide) {
+  if (req.body.isWide === 'true') {
     photoFile.cover(640, 480).quality(85)
   } else {
     photoFile.cover(400, 400).quality(85)
@@ -109,11 +101,7 @@ module.exports = async (req, res, next) => {
       return res.status(400).json(validationErrors)
     }
 
-    logger.error(
-      `Photo failed to be created at create-photo.\nData: ${JSON.stringify(
-        data
-      )}`
-    )
+    logger.error('Photo failed to be created at create-photo')
     return next(err)
   }
 

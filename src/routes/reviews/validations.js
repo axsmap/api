@@ -1,5 +1,5 @@
 const { isEmpty } = require('lodash')
-const { isBase64, isInt, isMongoId } = require('validator')
+const { isInt, isMongoId } = require('validator')
 
 module.exports = {
   validateCreateEditReview(data) {
@@ -75,12 +75,8 @@ module.exports = {
       errors.isSpacious = 'Should be a boolean'
     }
 
-    if (data.photo) {
-      if (typeof data.photo !== 'string') {
-        errors.photo = 'Should be a string'
-      } else if (!isBase64(data.photo.split(',')[1])) {
-        errors.photo = 'Should be a valid base 64 string'
-      }
+    if (typeof data.photo !== 'undefined' && typeof data.photo !== 'string') {
+      errors.photo = 'Should be a string'
     }
 
     if (!data.place) {
