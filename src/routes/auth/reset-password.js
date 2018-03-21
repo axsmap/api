@@ -71,6 +71,11 @@ module.exports = async (req, res, next) => {
     return res.status(400).json({ general: 'User not found' })
   }
 
+  const passwordMatches = user.comparePassword(password)
+  if (passwordMatches) {
+    return res.status(400).json({ password: 'Is already used' })
+  }
+
   user.password = password
   user.updatedAt = moment.utc().toDate()
 
