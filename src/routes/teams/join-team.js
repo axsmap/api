@@ -28,6 +28,13 @@ module.exports = async (req, res, next) => {
       .json({ general: 'You already are a member in this team' })
   }
 
+  const eventManagers = team.managers.map(m => m.toString())
+  if (eventManagers.includes(req.user.id)) {
+    return res
+      .status(400)
+      .json({ general: 'You already are a member in this team' })
+  }
+
   let petition
   try {
     petition = await Petition.findOne({

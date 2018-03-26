@@ -30,6 +30,13 @@ module.exports = async (req, res, next) => {
       .json({ general: 'You already are a participant in this event' })
   }
 
+  const eventManagers = event.managers.map(m => m.toString())
+  if (eventManagers.includes(req.user.id)) {
+    return res
+      .status(400)
+      .json({ general: 'You already are a participant in this event' })
+  }
+
   if (event.isOpen) {
     req.user.events = [...req.user.events, event.id]
     req.user.updatedAt = moment.utc().toDate()
