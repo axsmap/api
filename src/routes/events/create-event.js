@@ -69,7 +69,7 @@ module.exports = async (req, res, next) => {
     }
   }
 
-  data.startDate = moment(data.startDate).endOf('day').utc().toDate()
+  data.startDate = moment(data.startDate).startOf('day').utc().toDate()
 
   if (data.teamManager) {
     let team

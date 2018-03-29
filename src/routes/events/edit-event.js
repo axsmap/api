@@ -58,7 +58,7 @@ module.exports = async (req, res, next) => {
 
   if (data.endDate) {
     const endDate = moment(data.endDate).endOf('day').utc()
-    const startDate = moment(event.startDate).utc()
+    const startDate = moment(event.startDate).startOf('day').utc()
 
     if (!data.startDate) {
       if (endDate.isBefore(startDate)) {
@@ -219,11 +219,11 @@ module.exports = async (req, res, next) => {
   event.reviewsGoal = data.reviewsGoal || event.reviewsGoal
 
   if (data.startDate) {
-    const startDate = moment(data.startDate).endOf('day').utc()
+    const startDate = moment(data.startDate).startOf('day').utc()
     const endDate = moment(event.endDate).endOf('day').utc()
 
     if (!data.endDate) {
-      const today = moment.utc()
+      const today = moment().startOf('day').utc()
 
       if (startDate.isBefore(today)) {
         return res.status(400).json({

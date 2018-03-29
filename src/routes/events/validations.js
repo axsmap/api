@@ -84,7 +84,7 @@ module.exports = {
       errors.endDate = 'Should have a ISO-8601 format'
     } else {
       const endDate = moment(data.endDate).endOf('day').utc()
-      const today = moment().utc()
+      const today = moment().startOf('day').utc()
 
       if (endDate.isBefore(today)) {
         errors.endDate = 'Should be greater than or equal to today'
@@ -160,8 +160,8 @@ module.exports = {
     } else if (!moment(data.startDate).isValid()) {
       errors.startDate = 'Should have a ISO-8601 format'
     } else {
-      const startDate = moment(data.startDate).endOf('day').utc()
-      const today = moment().utc()
+      const startDate = moment(data.startDate).startOf('day').utc()
+      const today = moment().startOf('day').utc()
 
       if (startDate.isBefore(today)) {
         errors.startDate = 'Should be greater than or equal to today'
@@ -180,8 +180,8 @@ module.exports = {
     }
 
     if (endDateIsValid && startDateIsValid) {
-      const endDate = moment(data.endDate).utc()
-      const startDate = moment(data.startDate).utc()
+      const endDate = moment(data.endDate).endOf('day').utc()
+      const startDate = moment(data.startDate).startOf('day').utc()
 
       if (startDate.isAfter(endDate)) {
         errors.endDate = 'Should be greater than or equal to startDate'
@@ -221,7 +221,7 @@ module.exports = {
         errors.endDate = 'Should have a ISO-8601 format'
       } else {
         const endDate = moment(data.endDate).endOf('day').utc()
-        const today = moment().utc()
+        const today = moment().startOf('day').utc()
 
         if (endDate.isBefore(today)) {
           errors.endDate = 'Should be greater than or equal to today'
@@ -352,8 +352,8 @@ module.exports = {
       } else if (!moment(data.startDate).isValid()) {
         errors.startDate = 'Should have a ISO-8601 format'
       } else {
-        const startDate = moment(data.startDate).endOf('day').utc()
-        const today = moment().utc()
+        const startDate = moment(data.startDate).startOf('day').utc()
+        const today = moment().startOf('day').utc()
 
         if (startDate.isBefore(today)) {
           errors.startDate = 'Should be greater than or equal to today'
@@ -395,8 +395,8 @@ module.exports = {
     }
 
     if (endDateIsValid && startDateIsValid) {
-      const endDate = moment(data.endDate).utc()
-      const startDate = moment(data.startDate).utc()
+      const endDate = moment(data.endDate).endOf('day').utc()
+      const startDate = moment(data.startDate).startOf('day').utc()
 
       if (startDate.isAfter(endDate)) {
         errors.endDate = 'Should be greater than or equal to startDate'

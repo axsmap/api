@@ -1,6 +1,5 @@
 const axios = require('axios')
 const moment = require('moment')
-const { pick } = require('lodash')
 
 const { Event } = require('../../models/event')
 const logger = require('../../helpers/logger')
@@ -15,30 +14,28 @@ module.exports = async (req, res, next) => {
   const { errors, isValid } = validateCreateEditReview(req.body)
   if (!isValid) return res.status(400).json(errors)
 
-  const reviewData = pick(req.body, [
-    'allowsGuideDog',
-    'bathroomScore',
-    'comments',
-    'entryScore',
-    'event',
-    'hasParking',
-    'hasSecondEntry',
-    'hasWellLit',
-    'isQuiet',
-    'isSpacious',
-    'steps',
-    'team'
-  ])
-  reviewData.user = req.user.id
+  const data = {
+    allowsGuideDog: req.body.allowsGuideDog,
+    bathroomScore: req.body.bathroomScore,
+    comments: req.body.comments,
+    entryScore: req.body.entryScore,
+    event: req.body.event,
+    hasParking: req.body.hasParking,
+    hasSecondEntry: req.body.hasSecondEntry,
+    hasWellLit: req.body.hasWellLit,
+    isQuiet: req.body.isQuiet,
+    isSpacious: req.body.isSpacious,
+    steps: req.body.steps,
+    team: req.body.team,
+    user: req.user.id
+  }
 
-  if (reviewData.event) {
-    let event
+  let event
+  if (data.event) {
     try {
-      event = await Event.findOne({ _id: reviewData.event })
+      event = await Event.findOne({ _id: data.event, isArchived: false })
     } catch (err) {
-      logger.error(
-        `Event ${reviewData.event} failed to be found at create-review`
-      )
+      logger.error(`Event ${data.event} failed to be found at create-review`)
       return next(err)
     }
 
@@ -46,7 +43,10 @@ module.exports = async (req, res, next) => {
       return res.status(404).json({ event: 'Event not found' })
     }
 
-    if (!event.participants.find(p => p.toString() === reviewData.user)) {
+    if (
+      !event.participants.find(p => p.toString() === data.user) &&
+      !event.managers.find(m => m.toString() === data.user)
+    ) {
       return res
         .status(400)
         .json({ event: 'You are not a participant of this event' })
@@ -54,7 +54,7 @@ module.exports = async (req, res, next) => {
 
     const startDate = moment(event.startDate).utc()
     const endDate = moment(event.endDate).utc()
-    const today = moment.utc()
+    const today = moment().startOf('day').utc()
     if (startDate.isAfter(today)) {
       return res.status(400).json({ event: 'Event has not started yet' })
     } else if (endDate.isBefore(today)) {
@@ -62,14 +62,12 @@ module.exports = async (req, res, next) => {
     }
   }
 
-  if (reviewData.team) {
-    let team
+  let team
+  if (data.team) {
     try {
-      team = await Team.findOne({ _id: reviewData.team, isArchived: false })
+      team = await Team.findOne({ _id: data.team, isArchived: false })
     } catch (err) {
-      logger.error(
-        `Team ${reviewData.team} failed to be found at create-review`
-      )
+      logger.error(`Team ${data.team} failed to be found at create-review`)
       return next(err)
     }
 
@@ -77,7 +75,10 @@ module.exports = async (req, res, next) => {
       return res.status(404).json({ team: 'Team not found' })
     }
 
-    if (!team.members.find(m => m.toString() === reviewData.user)) {
+    if (
+      !team.members.find(m => m.toString() === data.user) &&
+      !team.managers.find(m => m.toString() === data.user)
+    ) {
       return res.status(400).json({ team: 'You are not a member of this team' })
     }
   }
@@ -135,17 +136,17 @@ module.exports = async (req, res, next) => {
       return next(err)
     }
   }
-  reviewData.venue = venue.id
+  data.venue = venue.id
 
   let repeatedReview
   try {
     repeatedReview = await Review.findOne({
-      user: reviewData.user,
-      venue: reviewData.venue
+      user: data.user,
+      venue: data.venue
     })
   } catch (err) {
     logger.error(
-      `Review for venue ${reviewData.venue} from user ${reviewData.user} failed to be found at create-review`
+      `Review for venue ${data.venue} from user ${data.user} failed to be found at create-review`
     )
     return next(err)
   }
@@ -156,7 +157,7 @@ module.exports = async (req, res, next) => {
 
   let review
   try {
-    review = await Review.create(reviewData)
+    review = await Review.create(data)
   } catch (err) {
     if (typeof err.errors === 'object') {
       const validationErrors = {}
@@ -170,7 +171,7 @@ module.exports = async (req, res, next) => {
 
     logger.error(
       `Review failed to be created at create-review.\nData: ${JSON.stringify(
-        reviewData
+        data
       )}`
     )
     return next(err)
@@ -183,6 +184,15 @@ module.exports = async (req, res, next) => {
     await req.user.save()
   } catch (err) {
     logger.error(`User ${req.user.id} failed to be updated at create-review`)
+    return next(err)
+  }
+
+  event.reviewsAmount = event.reviewsAmount + 1
+  event.updatedAt = moment.utc().toDate()
+  try {
+    await event.save()
+  } catch (err) {
+    logger.error(`Event ${event.id} failed to be updated at create-review`)
     return next(err)
   }
 
@@ -200,6 +210,15 @@ module.exports = async (req, res, next) => {
     if (!photo) {
       return res.status(404).json({ photo: 'Not found' })
     }
+  }
+
+  team.reviewsAmount = team.reviewsAmount + 1
+  team.updatedAt = moment.utc().toDate()
+  try {
+    await team.save()
+  } catch (err) {
+    logger.error(`Team ${team.id} failed to be updated at create-review`)
+    return next(err)
   }
 
   if (typeof review.allowsGuideDog !== 'undefined') {
@@ -295,23 +314,22 @@ module.exports = async (req, res, next) => {
     return next(err)
   }
 
-  const dataResponse = pick(review, [
-    '_id',
-    'allowsGuideDog',
-    'bathroomScore',
-    'comments',
-    'entryScore',
-    'event',
-    'hasParking',
-    'hasSecondEntry',
-    'hasWellLit',
-    'isQuiet',
-    'isSpacious',
-    'steps',
-    'team',
-    'user',
-    'venue'
-  ])
-
+  const dataResponse = {
+    id: review.id,
+    allowsGuideDog: review.allowsGuideDog,
+    bathroomScore: review.bathroomScore,
+    comments: review.comments,
+    entryScore: review.entryScore,
+    event: review.event,
+    hasParking: review.hasParking,
+    hasSecondEntry: review.hasSecondEntry,
+    hasWellLit: review.hasWellLit,
+    isQuiet: review.isQuiet,
+    isSpacious: review.isSpacious,
+    steps: review.steps,
+    team: review.team,
+    user: review.user,
+    venue: review.venue
+  }
   return res.status(201).json(dataResponse)
 }

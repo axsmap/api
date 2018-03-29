@@ -50,14 +50,18 @@ module.exports = async (req, res, next) => {
       if (eventManagers.includes(req.user.id)) {
         managedEvents.push({
           id: e.id.toString(),
+          endDate: e.endDate,
+          name: e.name,
           poster: e.poster,
-          name: e.name
+          startDate: e.startDate
         })
       } else {
         events.push({
           id: e.id.toString(),
+          endDate: e.endDate,
+          name: e.name,
           poster: e.poster,
-          name: e.name
+          startDate: e.startDate
         })
       }
     }
