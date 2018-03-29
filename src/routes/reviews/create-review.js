@@ -187,13 +187,15 @@ module.exports = async (req, res, next) => {
     return next(err)
   }
 
-  event.reviewsAmount = event.reviewsAmount + 1
-  event.updatedAt = moment.utc().toDate()
-  try {
-    await event.save()
-  } catch (err) {
-    logger.error(`Event ${event.id} failed to be updated at create-review`)
-    return next(err)
+  if (event) {
+    event.reviewsAmount = event.reviewsAmount + 1
+    event.updatedAt = moment.utc().toDate()
+    try {
+      await event.save()
+    } catch (err) {
+      logger.error(`Event ${event.id} failed to be updated at create-review`)
+      return next(err)
+    }
   }
 
   if (req.body.photo) {
@@ -212,13 +214,15 @@ module.exports = async (req, res, next) => {
     }
   }
 
-  team.reviewsAmount = team.reviewsAmount + 1
-  team.updatedAt = moment.utc().toDate()
-  try {
-    await team.save()
-  } catch (err) {
-    logger.error(`Team ${team.id} failed to be updated at create-review`)
-    return next(err)
+  if (team) {
+    team.reviewsAmount = team.reviewsAmount + 1
+    team.updatedAt = moment.utc().toDate()
+    try {
+      await team.save()
+    } catch (err) {
+      logger.error(`Team ${team.id} failed to be updated at create-review`)
+      return next(err)
+    }
   }
 
   if (typeof review.allowsGuideDog !== 'undefined') {
