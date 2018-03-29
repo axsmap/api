@@ -45,16 +45,6 @@ module.exports = {
             errors.donationAmounts =
               'All value properties should be between 5 and 10000'
             return true
-          } else if (typeof d.description !== 'undefined') {
-            if (typeof d.description !== 'string') {
-              errors.donationAmounts =
-                'All description properties should be strings'
-              return true
-            } else if (d.description.length > 100) {
-              errors.donationAmounts =
-                'All description properties should be less than 101 characters'
-              return true
-            }
           }
         })
       }

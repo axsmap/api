@@ -19,10 +19,6 @@ const eventSchema = new mongoose.Schema(
             default: 5,
             max: [10000, 'Should be less than 10001'],
             min: [5, 'Should be greater than 4']
-          },
-          description: {
-            type: String,
-            maxlength: [100, 'Should be less than 101 characters']
           }
         }
       ]
