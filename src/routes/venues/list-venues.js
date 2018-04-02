@@ -17,17 +17,17 @@ module.exports = async (req, res, next) => {
 
   let venuesQuery = {}
 
-  if (queryParams.bathroomScore) {
-    venuesQuery.bathroomScore = {
-      $gte: parseFloat(queryParams.bathroomScore),
-      $lt: parseFloat(queryParams.bathroomScore) + 1
-    }
-  }
-
   if (queryParams.entryScore) {
     venuesQuery.entryScore = {
       $gte: parseFloat(queryParams.entryScore),
       $lt: parseFloat(queryParams.entryScore) + 1
+    }
+  }
+
+  if (queryParams.bathroomScore) {
+    venuesQuery.bathroomScore = {
+      $gte: parseFloat(queryParams.bathroomScore),
+      $lt: parseFloat(queryParams.bathroomScore) + 1
     }
   }
 
@@ -114,7 +114,7 @@ module.exports = async (req, res, next) => {
     }
 
     const coordinates = queryParams.location.split(',')
-    queryParams.location = {
+    venuesQuery.location = {
       $near: {
         $geometry: {
           type: 'Point',
@@ -151,7 +151,7 @@ module.exports = async (req, res, next) => {
       ;[venues, total] = await Promise.all([
         Venue.find(
           venuesQuery,
-          'address bathroomScore entryScore location name photos placeId types'
+          'address allowsGuideDog bathroomScore entryScore hasParking hasSecondEntry hasWellLit isQuiet isSpacious location name photos placeId steps types'
         )
           .skip(page * pageLimit)
           .limit(pageLimit),
