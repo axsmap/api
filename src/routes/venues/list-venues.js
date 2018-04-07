@@ -236,6 +236,7 @@ module.exports = async (req, res, next) => {
     }
 
     if (placesResponse.data.results.length > 0 && !queryParams.page) {
+      console.log(JSON.stringify(placesResponse.data.results, null, 2))
       const firstPlace = placesResponse.data.results[0]
       const firstPlaceTypes = firstPlace.types
       const commonTypes = intersection(firstPlaceTypes, directionsTypes)
@@ -246,6 +247,24 @@ module.exports = async (req, res, next) => {
               .env.PLACES_API_KEY}&location=${firstPlace.geometry.location
               .lat},${firstPlace.geometry.location
               .lng}&rankby=distance&type=${queryParams.type || 'establishment'}`
+          )
+        } catch (err) {
+          logger.error(
+            `Places failed to be found at list-venues.\nQuery Params: ${JSON.stringify(
+              queryParams
+            )}`
+          )
+          return next(err)
+        }
+      } else {
+        try {
+          placesResponse = await axios.get(
+            `https://maps.googleapis.com/maps/api/place/nearbysearch/json?key=${process
+              .env.PLACES_API_KEY}&keyword=${escape(
+              queryParams.keywords
+            )}&location=${firstPlace.geometry.location.lat},${firstPlace
+              .geometry.location.lng}&rankby=distance&type=${queryParams.type ||
+              'establishment'}`
           )
         } catch (err) {
           logger.error(

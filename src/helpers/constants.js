@@ -101,6 +101,8 @@ module.exports = {
     'administrative_area_level_5',
     'colloquial_area',
     'country',
+    'finance',
+    'floor',
     'geocode',
     'intersection',
     'locality',
@@ -112,6 +114,7 @@ module.exports = {
     'postal_code_prefix',
     'postal_code_suffix',
     'postal_town',
+    'premise',
     'route',
     'street_address',
     'street_number',
@@ -120,6 +123,7 @@ module.exports = {
     'sublocality_level_4',
     'sublocality_level_3',
     'sublocality_level_2',
-    'sublocality_level_1'
+    'sublocality_level_1',
+    'subpremise'
   ]
 }
