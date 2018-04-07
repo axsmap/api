@@ -1,6 +1,7 @@
 const axios = require('axios')
-const { find, isEmpty } = require('lodash')
+const { find, intersection, isEmpty } = require('lodash')
 
+const { directionsTypes } = require('../../helpers/constants')
 const { isNumber } = require('../../helpers')
 const logger = require('../../helpers/logger')
 const { Venue } = require('../../models/venue')
@@ -190,19 +191,25 @@ module.exports = async (req, res, next) => {
       results: venues
     }
   } else {
+    let useTextSearch = false
     let placesQuery = `?key=${process.env.PLACES_API_KEY}`
 
     if (!queryParams.page) {
-      placesQuery = `${placesQuery}&location=${queryParams.location}&rankby=distance`
-
       if (queryParams.keywords) {
-        placesQuery = `${placesQuery}&keyword=${queryParams.keywords}`
+        useTextSearch = true
+        placesQuery = `${placesQuery}&query=${escape(
+          queryParams.keywords
+        )}&location=${queryParams.location}&radius=50000`
+      } else {
+        placesQuery = `${placesQuery}&location=${queryParams.location}&rankby=distance`
       }
 
-      if (queryParams.type) {
-        placesQuery = `${placesQuery}&type=${queryParams.type}`
-      } else {
-        placesQuery = `${placesQuery}&type=establishment`
+      if (!useTextSearch) {
+        if (queryParams.type) {
+          placesQuery = `${placesQuery}&type=${queryParams.type}`
+        } else {
+          placesQuery = `${placesQuery}&type=establishment`
+        }
       }
     } else {
       placesQuery = `${placesQuery}&pagetoken=${queryParams.page}`
@@ -210,9 +217,15 @@ module.exports = async (req, res, next) => {
 
     let placesResponse
     try {
-      placesResponse = await axios.get(
-        `https://maps.googleapis.com/maps/api/place/nearbysearch/json${placesQuery}`
-      )
+      if (useTextSearch) {
+        placesResponse = await axios.get(
+          `https://maps.googleapis.com/maps/api/place/textsearch/json${placesQuery}`
+        )
+      } else {
+        placesResponse = await axios.get(
+          `https://maps.googleapis.com/maps/api/place/nearbysearch/json${placesQuery}`
+        )
+      }
     } catch (err) {
       logger.error(
         `Places failed to be found at list-venues.\nQuery Params: ${JSON.stringify(
@@ -220,6 +233,29 @@ module.exports = async (req, res, next) => {
         )}`
       )
       return next(err)
+    }
+
+    if (placesResponse.data.results.length > 0 && !queryParams.page) {
+      const firstPlace = placesResponse.data.results[0]
+      const firstPlaceTypes = firstPlace.types
+      const commonTypes = intersection(firstPlaceTypes, directionsTypes)
+      if (commonTypes.length > 0) {
+        try {
+          placesResponse = await axios.get(
+            `https://maps.googleapis.com/maps/api/place/nearbysearch/json?key=${process
+              .env.PLACES_API_KEY}&location=${firstPlace.geometry.location
+              .lat},${firstPlace.geometry.location
+              .lng}&rankby=distance&type=${queryParams.type || 'establishment'}`
+          )
+        } catch (err) {
+          logger.error(
+            `Places failed to be found at list-venues.\nQuery Params: ${JSON.stringify(
+              queryParams
+            )}`
+          )
+          return next(err)
+        }
+      }
     }
 
     let places = []
