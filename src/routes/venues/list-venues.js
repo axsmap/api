@@ -1,7 +1,6 @@
 const axios = require('axios')
-const { find, intersection, isEmpty } = require('lodash')
+const { find, isEmpty } = require('lodash')
 
-const { directionsTypes } = require('../../helpers/constants')
 const { isNumber } = require('../../helpers')
 const logger = require('../../helpers/logger')
 const { Venue } = require('../../models/venue')
@@ -10,23 +9,60 @@ const { validateListVenues } = require('./validations')
 
 module.exports = async (req, res, next) => {
   const queryParams = req.query
-  const { errors, isValid } = validateListVenues(queryParams)
 
-  if (!isValid) {
-    return res.status(400).json(errors)
+  const { errors, isValid } = validateListVenues(queryParams)
+  if (!isValid) return res.status(400).json(errors)
+
+  let coordinates = queryParams.location.split(',')
+  if (queryParams.keywords && !queryParams.page) {
+    const geocodeParams = `?key=${process.env.PLACES_API_KEY}&address=${escape(
+      queryParams.keywords
+    )}`
+
+    let geocodeResponse
+    try {
+      geocodeResponse = await axios.get(
+        `https://maps.googleapis.com/maps/api/geocode/json${geocodeParams}`
+      )
+    } catch (err) {
+      logger.error(
+        `Geocode failed to be found at list-venues.\nQuery Params: ${JSON.stringify(
+          queryParams
+        )}`
+      )
+      return next(err)
+    }
+
+    const statusCode = geocodeResponse.data.status
+    if (statusCode === 'ZERO_RESULTS') {
+      return res.status(404).json({ keywords: 'Address not found' })
+    } else if (statusCode === 'OVER_QUERY_LIMIT') {
+      return next(new Error('Over query limit with Google Places API'))
+    } else if (statusCode === 'REQUEST_DENIED') {
+      return next(new Error('Request denied with Google Places API'))
+    } else if (statusCode === 'INVALID_REQUEST') {
+      return next(new Error('Invalid request with Google Places API'))
+    } else if (statusCode === 'UNKNOWN_ERROR') {
+      return next(new Error('Unknown error with Google Places API'))
+    }
+
+    coordinates = [
+      geocodeResponse.data.results[0].geometry.location.lat,
+      geocodeResponse.data.results[0].geometry.location.lng
+    ]
   }
 
-  let venuesQuery = {}
+  let venuesFilters = {}
 
   if (queryParams.entryScore) {
-    venuesQuery.entryScore = {
+    venuesFilters.entryScore = {
       $gte: parseFloat(queryParams.entryScore),
       $lt: parseFloat(queryParams.entryScore) + 1
     }
   }
 
   if (queryParams.bathroomScore) {
-    venuesQuery.bathroomScore = {
+    venuesFilters.bathroomScore = {
       $gte: parseFloat(queryParams.bathroomScore),
       $lt: parseFloat(queryParams.bathroomScore) + 1
     }
@@ -35,87 +71,82 @@ module.exports = async (req, res, next) => {
   if (queryParams.allowsGuideDog) {
     const allowsGuideDog = parseFloat(queryParams.allowsGuideDog) === 1
     if (allowsGuideDog) {
-      venuesQuery['allowsGuideDog.yes'] = { $gte: 1 }
+      venuesFilters['allowsGuideDog.yes'] = { $gte: 1 }
     } else {
-      venuesQuery['allowsGuideDog.no'] = { $gte: 1 }
+      venuesFilters['allowsGuideDog.no'] = { $gte: 1 }
     }
   }
 
   if (queryParams.hasParking) {
     const hasParking = parseFloat(queryParams.hasParking) === 1
     if (hasParking) {
-      venuesQuery['hasParking.yes'] = { $gte: 1 }
+      venuesFilters['hasParking.yes'] = { $gte: 1 }
     } else {
-      venuesQuery['hasParking.no'] = { $gte: 1 }
+      venuesFilters['hasParking.no'] = { $gte: 1 }
     }
   }
 
   if (queryParams.hasRamp) {
     const hasRamp = parseFloat(queryParams.hasRamp) === 1
     if (hasRamp) {
-      venuesQuery['hasRamp.yes'] = { $gte: 1 }
+      venuesFilters['hasRamp.yes'] = { $gte: 1 }
     } else {
-      venuesQuery['hasRamp.no'] = { $gte: 1 }
+      venuesFilters['hasRamp.no'] = { $gte: 1 }
     }
   }
 
   if (queryParams.hasSecondEntry) {
     const hasSecondEntry = parseFloat(queryParams.hasSecondEntry) === 1
     if (hasSecondEntry) {
-      venuesQuery['hasSecondEntry.yes'] = { $gte: 1 }
+      venuesFilters['hasSecondEntry.yes'] = { $gte: 1 }
     } else {
-      venuesQuery['hasSecondEntry.no'] = { $gte: 1 }
+      venuesFilters['hasSecondEntry.no'] = { $gte: 1 }
     }
   }
 
   if (queryParams.hasWellLit) {
     const hasWellLit = parseFloat(queryParams.hasWellLit) === 1
     if (hasWellLit) {
-      venuesQuery['hasWellLit.yes'] = { $gte: 1 }
+      venuesFilters['hasWellLit.yes'] = { $gte: 1 }
     } else {
-      venuesQuery['hasWellLit.no'] = { $gte: 1 }
+      venuesFilters['hasWellLit.no'] = { $gte: 1 }
     }
   }
 
   if (queryParams.isQuiet) {
     const isQuiet = parseFloat(queryParams.isQuiet) === 1
     if (isQuiet) {
-      venuesQuery['isQuiet.yes'] = { $gte: 1 }
+      venuesFilters['isQuiet.yes'] = { $gte: 1 }
     } else {
-      venuesQuery['isQuiet.no'] = { $gte: 1 }
+      venuesFilters['isQuiet.no'] = { $gte: 1 }
     }
   }
 
   if (queryParams.isSpacious) {
     const isSpacious = parseFloat(queryParams.isSpacious) === 1
     if (isSpacious) {
-      venuesQuery['isSpacious.yes'] = { $gte: 1 }
+      venuesFilters['isSpacious.yes'] = { $gte: 1 }
     } else {
-      venuesQuery['isSpacious.no'] = { $gte: 1 }
+      venuesFilters['isSpacious.no'] = { $gte: 1 }
     }
   }
 
   if (queryParams.steps) {
     if (parseFloat(queryParams.steps) === 0) {
-      venuesQuery['steps.zero'] = { $gte: 1 }
+      venuesFilters['steps.zero'] = { $gte: 1 }
     } else if (parseFloat(queryParams.steps) === 1) {
-      venuesQuery['steps.one'] = { $gte: 1 }
+      venuesFilters['steps.one'] = { $gte: 1 }
     } else if (parseFloat(queryParams.steps) === 2) {
-      venuesQuery['steps.two'] = { $gte: 1 }
+      venuesFilters['steps.two'] = { $gte: 1 }
     } else if (parseFloat(queryParams.steps) === 3) {
-      venuesQuery['steps.moreThanTwo'] = { $gte: 1 }
+      venuesFilters['steps.moreThanTwo'] = { $gte: 1 }
     }
   }
 
   let dataResponse
 
-  if (!isEmpty(venuesQuery)) {
-    if (queryParams.keywords) {
-      venuesQuery.$text = { $search: queryParams.keywords }
-    }
-
-    const coordinates = queryParams.location.split(',')
-    venuesQuery.location = {
+  if (!isEmpty(venuesFilters)) {
+    venuesFilters.location = {
       $near: {
         $geometry: {
           type: 'Point',
@@ -126,10 +157,10 @@ module.exports = async (req, res, next) => {
     }
 
     if (queryParams.type) {
-      venuesQuery.types = queryParams.type
+      venuesFilters.types = queryParams.type
     }
 
-    venuesQuery.isArchived = false
+    venuesFilters.isArchived = false
 
     let page = 1
     if (isNumber(queryParams.page)) {
@@ -151,17 +182,17 @@ module.exports = async (req, res, next) => {
     try {
       ;[venues, total] = await Promise.all([
         Venue.find(
-          venuesQuery,
+          venuesFilters,
           'address allowsGuideDog bathroomScore entryScore hasParking hasSecondEntry hasWellLit isQuiet isSpacious location name photos placeId steps types'
         )
           .skip(page * pageLimit)
           .limit(pageLimit),
-        Venue.find(venuesQuery).count()
+        Venue.find(venuesFilters).count()
       ])
     } catch (err) {
       logger.error(
         `Venues failed to be found or count at list-venues.\nvenuesQuery: ${JSON.stringify(
-          venuesQuery
+          venuesFilters
         )}`
       )
       return next(err)
@@ -191,41 +222,25 @@ module.exports = async (req, res, next) => {
       results: venues
     }
   } else {
-    let useTextSearch = false
-    let placesQuery = `?key=${process.env.PLACES_API_KEY}`
+    let nearbyParams = `?key=${process.env.PLACES_API_KEY}`
 
     if (!queryParams.page) {
-      if (queryParams.keywords) {
-        useTextSearch = true
-        placesQuery = `${placesQuery}&query=${escape(
-          queryParams.keywords
-        )}&location=${queryParams.location}&radius=50000`
-      } else {
-        placesQuery = `${placesQuery}&location=${queryParams.location}&rankby=distance`
-      }
+      nearbyParams = `${nearbyParams}&location=${coordinates[0]},${coordinates[1]}&rankby=distance`
 
-      if (!useTextSearch) {
-        if (queryParams.type) {
-          placesQuery = `${placesQuery}&type=${queryParams.type}`
-        } else {
-          placesQuery = `${placesQuery}&type=establishment`
-        }
+      if (queryParams.type) {
+        nearbyParams = `${nearbyParams}&type=${queryParams.type}`
+      } else {
+        nearbyParams = `${nearbyParams}&type=establishment`
       }
     } else {
-      placesQuery = `${placesQuery}&pagetoken=${queryParams.page}`
+      nearbyParams = `${nearbyParams}&pagetoken=${queryParams.page}`
     }
 
     let placesResponse
     try {
-      if (useTextSearch) {
-        placesResponse = await axios.get(
-          `https://maps.googleapis.com/maps/api/place/textsearch/json${placesQuery}`
-        )
-      } else {
-        placesResponse = await axios.get(
-          `https://maps.googleapis.com/maps/api/place/nearbysearch/json${placesQuery}`
-        )
-      }
+      placesResponse = await axios.get(
+        `https://maps.googleapis.com/maps/api/place/nearbysearch/json${nearbyParams}`
+      )
     } catch (err) {
       logger.error(
         `Places failed to be found at list-venues.\nQuery Params: ${JSON.stringify(
@@ -235,46 +250,15 @@ module.exports = async (req, res, next) => {
       return next(err)
     }
 
-    if (placesResponse.data.results.length > 0 && !queryParams.page) {
-      console.log(JSON.stringify(placesResponse.data.results, null, 2))
-      const firstPlace = placesResponse.data.results[0]
-      const firstPlaceTypes = firstPlace.types
-      const commonTypes = intersection(firstPlaceTypes, directionsTypes)
-      if (commonTypes.length > 0) {
-        try {
-          placesResponse = await axios.get(
-            `https://maps.googleapis.com/maps/api/place/nearbysearch/json?key=${process
-              .env.PLACES_API_KEY}&location=${firstPlace.geometry.location
-              .lat},${firstPlace.geometry.location
-              .lng}&rankby=distance&type=${queryParams.type || 'establishment'}`
-          )
-        } catch (err) {
-          logger.error(
-            `Places failed to be found at list-venues.\nQuery Params: ${JSON.stringify(
-              queryParams
-            )}`
-          )
-          return next(err)
-        }
-      } else {
-        try {
-          placesResponse = await axios.get(
-            `https://maps.googleapis.com/maps/api/place/nearbysearch/json?key=${process
-              .env.PLACES_API_KEY}&keyword=${escape(
-              queryParams.keywords
-            )}&location=${firstPlace.geometry.location.lat},${firstPlace
-              .geometry.location.lng}&rankby=distance&type=${queryParams.type ||
-              'establishment'}`
-          )
-        } catch (err) {
-          logger.error(
-            `Places failed to be found at list-venues.\nQuery Params: ${JSON.stringify(
-              queryParams
-            )}`
-          )
-          return next(err)
-        }
-      }
+    const statusCode = placesResponse.data.status
+    if (statusCode === 'OVER_QUERY_LIMIT') {
+      return next(new Error('Over query limit with Google Places API'))
+    } else if (statusCode === 'REQUEST_DENIED') {
+      return next(new Error('Request denied with Google Places API'))
+    } else if (statusCode === 'INVALID_REQUEST') {
+      return next(new Error('Invalid request with Google Places API'))
+    } else if (statusCode === 'UNKNOWN_ERROR') {
+      return next(new Error('Unknown error with Google Places API'))
     }
 
     let places = []
