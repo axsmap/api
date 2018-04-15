@@ -1,5 +1,6 @@
 const axios = require('axios')
 const { find, isEmpty } = require('lodash')
+const slugify = require('speakingurl')
 
 const { isNumber } = require('../../helpers')
 const logger = require('../../helpers/logger')
@@ -15,7 +16,7 @@ module.exports = async (req, res, next) => {
 
   let coordinates = queryParams.location.split(',')
   if (queryParams.keywords && !queryParams.page) {
-    const geocodeParams = `?key=${process.env.PLACES_API_KEY}&address=${escape(
+    const geocodeParams = `?key=${process.env.PLACES_API_KEY}&address=${slugify(
       queryParams.keywords
     )}`
 
