@@ -62,10 +62,93 @@ module.exports = async (req, res, next) => {
   }
 
   let venue
+  let venueToSave
   try {
-    venue = await Venue.findOne({ placeId, isArchived: false }).select(
-      '-__v -createdAt -updatedAt -isArchived'
-    )
+    ;[venue, venueToSave] = await Promise.all([
+      Venue.aggregate([
+        {
+          $match: { placeId, isArchived: false }
+        },
+        {
+          $lookup: {
+            from: 'reviews',
+            let: { reviews: '$reviews' },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $in: ['$_id', '$$reviews']
+                  }
+                }
+              },
+              {
+                $lookup: {
+                  from: 'users',
+                  let: { user: '$user' },
+                  pipeline: [
+                    {
+                      $match: {
+                        $expr: {
+                          $eq: ['$_id', '$$user']
+                        }
+                      }
+                    },
+                    {
+                      $project: {
+                        _id: 0,
+                        id: '$_id',
+                        avatar: 1,
+                        firstName: 1,
+                        lastName: 1
+                      }
+                    }
+                  ],
+                  as: 'user'
+                }
+              },
+              {
+                $project: {
+                  _id: 0,
+                  id: '$_id',
+                  bathroomScore: 1,
+                  comments: 1,
+                  createdAt: 1,
+                  entryScore: 1,
+                  user: 1,
+                  voters: 1
+                }
+              }
+            ],
+            as: 'reviews'
+          }
+        },
+        {
+          $project: {
+            _id: 0,
+            id: '$_id',
+            address: 1,
+            description: 1,
+            allowsGuideDog: 1,
+            bathroomReviews: 1,
+            bathroomScore: 1,
+            entryReviews: 1,
+            entryScore: 1,
+            hasParking: 1,
+            hasSecondEntry: 1,
+            hasWellLit: 1,
+            isQuiet: 1,
+            isSpacious: 1,
+            location: 1,
+            name: 1,
+            placeId: 1,
+            steps: 1,
+            types: 1,
+            reviews: 1
+          }
+        }
+      ]),
+      Venue.findOne({ placeId, isArchived: false })
+    ])
   } catch (err) {
     logger.error(
       `Venue with placeId ${placeId} failed to be found at get-venue`
@@ -73,53 +156,55 @@ module.exports = async (req, res, next) => {
     return next(err)
   }
 
-  if (venue) {
+  if (venue && venue[0]) {
     let venueHasUpdates = false
-    if (venue.address !== dataResponse.address) {
-      venue.address = dataResponse.address
+    if (venueToSave.address !== dataResponse.address) {
+      venueToSave.address = dataResponse.address
       venueHasUpdates = true
     }
     if (
-      venue.location.coordinates[0] !== dataResponse.location.lng ||
-      venue.location.coordinates[1] !== dataResponse.location.lat
+      venueToSave.location.coordinates[0] !== dataResponse.location.lng ||
+      venueToSave.location.coordinates[1] !== dataResponse.location.lat
     ) {
-      venue.location.coordinates = [
+      venueToSave.location.coordinates = [
         dataResponse.location.lng,
         dataResponse.location.lat
       ]
       venueHasUpdates = true
     }
-    if (venue.name !== dataResponse.name) {
-      venue.name = dataResponse.name
+    if (venueToSave.name !== dataResponse.name) {
+      venueToSave.name = dataResponse.name
       venueHasUpdates = true
     }
-    if (!isEqual(venue.types, dataResponse.types)) {
-      venue.types = dataResponse.types
+    if (!isEqual(venueToSave.types, dataResponse.types)) {
+      venueToSave.types = dataResponse.types
       venueHasUpdates = true
     }
+
     if (venueHasUpdates) {
       try {
-        await venue.save()
+        await venueToSave.save()
       } catch (err) {
         logger.error(
-          `Venue with id ${venue.id} failed to be updated at get-venue.`
+          `Venue with id ${venueToSave.id} failed to be updated at get-venue.`
         )
         return next(err)
       }
     }
 
-    dataResponse.id = venue._id
-    dataResponse.allowsGuideDog = venue.allowsGuideDog
-    dataResponse.bathroomReviews = venue.bathroomReviews
-    dataResponse.bathroomScore = venue.bathroomScore
-    dataResponse.entryReviews = venue.entryReviews
-    dataResponse.entryScore = venue.entryScore
-    dataResponse.hasParking = venue.hasParking
-    dataResponse.hasSecondEntry = venue.hasSecondEntry
-    dataResponse.hasWellLit = venue.hasWellLit
-    dataResponse.isQuiet = venue.isQuiet
-    dataResponse.isSpacious = venue.isSpacious
-    dataResponse.steps = venue.steps
+    dataResponse.id = venue[0]._id
+    dataResponse.allowsGuideDog = venue[0].allowsGuideDog
+    dataResponse.bathroomReviews = venue[0].bathroomReviews
+    dataResponse.bathroomScore = venue[0].bathroomScore
+    dataResponse.entryReviews = venue[0].entryReviews
+    dataResponse.entryScore = venue[0].entryScore
+    dataResponse.hasParking = venue[0].hasParking
+    dataResponse.hasSecondEntry = venue[0].hasSecondEntry
+    dataResponse.hasWellLit = venue[0].hasWellLit
+    dataResponse.isQuiet = venue[0].isQuiet
+    dataResponse.isSpacious = venue[0].isSpacious
+    dataResponse.steps = venue[0].steps
+    dataResponse.reviews = venue[0].reviews
   }
 
   return res.status(200).json(dataResponse)
