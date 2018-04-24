@@ -57,15 +57,13 @@ module.exports = async (req, res, next) => {
 
   if (queryParams.entryScore) {
     venuesFilters.entryScore = {
-      $gte: parseFloat(queryParams.entryScore),
-      $lt: parseFloat(queryParams.entryScore) + 1
+      $gte: parseFloat(queryParams.entryScore)
     }
   }
 
   if (queryParams.bathroomScore) {
     venuesFilters.bathroomScore = {
-      $gte: parseFloat(queryParams.bathroomScore),
-      $lt: parseFloat(queryParams.bathroomScore) + 1
+      $gte: parseFloat(queryParams.bathroomScore)
     }
   }
 
