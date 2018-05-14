@@ -145,9 +145,9 @@ module.exports = async (req, res, next) => {
   let dataResponse
 
   if (!isEmpty(venuesFilters)) {
-    venuesFilters.name = queryParams.name
-      ? { $regex: queryParams.name, $options: 'i' }
-      : undefined
+    if (queryParams.name) {
+      venuesFilters.name = { $regex: queryParams.name, $options: 'i' }
+    }
 
     venuesFilters.location = {
       $near: {
