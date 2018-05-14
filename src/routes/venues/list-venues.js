@@ -15,9 +15,9 @@ module.exports = async (req, res, next) => {
   if (!isValid) return res.status(400).json(errors)
 
   let coordinates = queryParams.location.split(',')
-  if (queryParams.keywords && !queryParams.page) {
+  if (queryParams.address && !queryParams.page) {
     const geocodeParams = `?key=${process.env.PLACES_API_KEY}&address=${slugify(
-      queryParams.keywords
+      queryParams.address
     )}`
 
     let geocodeResponse
@@ -145,6 +145,10 @@ module.exports = async (req, res, next) => {
   let dataResponse
 
   if (!isEmpty(venuesFilters)) {
+    venuesFilters.name = queryParams.name
+      ? { $regex: queryParams.name, $options: 'i' }
+      : undefined
+
     venuesFilters.location = {
       $near: {
         $geometry: {
@@ -225,6 +229,10 @@ module.exports = async (req, res, next) => {
 
     if (!queryParams.page) {
       nearbyParams = `${nearbyParams}&location=${coordinates[0]},${coordinates[1]}&rankby=distance`
+
+      if (queryParams.name) {
+        nearbyParams = `${nearbyParams}&keyword=${queryParams.name}`
+      }
 
       if (queryParams.type) {
         nearbyParams = `${nearbyParams}&type=${queryParams.type}`
