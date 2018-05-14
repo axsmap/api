@@ -123,6 +123,29 @@ module.exports = async (req, res, next) => {
           }
         },
         {
+          $lookup: {
+            from: 'photos',
+            let: { photos: { $ifNull: ['$photos', []] } },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $in: ['$_id', '$$photos']
+                  }
+                }
+              },
+              {
+                $project: {
+                  _id: 0,
+                  id: '$_id',
+                  url: 1
+                }
+              }
+            ],
+            as: 'photos'
+          }
+        },
+        {
           $project: {
             _id: 0,
             id: '$_id',
@@ -140,6 +163,7 @@ module.exports = async (req, res, next) => {
             isSpacious: 1,
             location: 1,
             name: 1,
+            photos: 1,
             placeId: 1,
             steps: 1,
             types: 1,
@@ -203,6 +227,7 @@ module.exports = async (req, res, next) => {
     dataResponse.hasWellLit = venue[0].hasWellLit
     dataResponse.isQuiet = venue[0].isQuiet
     dataResponse.isSpacious = venue[0].isSpacious
+    dataResponse.photos = venue[0].photos
     dataResponse.steps = venue[0].steps
     dataResponse.reviews = venue[0].reviews
   }

@@ -102,6 +102,12 @@ const venueSchema = new mongoose.Schema(
       type: String,
       maxlength: [255, 'Should be less than 256 characters']
     },
+    photos: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: 'Photo'
+      }
+    ],
     placeId: {
       type: String,
       maxlength: [255, 'Should be less than 256 characters'],

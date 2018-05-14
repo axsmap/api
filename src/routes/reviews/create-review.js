@@ -138,23 +138,6 @@ module.exports = async (req, res, next) => {
   }
   data.venue = venue.id
 
-  let repeatedReview
-  try {
-    repeatedReview = await Review.findOne({
-      user: data.user,
-      venue: data.venue
-    })
-  } catch (err) {
-    logger.error(
-      `Review for venue ${data.venue} from user ${data.user} failed to be found at create-review`
-    )
-    return next(err)
-  }
-
-  if (repeatedReview) {
-    return res.status(400).json({ general: 'You already rated this venue' })
-  }
-
   let review
   try {
     review = await Review.create(data)
@@ -211,6 +194,15 @@ module.exports = async (req, res, next) => {
 
     if (!photo) {
       return res.status(404).json({ photo: 'Not found' })
+    }
+
+    venue.photos = [...venue.photos, photo.id]
+
+    try {
+      await venue.save()
+    } catch (err) {
+      logger.error(`Venue ${venue.id} failed to be updated at create-review`)
+      return next(err)
     }
   }
 
