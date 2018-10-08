@@ -1,12 +1,13 @@
-const bcrypt = require('bcrypt-nodejs')
-const mongoose = require('mongoose')
+const bcrypt = require('bcrypt-nodejs');
+const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema(
   {
     avatar: {
       type: String,
-      default: `https://s3.amazonaws.com/${process.env
-        .AWS_S3_BUCKET}/users/avatars/default.png`,
+      default: `https://s3.amazonaws.com/${
+        process.env.AWS_S3_BUCKET
+      }/users/avatars/default.png`,
       maxlength: [2000, 'Should be less than 2001 characters'],
       required: [true, 'Is required']
     },
@@ -139,7 +140,7 @@ const userSchema = new mongoose.Schema(
     }
   },
   { timestamps: true }
-)
+);
 
 userSchema.index(
   {
@@ -150,12 +151,12 @@ userSchema.index(
     reviewsAmount: 1
   },
   { weights: { email: 5, username: 5 } }
-)
+);
 
 function hashPassword(password) {
   bcrypt.genSalt(10, (errorOnSaltGeneration, salt) => {
     if (errorOnSaltGeneration) {
-      return false
+      return false;
     }
 
     bcrypt.hash(
@@ -164,24 +165,24 @@ function hashPassword(password) {
       null,
       (errorOnHashingPassword, hashedPassword) => {
         if (errorOnHashingPassword) {
-          return false
+          return false;
         }
 
-        this.hashedPassword = hashedPassword
-        return true
+        this.hashedPassword = hashedPassword;
+        return true;
       }
-    )
-  })
+    );
+  });
 }
 
 function comparePassword(password) {
-  return bcrypt.compareSync(password, this.hashedPassword)
+  return bcrypt.compareSync(password, this.hashedPassword);
 }
 
-userSchema.virtual('password').set(hashPassword)
-userSchema.methods.comparePassword = comparePassword
+userSchema.virtual('password').set(hashPassword);
+userSchema.methods.comparePassword = comparePassword;
 
 module.exports = {
   User: mongoose.model('User', userSchema),
   userSchema
-}
+};

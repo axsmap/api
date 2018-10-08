@@ -1,13 +1,12 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 
-const logger = require('../../helpers/logger')
-const { Team } = require('../../models/team')
+const { Team } = require('../../models/team');
 
 module.exports = async (req, res, next) => {
-  const teamId = req.params.teamId
+  const teamId = req.params.teamId;
 
-  const teamIdObj = mongoose.Types.ObjectId(teamId)
-  let team
+  const teamIdObj = mongoose.Types.ObjectId(teamId);
+  let team;
   try {
     team = await Team.aggregate([
       {
@@ -124,22 +123,22 @@ module.exports = async (req, res, next) => {
           ranking: 1
         }
       }
-    ])
+    ]);
   } catch (err) {
     if (err.name === 'CastError') {
-      return res.status(404).json({ general: 'Team not found' })
+      return res.status(404).json({ general: 'Team not found' });
     }
 
-    logger.error(`Team ${teamId} failed to be found at get-team`)
-    return next(err)
+    console.log(`Team ${teamId} failed to be found at get-team`);
+    return next(err);
   }
 
   if (!team) {
-    return res.status(404).json({ general: 'Team not found' })
+    return res.status(404).json({ general: 'Team not found' });
   }
 
   const dataResponse = Object.assign({}, team[0], {
     ranking: team[0].ranking.length ? team[0].ranking[0].ranking + 1 : 1
-  })
-  return res.status(200).json(dataResponse)
-}
+  });
+  return res.status(200).json(dataResponse);
+};

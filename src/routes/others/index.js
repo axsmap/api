@@ -1,9 +1,9 @@
-const express = require('express')
+const express = require('express');
 
-const contact = require('./contact')
+const contact = require('./contact');
 
-const router = new express.Router()
+const router = new express.Router();
 
-router.post('/contact', contact)
+router.post('/contact', contact);
 
-module.exports = router
+module.exports = router;

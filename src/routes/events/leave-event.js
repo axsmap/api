@@ -1,70 +1,69 @@
-const moment = require('moment')
+const moment = require('moment');
 
-const { Event } = require('../../models/event')
-const logger = require('../../helpers/logger')
+const { Event } = require('../../models/event');
 
 module.exports = async (req, res, next) => {
-  const eventId = req.params.eventId
+  const eventId = req.params.eventId;
 
-  let event
+  let event;
   try {
-    event = await Event.findOne({ _id: eventId, isArchived: false })
+    event = await Event.findOne({ _id: eventId, isArchived: false });
   } catch (err) {
     if (err.name === 'CastError') {
-      return res.status(404).json({ general: 'Event not found' })
+      return res.status(404).json({ general: 'Event not found' });
     }
 
-    logger.error(`Event ${eventId} failed to be found at leave-event`)
-    return next(err)
+    console.log(`Event ${eventId} failed to be found at leave-event`);
+    return next(err);
   }
 
   if (!event) {
-    return res.status(404).json({ general: 'Event not found' })
+    return res.status(404).json({ general: 'Event not found' });
   }
 
-  const endDate = moment(event.endDate).utc()
-  const today = moment.utc()
+  const endDate = moment(event.endDate).utc();
+  const today = moment.utc();
 
   if (endDate.isBefore(today)) {
     return res.status(400).json({
       general: 'You cannot leave because it already ended'
-    })
+    });
   }
 
   if (event.managers.find(m => m.toString() === req.user.id)) {
-    event.managers = event.managers.filter(m => m.toString() !== req.user.id)
+    event.managers = event.managers.filter(m => m.toString() !== req.user.id);
 
     if (event.managers.length === 0) {
       return res.status(400).json({
         general: 'You cannot leave because you are the only manager'
-      })
+      });
     }
   } else if (event.participants.find(p => p.toString() === req.user.id)) {
     event.participants = event.participants.filter(
       p => p.toString() !== req.user.id
-    )
+    );
   } else {
-    return res.status(400).json({ general: 'You are not a participant' })
+    return res.status(400).json({ general: 'You are not a participant' });
   }
 
-  event.updatedAt = today.toDate()
+  event.updatedAt = today.toDate();
 
   try {
-    await event.save()
+    await event.save();
   } catch (err) {
-    logger.error(`Event ${event.id} failed to be updated at leave-event`)
-    return next(err)
+    console.log(`Event ${event.id} failed to be updated at leave-event`);
+    return next(err);
   }
 
-  req.user.events = req.user.events.filter(e => e.toString() !== event.id)
-  req.user.updatedAt = today.toDate()
+  req.user.events = req.user.events.filter(e => e.toString() !== event.id);
+  req.user.updatedAt = today.toDate();
 
   try {
-    await req.user.save()
+    await req.user.save();
   } catch (err) {
-    logger.error(`User ${req.user.id} failed to be updated at leave-event`)
-    return next(err)
+    console.log(`User ${req.user.id} failed to be updated at leave-event`);
+    return next(err);
   }
 
-  return res.status(200).json({ general: 'Success' })
-}
+  return res.status(200).json({ general: 'Success' });
+};

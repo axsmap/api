@@ -1,4 +1,4 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 
 const petitionSchema = new mongoose.Schema(
   {
@@ -49,11 +49,11 @@ const petitionSchema = new mongoose.Schema(
     }
   },
   { timestamps: true }
-)
+);
 
-petitionSchema.index({ createdAt: -1 })
+petitionSchema.index({ createdAt: -1 });
 
 module.exports = {
   Petition: mongoose.model('Petition', petitionSchema),
   petitionSchema
-}
+};

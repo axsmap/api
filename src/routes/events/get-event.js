@@ -1,18 +1,17 @@
-const axios = require('axios')
-const mongoose = require('mongoose')
-const { isMongoId } = require('validator')
+const axios = require('axios');
+const mongoose = require('mongoose');
+const { isMongoId } = require('validator');
 
-const { Event } = require('../../models/event')
-const logger = require('../../helpers/logger')
+const { Event } = require('../../models/event');
 
 module.exports = async (req, res, next) => {
-  let eventId = req.params.eventId
+  let eventId = req.params.eventId;
   if (!isMongoId(eventId)) {
-    return res.status(400).json({ general: 'Event not found' })
+    return res.status(400).json({ general: 'Event not found' });
   }
-  eventId = mongoose.Types.ObjectId(eventId)
+  eventId = mongoose.Types.ObjectId(eventId);
 
-  let event
+  let event;
   try {
     event = await Event.aggregate([
       {
@@ -165,43 +164,44 @@ module.exports = async (req, res, next) => {
           teams: 1
         }
       }
-    ])
+    ]);
   } catch (err) {
-    logger.error(`Event ${eventId} failed to be found at get-event`)
-    return next(err)
+    console.log(`Event ${eventId} failed to be found at get-event`);
+    return next(err);
   }
 
   if (!event) {
-    return res.status(404).json({ general: 'Event not found' })
+    return res.status(404).json({ general: 'Event not found' });
   }
 
   const dataResponse = Object.assign({}, event[0], {
     ranking: event[0].ranking.length ? event[0].ranking[0].ranking + 1 : 1
-  })
+  });
 
   if (dataResponse.donationId) {
     let options = {
       method: 'GET',
-      url: `https://${process.env
-        .DONATELY_SUBDOMAIN}.dntly.com/api/v1/admin/campaigns/${dataResponse.donationId}`,
+      url: `https://${
+        process.env.DONATELY_SUBDOMAIN
+      }.dntly.com/api/v1/admin/campaigns/${dataResponse.donationId}`,
       auth: {
         username: process.env.DONATELY_TOKEN,
         password: ''
       }
-    }
+    };
 
-    let response
+    let response;
     try {
-      response = await axios(options)
+      response = await axios(options);
     } catch (err) {
-      logger.error('Donation campaign failed to be found at get-event.')
-      return next(err)
+      console.log('Donation campaign failed to be found at get-event.');
+      return next(err);
     }
 
-    dataResponse.donationAmountRaised = response.data.campaign.amount_raised
-    dataResponse.donationDonorsCount = response.data.campaign.donors_count
-    dataResponse.donationGoal = response.data.campaign.campaign_goal
+    dataResponse.donationAmountRaised = response.data.campaign.amount_raised;
+    dataResponse.donationDonorsCount = response.data.campaign.donors_count;
+    dataResponse.donationGoal = response.data.campaign.campaign_goal;
   }
 
-  return res.status(200).json(dataResponse)
-}
+  return res.status(200).json(dataResponse);
+};

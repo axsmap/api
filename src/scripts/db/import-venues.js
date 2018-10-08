@@ -1,73 +1,72 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 
-require('dotenv').config()
+require('dotenv').config();
 
-const logger = require('../../helpers/logger')
-const { venueSchema } = require('../../models/venue')
+const { venueSchema } = require('../../models/venue');
 
-const oldVenueSchema = require('./old-schemas/venue')
+const oldVenueSchema = require('./old-schemas/venue');
 
-mongoose.Promise = global.Promise
+mongoose.Promise = global.Promise;
 
 async function closeConnections(db, oldDb) {
   try {
-    await oldDb.close()
+    await oldDb.close();
   } catch (error) {
-    logger.error(error)
-    process.exit(0)
+    console.log(error);
+    process.exit(0);
   }
 
   try {
-    await db.close()
+    await db.close();
   } catch (error) {
-    logger.error(error)
-    process.exit(0)
+    console.log(error);
+    process.exit(0);
   }
 
-  process.exit(0)
+  process.exit(0);
 }
 
-const uri = process.env.MONGODB_URI
+const uri = process.env.MONGODB_URI;
 const options = {
   useMongoClient: true,
   socketTimeoutMS: 0,
   keepAlive: 2000
-}
-const db = mongoose.createConnection(uri, options)
+};
+const db = mongoose.createConnection(uri, options);
 
 db.on('connected', async () => {
-  logger.info('Connection to DB established successfully')
+  console.log('Connection to DB established successfully');
 
-  const oldUri = process.env.OLD_DB_URI
-  const oldDb = mongoose.createConnection(oldUri, options)
+  const oldUri = process.env.OLD_DB_URI;
+  const oldDb = mongoose.createConnection(oldUri, options);
 
   oldDb.on('connected', async () => {
-    logger.info('Connection to old DB established successfully')
+    console.log('Connection to old DB established successfully');
 
-    const OldVenue = oldDb.model('venues', oldVenueSchema)
+    const OldVenue = oldDb.model('venues', oldVenueSchema);
 
-    let totalOldVenues
+    let totalOldVenues;
     try {
       totalOldVenues = await OldVenue.find({
         lngLat: { $exists: true },
         place_id: { $exists: true, $ne: '' },
         types: { $ne: [] }
-      }).count()
+      }).count();
     } catch (error) {
-      logger.info('Old venues failed to be count')
-      logger.error(error)
-      await closeConnections(db, oldDb)
+      console.log('Old venues failed to be count');
+      console.log(error);
+      await closeConnections(db, oldDb);
     }
 
-    logger.info(`Total old venues: ${totalOldVenues}`)
+    console.log(`Total old venues: ${totalOldVenues}`);
 
-    console.time('createVenues')
+    console.time('createVenues');
 
-    let page = 0
-    const pageLimit = 100
-    let i = 0
+    let page = 0;
+    const pageLimit = 100;
+    let i = 0;
     do {
-      let oldVenues
+      let oldVenues;
       try {
         oldVenues = await OldVenue.find({
           lngLat: { $exists: true },
@@ -75,37 +74,37 @@ db.on('connected', async () => {
           types: { $ne: [] }
         })
           .skip(page * pageLimit)
-          .limit(pageLimit)
+          .limit(pageLimit);
       } catch (error) {
-        logger.info('Old venues failed to be found')
-        logger.error(error)
-        await closeConnections(db, oldDb)
+        console.log('Old venues failed to be found');
+        console.log(error);
+        await closeConnections(db, oldDb);
       }
 
-      const Venue = db.model('Venue', venueSchema)
+      const Venue = db.model('Venue', venueSchema);
 
-      const createVenues = []
+      const createVenues = [];
       for (let oldVenue of oldVenues) {
-        const addressOne = oldVenue.addr1
-        const addressTwo = oldVenue.addr2 ? ` ${oldVenue.addr2}` : ''
-        const city = oldVenue.city ? `, ${oldVenue.city}` : ''
-        const state = oldVenue.state ? `, ${oldVenue.state}` : ''
-        const address = `${addressOne}${addressTwo}${city}${state}`
+        const addressOne = oldVenue.addr1;
+        const addressTwo = oldVenue.addr2 ? ` ${oldVenue.addr2}` : '';
+        const city = oldVenue.city ? `, ${oldVenue.city}` : '';
+        const state = oldVenue.state ? `, ${oldVenue.state}` : '';
+        const address = `${addressOne}${addressTwo}${city}${state}`;
 
         const bathroomScore =
-          oldVenue.bathroom >= 1 ? oldVenue.bathroom : undefined
-        const entryScore = oldVenue.entry >= 1 ? oldVenue.entry : undefined
+          oldVenue.bathroom >= 1 ? oldVenue.bathroom : undefined;
+        const entryScore = oldVenue.entry >= 1 ? oldVenue.entry : undefined;
 
-        let longitude
+        let longitude;
         if (oldVenue.lngLat[1] >= -180 && oldVenue.lngLat[1] <= 180) {
-          longitude = oldVenue.lngLat[1]
+          longitude = oldVenue.lngLat[1];
         }
-        let latitude
+        let latitude;
         if (oldVenue.lngLat[0] >= -90 && oldVenue.lngLat[0] <= 90) {
-          latitude = oldVenue.lngLat[0]
+          latitude = oldVenue.lngLat[0];
         } else {
-          longitude = oldVenue.lngLat[0]
-          latitude = oldVenue.lngLat[1]
+          longitude = oldVenue.lngLat[0];
+          latitude = oldVenue.lngLat[1];
         }
 
         const venueData = {
@@ -135,49 +134,49 @@ db.on('connected', async () => {
           },
           types: oldVenue.types,
           updatedAt: oldVenue.updated_at
-        }
+        };
 
-        createVenues.push(Venue.create(venueData))
+        createVenues.push(Venue.create(venueData));
       }
 
       try {
-        await Promise.all(createVenues)
+        await Promise.all(createVenues);
       } catch (error) {
-        logger.info(
+        console.log(
           `Venues failed to be created.\nData: ${JSON.stringify({
             page,
             i
           })}`
-        )
-        logger.error(error)
-        await closeConnections(db, oldDb)
+        );
+        console.log(error);
+        await closeConnections(db, oldDb);
       }
 
-      page = page + 1
-      i = i + oldVenues.length
-      logger.info(i)
-    } while (i < totalOldVenues)
+      page = page + 1;
+      i = i + oldVenues.length;
+      console.log(i);
+    } while (i < totalOldVenues);
 
-    console.timeEnd('createVenues')
+    console.timeEnd('createVenues');
 
-    await closeConnections(db, oldDb)
-  })
+    await closeConnections(db, oldDb);
+  });
 
   oldDb.on('error', err => {
-    logger.error('Connection to old DB failed ' + err)
-    process.exit(0)
-  })
+    console.log('Connection to old DB failed ' + err);
+    process.exit(0);
+  });
 
   oldDb.on('disconnected', () => {
-    logger.info('Connection from old DB closed')
-  })
-})
+    console.log('Connection from old DB closed');
+  });
+});
 
 db.on('error', err => {
-  logger.error('Connection to DB failed ' + err)
-  process.exit(0)
-})
+  console.log('Connection to DB failed ' + err);
+  process.exit(0);
+});
 
 db.on('disconnected', () => {
-  logger.info('Connection from DB closed')
-})
+  console.log('Connection from DB closed');
+});

@@ -1,4 +1,4 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 
 const eventSchema = new mongoose.Schema(
   {
@@ -89,8 +89,9 @@ const eventSchema = new mongoose.Schema(
     },
     poster: {
       type: String,
-      default: `https://s3.amazonaws.com/${process.env
-        .AWS_S3_BUCKET}/events/posters/default.png`,
+      default: `https://s3.amazonaws.com/${
+        process.env.AWS_S3_BUCKET
+      }/events/posters/default.png`,
       maxlength: [2000, 'Should be less than 2001 characters'],
       required: [true, 'Is required']
     },
@@ -124,7 +125,7 @@ const eventSchema = new mongoose.Schema(
     }
   },
   { timestamps: true }
-)
+);
 
 eventSchema.index({
   address: 'text',
@@ -132,9 +133,9 @@ eventSchema.index({
   endDate: 1,
   reviewsAmount: 1,
   startDate: 1
-})
+});
 
 module.exports = {
   Event: mongoose.model('Event', eventSchema),
   eventSchema
-}
+};

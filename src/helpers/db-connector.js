@@ -1,105 +1,105 @@
-const mongoose = require('mongoose')
-const mongoUri = require('mongodb-uri')
+const mongoose = require('mongoose');
+const mongoUri = require('mongodb-uri');
 
-const logger = require('./logger')
+mongoose.Promise = global.Promise;
 
-mongoose.Promise = global.Promise
-
-const delayToReconnect = 1000
-let disconnecting
-let initialized = false
-const mongodbURI = process.env.MONGODB_URI
-const dbName = mongoUri.parse(mongodbURI).database
+const delayToReconnect = 1000;
+let disconnecting;
+let initialized = false;
+const mongodbURI = process.env.MONGODB_URI;
+const dbName = mongoUri.parse(mongodbURI).database;
 const options = {
   connectTimeoutMS: 30000,
   keepAlive: 120,
   useMongoClient: true
-}
+};
 
 function logging(db) {
   db.on('connected', () =>
-    logger.info(`Database connection to ${dbName} established`)
-  )
-  db.on('open', () => logger.debug(`Database connection to ${dbName} opened`))
+    console.log(`Database connection to ${dbName} established`)
+  );
+  db.on('open', () => console.log(`Database connection to ${dbName} opened`));
   db.on('disconnected', () => {
     if (disconnecting !== true) {
-      logger.error(`Database connection to ${dbName} lost`)
+      console.log(`Database connection to ${dbName} lost`);
     }
-  })
-  db.on('error', err =>
-    logger.error(`Database connection to ${dbName} error`, {
-      stack: err.stack || err.message || err || '(unknown)'
-    })
-  )
+  });
+  db.on('error', err => {
+    console.log(`Database connection to ${dbName} error`);
+    throw err;
+  });
 }
 
 function open() {
-  logger.debug(`Opening database connection to ${dbName}...`)
-  mongoose.connect(mongodbURI, options)
+  console.log(`Opening database connection to ${dbName}...`);
+  mongoose.connect(
+    mongodbURI,
+    options
+  );
 }
 
 function reconnection(db) {
-  let timer
+  let timer;
 
   function reconnect() {
-    timer = false
-    open(db)
+    timer = false;
+    open(db);
   }
 
   function clear() {
     if (timer) {
-      clearTimeout(timer)
+      clearTimeout(timer);
     }
-    timer = false
+    timer = false;
   }
 
   function schedule() {
     if (disconnecting) {
-      logger.info(`Database connection to ${dbName} explicitly shut down`)
-      return
+      console.log(`Database connection to ${dbName} explicitly shut down`);
+      return;
     }
 
     if (timer) {
-      clearTimeout(timer)
+      clearTimeout(timer);
     }
-    timer = setTimeout(reconnect, delayToReconnect)
+    timer = setTimeout(reconnect, delayToReconnect);
   }
 
-  db.on('disconnected', schedule)
-  db.on('connected', clear)
+  db.on('disconnected', schedule);
+  db.on('connected', clear);
 }
 
 function connect(done) {
-  const db = mongoose.connection
+  const db = mongoose.connection;
 
   if (initialized === false) {
-    initialized = true
-    logging(db)
-    reconnection(db)
+    initialized = true;
+    logging(db);
+    reconnection(db);
   }
 
-  open()
+  open();
 
-  db.once('connected', done)
+  db.once('connected', done);
 }
 
 function disconnect(done) {
-  const db = mongoose.connection
+  const db = mongoose.connection;
 
   function disconnected() {
-    disconnecting = false
+    disconnecting = false;
     if (done) {
-      done()
+      done();
     }
   }
 
   if (db.readyState !== 0) {
-    disconnecting = true
-    db.once('disconnected', disconnected)
-    db.close()
+    disconnecting = true;
+    db.once('disconnected', disconnected);
+    db.close();
   }
 }
 
-connect.disconnect = disconnect
+connect.disconnect = disconnect;
 
-module.exports = connect
+module.exports = connect;

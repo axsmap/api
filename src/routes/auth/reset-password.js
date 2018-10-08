@@ -1,122 +1,133 @@
-const moment = require('moment')
+const moment = require('moment');
 
-const logger = require('../../helpers/logger')
-const { PasswordTicket } = require('../../models/password-ticket')
-const { RefreshToken } = require('../../models/refresh-token')
-const { User } = require('../../models/user')
+const { PasswordTicket } = require('../../models/password-ticket');
+const { RefreshToken } = require('../../models/refresh-token');
+const { User } = require('../../models/user');
 
-const { validateResetPassword } = require('./validations')
+const { validateResetPassword } = require('./validations');
 
 module.exports = async (req, res, next) => {
-  const { errors, isValid } = validateResetPassword(req.body)
+  const { errors, isValid } = validateResetPassword(req.body);
   if (!isValid) {
-    return res.status(400).json(errors)
+    return res.status(400).json(errors);
   }
 
-  const key = req.body.key
-  const password = req.body.password
+  const key = req.body.key;
+  const password = req.body.password;
 
-  let passwordTicket
+  let passwordTicket;
   try {
-    passwordTicket = await PasswordTicket.findOne({ key })
+    passwordTicket = await PasswordTicket.findOne({ key });
   } catch (err) {
-    logger.error(
+    console.log(
       `Password ticket with key ${key} failed to be found at reset-password.`
-    )
-    return next(err)
+    );
+    return next(err);
   }
 
   if (!passwordTicket) {
-    return res.status(404).json({ general: 'Password Ticket not found' })
+    return res.status(404).json({ general: 'Password Ticket not found' });
   }
 
-  const expiresAt = moment(passwordTicket.expiresAt).utc()
-  const today = moment.utc()
+  const expiresAt = moment(passwordTicket.expiresAt).utc();
+  const today = moment.utc();
   if (expiresAt.isBefore(today)) {
     try {
-      await passwordTicket.remove()
+      await passwordTicket.remove();
     } catch (err) {
-      logger.error(
-        `Password Ticket with key ${passwordTicket.key} failed to be removed at reset-password.`
-      )
-      return next(err)
+      console.log(
+        `Password Ticket with key ${
+          passwordTicket.key
+        } failed to be removed at reset-password.`
+      );
+      return next(err);
     }
 
-    return res.status(400).json({ general: 'Password Ticket expired' })
+    return res.status(400).json({ general: 'Password Ticket expired' });
   }
 
-  let user
+  let user;
   try {
     user = await User.findOne({
       email: passwordTicket.email,
       isArchived: false
-    })
+    });
   } catch (err) {
-    logger.error(
-      `User with email ${passwordTicket.email} failed to be found at reset-password.`
-    )
-    return next(err)
+    console.log(
+      `User with email ${
+        passwordTicket.email
+      } failed to be found at reset-password.`
+    );
+    return next(err);
   }
 
   if (!user) {
     try {
-      await passwordTicket.remove()
+      await passwordTicket.remove();
     } catch (err) {
-      logger.error(
-        `Password Ticket with key ${passwordTicket.key} failed to be removed at reset-password.`
-      )
-      return next(err)
+      console.log(
+        `Password Ticket with key ${
+          passwordTicket.key
+        } failed to be removed at reset-password.`
+      );
+      return next(err);
     }
 
-    return res.status(400).json({ general: 'User not found' })
+    return res.status(400).json({ general: 'User not found' });
   }
 
-  const passwordMatches = user.comparePassword(password)
+  const passwordMatches = user.comparePassword(password);
   if (passwordMatches) {
-    return res.status(400).json({ password: 'Is already used' })
+    return res.status(400).json({ password: 'Is already used' });
   }
 
-  user.password = password
-  user.updatedAt = moment.utc().toDate()
+  user.password = password;
+  user.updatedAt = moment.utc().toDate();
 
   try {
-    await user.save()
+    await user.save();
   } catch (err) {
-    logger.error(
+    console.log(
       `User with email ${user.email} failed to be updated at reset-password.`
-    )
-    return next(err)
+    );
+    return next(err);
   }
 
-  let refreshToken
+  let refreshToken;
   try {
-    refreshToken = await RefreshToken.findOne({ userId: user.id })
+    refreshToken = await RefreshToken.findOne({ userId: user.id });
   } catch (err) {
-    logger.error(
-      `Refresh token with userId ${user.id} failed to be found at reset-password.`
-    )
-    return next(err)
+    console.log(
+      `Refresh token with userId ${
+        user.id
+      } failed to be found at reset-password.`
+    );
+    return next(err);
   }
 
   if (refreshToken) {
     try {
-      await refreshToken.remove()
+      await refreshToken.remove();
     } catch (err) {
-      logger.error(
-        `Refresh Token with userId ${refreshToken.userId} failed to be removed at reset-password.`
-      )
-      return next(err)
+      console.log(
+        `Refresh Token with userId ${
+          refreshToken.userId
+        } failed to be removed at reset-password.`
+      );
+      return next(err);
     }
   }
 
   try {
-    await passwordTicket.remove()
+    await passwordTicket.remove();
   } catch (err) {
-    logger.error(
-      `Password Ticket with key ${passwordTicket.key} failed to be removed at reset-password.`
-    )
-    return next(err)
+    console.log(
+      `Password Ticket with key ${
+        passwordTicket.key
+      } failed to be removed at reset-password.`
+    );
+    return next(err);
   }
 
-  return res.status(200).json({ general: 'Success' })
-}
+  return res.status(200).json({ general: 'Success' });
+};

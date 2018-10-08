@@ -1,4 +1,4 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 
 const reviewSchema = new mongoose.Schema({
   venue_id: {
@@ -76,6 +76,6 @@ const reviewSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   }
-})
+});
 
-module.exports = reviewSchema
+module.exports = reviewSchema;

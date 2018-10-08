@@ -1,94 +1,101 @@
-const moment = require('moment')
+const moment = require('moment');
 
-const { ActivationTicket } = require('../../models/activation-ticket')
-const logger = require('../../helpers/logger')
-const { PasswordTicket } = require('../../models/password-ticket')
-const { RefreshToken } = require('../../models/refresh-token')
-const { User } = require('../../models/user')
+const { ActivationTicket } = require('../../models/activation-ticket');
+const { PasswordTicket } = require('../../models/password-ticket');
+const { RefreshToken } = require('../../models/refresh-token');
+const { User } = require('../../models/user');
 
 module.exports = async (req, res, next) => {
-  const userId = req.params.userId
+  const userId = req.params.userId;
 
-  let user
+  let user;
   try {
-    user = await User.findOne({ _id: userId, isArchived: false })
+    user = await User.findOne({ _id: userId, isArchived: false });
   } catch (err) {
     if (err.name === 'CastError') {
-      return res.status(404).json({ general: 'User not found' })
+      return res.status(404).json({ general: 'User not found' });
     }
 
-    logger.error(`User with Id ${userId} failed to be found at archive-user.`)
-    return next(err)
+    console.log(`User with Id ${userId} failed to be found at archive-user.`);
+    return next(err);
   }
 
   if (!user) {
-    return res.status(404).json({ general: 'User not found' })
+    return res.status(404).json({ general: 'User not found' });
   }
 
   if (user.id !== req.user.id && !req.user.isAdmin) {
-    return res.status(403).json({ general: 'Forbidden action' })
+    return res.status(403).json({ general: 'Forbidden action' });
   }
 
-  let activateAccountTicket
-  let passwordTicket
-  let refreshToken
+  let activateAccountTicket;
+  let passwordTicket;
+  let refreshToken;
   try {
-    ;[activateAccountTicket, passwordTicket, refreshToken] = await Promise.all([
+    [activateAccountTicket, passwordTicket, refreshToken] = await Promise.all([
       ActivationTicket.findOne({ email: user.email }),
       PasswordTicket.findOne({ email: user.email }),
       RefreshToken.findOne({ userId: user.id })
-    ])
+    ]);
   } catch (err) {
-    logger.error(
-      `Activate account ticket, password ticket or refresh token with email ${user.email} failed to be found at archive-user.`
-    )
-    return next(err)
+    console.log(
+      `Activate account ticket, password ticket or refresh token with email ${
+        user.email
+      } failed to be found at archive-user.`
+    );
+    return next(err);
   }
 
   if (activateAccountTicket) {
     try {
-      await activateAccountTicket.remove()
+      await activateAccountTicket.remove();
     } catch (err) {
-      logger.error(
-        `Activate user ticket with key ${activateAccountTicket.key} failed to be removed at archive-user.`
-      )
-      return next(err)
+      console.log(
+        `Activate user ticket with key ${
+          activateAccountTicket.key
+        } failed to be removed at archive-user.`
+      );
+      return next(err);
     }
   }
 
   if (passwordTicket) {
     try {
-      await passwordTicket.remove()
+      await passwordTicket.remove();
     } catch (err) {
-      logger.error(
-        `Password ticket with key ${passwordTicket.key} failed to be removed at archive-user.`
-      )
-      return next(err)
+      console.log(
+        `Password ticket with key ${
+          passwordTicket.key
+        } failed to be removed at archive-user.`
+      );
+      return next(err);
     }
   }
 
   if (refreshToken) {
     try {
-      await refreshToken.remove()
+      await refreshToken.remove();
     } catch (err) {
-      logger.error(
-        `Refresh token with key ${refreshToken.key} failed to be removed at archive-user.`
-      )
-      return next(err)
+      console.log(
+        `Refresh token with key ${
+          refreshToken.key
+        } failed to be removed at archive-user.`
+      );
+      return next(err);
     }
   }
 
-  user.isArchived = true
-  user.updatedAt = moment.utc().toDate()
+  user.isArchived = true;
+  user.updatedAt = moment.utc().toDate();
 
   try {
-    await user.save()
+    await user.save();
   } catch (err) {
-    logger.error(
+    console.log(
       `User with email ${user.email} failed to be updated at archive-user.`
-    )
-    return next(err)
+    );
+    return next(err);
   }
 
-  return res.status(200).json({ general: 'Success' })
-}
+  return res.status(200).json({ general: 'Success' });
+};

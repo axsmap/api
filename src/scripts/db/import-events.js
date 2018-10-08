@@ -1,88 +1,87 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 
-require('dotenv').config()
+require('dotenv').config();
 
-const logger = require('../../helpers/logger')
-const { eventSchema } = require('../../models/event')
+const { eventSchema } = require('../../models/event');
 
-const oldEventsSchema = require('./old-schemas/event')
+const oldEventsSchema = require('./old-schemas/event');
 
-mongoose.Promise = global.Promise
+mongoose.Promise = global.Promise;
 
 async function closeConnections(db, oldDb) {
   try {
-    await oldDb.close()
+    await oldDb.close();
   } catch (error) {
-    logger.error(error)
-    process.exit(0)
+    console.log(error);
+    process.exit(0);
   }
 
   try {
-    await db.close()
+    await db.close();
   } catch (error) {
-    logger.error(error)
-    process.exit(0)
+    console.log(error);
+    process.exit(0);
   }
 
-  process.exit(0)
+  process.exit(0);
 }
 
-const uri = process.env.MONGODB_URI
+const uri = process.env.MONGODB_URI;
 const options = {
   useMongoClient: true,
   socketTimeoutMS: 0,
   keepAlive: 2000
-}
-const db = mongoose.createConnection(uri, options)
+};
+const db = mongoose.createConnection(uri, options);
 
 db.on('connected', async () => {
-  logger.info('Connection to DB established successfully')
+  console.log('Connection to DB established successfully');
 
-  const oldUri = process.env.OLD_DB_URI
-  const oldDb = mongoose.createConnection(oldUri, options)
+  const oldUri = process.env.OLD_DB_URI;
+  const oldDb = mongoose.createConnection(oldUri, options);
 
   oldDb.on('connected', async () => {
-    logger.info('Connection to old DB established successfully')
+    console.log('Connection to old DB established successfully');
 
-    const oldEvent = oldDb.model('events', oldEventsSchema)
+    const oldEvent = oldDb.model('events', oldEventsSchema);
 
-    let totalOldEvents
+    let totalOldEvents;
     try {
-      totalOldEvents = await oldEvent.count({ name: { $ne: '' } })
+      totalOldEvents = await oldEvent.count({ name: { $ne: '' } });
     } catch (error) {
-      logger.info('Old events failed to be count')
-      logger.error(error)
-      await closeConnections(db, oldDb)
+      console.log('Old events failed to be count');
+      console.log(error);
+      await closeConnections(db, oldDb);
     }
 
-    logger.info(`Total old events: ${totalOldEvents}`)
+    console.log(`Total old events: ${totalOldEvents}`);
 
-    console.time('createEvents')
+    console.time('createEvents');
 
-    let page = 0
-    const pageLimit = 100
-    let i = 0
+    let page = 0;
+    const pageLimit = 100;
+    let i = 0;
     do {
-      let oldEvents
+      let oldEvents;
       try {
         oldEvents = await oldEvent
           .find({ name: { $ne: '' } })
           .skip(page * pageLimit)
-          .limit(pageLimit)
+          .limit(pageLimit);
       } catch (error) {
-        logger.info('Old events failed to be found')
-        logger.error(error)
-        await closeConnections(db, oldDb)
+        console.log('Old events failed to be found');
+        console.log(error);
+        await closeConnections(db, oldDb);
       }
 
-      const Event = db.model('Event', eventSchema)
+      const Event = db.model('Event', eventSchema);
 
-      const createEvents = []
+      const createEvents = [];
       for (let oldEventItem of oldEvents) {
-        let participants = oldEventItem.members.map(member => member.user)
+        let participants = oldEventItem.members.map(member => member.user);
         participants = participants.filter(
           p => p.toString() !== oldEventItem.creator.toString()
-        )
+        );
 
         const eventData = {
           _id: oldEventItem.id,
@@ -107,49 +106,49 @@ db.on('connected', async () => {
           teams: oldEventItem.teams,
           updatedAt: oldEventItem.updated_at,
           venue: oldEventItem.location
-        }
+        };
 
-        createEvents.push(Event.create(eventData))
+        createEvents.push(Event.create(eventData));
       }
 
       try {
-        await Promise.all(createEvents)
+        await Promise.all(createEvents);
       } catch (error) {
-        logger.info(
+        console.log(
           `Events failed to be created.\nData: ${JSON.stringify({
             page,
             i
           })}`
-        )
-        logger.error(error)
-        await closeConnections(db, oldDb)
+        );
+        console.log(error);
+        await closeConnections(db, oldDb);
       }
 
-      page = page + 1
-      i = i + oldEvents.length
-      logger.info(i)
-    } while (i < totalOldEvents)
+      page = page + 1;
+      i = i + oldEvents.length;
+      console.log(i);
+    } while (i < totalOldEvents);
 
-    console.timeEnd('createEvents')
+    console.timeEnd('createEvents');
 
-    await closeConnections(db, oldDb)
-  })
+    await closeConnections(db, oldDb);
+  });
 
   oldDb.on('error', err => {
-    logger.error('Connection to old DB failed ' + err)
-    process.exit(0)
-  })
+    console.log('Connection to old DB failed ' + err);
+    process.exit(0);
+  });
 
   oldDb.on('disconnected', () => {
-    logger.info('Connection from old DB closed')
-  })
-})
+    console.log('Connection from old DB closed');
+  });
+});
 
 db.on('error', err => {
-  logger.error('Connection to DB failed ' + err)
-  process.exit(0)
-})
+  console.log('Connection to DB failed ' + err);
+  process.exit(0);
+});
 
 db.on('disconnected', () => {
-  logger.info('Connection from DB closed')
-})
+  console.log('Connection from DB closed');
+});

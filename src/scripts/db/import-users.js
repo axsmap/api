@@ -1,86 +1,85 @@
-const mongoose = require('mongoose')
-const randomstring = require('randomstring')
-const slugify = require('speakingurl')
+const mongoose = require('mongoose');
+const randomstring = require('randomstring');
+const slugify = require('speakingurl');
 
-require('dotenv').config()
+require('dotenv').config();
 
-const { cleanSpaces } = require('../../helpers')
-const logger = require('../../helpers/logger')
-const { reviewSchema } = require('../../models/review')
-const { userSchema } = require('../../models/user')
+const { cleanSpaces } = require('../../helpers');
+const { reviewSchema } = require('../../models/review');
+const { userSchema } = require('../../models/user');
 
-const oldUserSchema = require('./old-schemas/user')
+const oldUserSchema = require('./old-schemas/user');
 
-mongoose.Promise = global.Promise
+mongoose.Promise = global.Promise;
 
 async function closeConnections(db, oldDb) {
   try {
-    await oldDb.close()
+    await oldDb.close();
   } catch (error) {
-    logger.error(error)
-    process.exit(0)
+    console.log(error);
+    process.exit(0);
   }
 
   try {
-    await db.close()
+    await db.close();
   } catch (error) {
-    logger.error(error)
-    process.exit(0)
+    console.log(error);
+    process.exit(0);
   }
 
-  process.exit(0)
+  process.exit(0);
 }
 
-const uri = process.env.MONGODB_URI
+const uri = process.env.MONGODB_URI;
 const options = {
   useMongoClient: true,
   socketTimeoutMS: 0,
   keepAlive: 2000
-}
-const db = mongoose.createConnection(uri, options)
+};
+const db = mongoose.createConnection(uri, options);
 
 db.on('connected', async () => {
-  logger.info('Connection to DB established successfully')
+  console.log('Connection to DB established successfully');
 
-  const oldUri = process.env.OLD_DB_URI
-  const oldDb = mongoose.createConnection(oldUri, options)
+  const oldUri = process.env.OLD_DB_URI;
+  const oldDb = mongoose.createConnection(oldUri, options);
 
   oldDb.on('connected', async () => {
-    logger.info('Connection to old DB established successfully')
+    console.log('Connection to old DB established successfully');
 
-    const OldUser = oldDb.model('users', oldUserSchema)
+    const OldUser = oldDb.model('users', oldUserSchema);
 
-    let totalOldUsers
+    let totalOldUsers;
     try {
-      totalOldUsers = await OldUser.count()
+      totalOldUsers = await OldUser.count();
     } catch (error) {
-      logger.info('Old users failed to be count')
-      logger.error(error)
-      await closeConnections(db, oldDb)
+      console.log('Old users failed to be count');
+      console.log(error);
+      await closeConnections(db, oldDb);
     }
 
-    logger.info(`Total old users: ${totalOldUsers}`)
+    console.log(`Total old users: ${totalOldUsers}`);
 
-    const User = db.model('User', userSchema)
+    const User = db.model('User', userSchema);
 
-    console.time('createUsers')
+    console.time('createUsers');
 
-    let page = 0
-    const pageLimit = 100
-    let i = 0
+    let page = 0;
+    const pageLimit = 100;
+    let i = 0;
     do {
-      let oldUsers
+      let oldUsers;
       try {
         oldUsers = await OldUser.find({})
           .skip(page * pageLimit)
-          .limit(pageLimit)
+          .limit(pageLimit);
       } catch (error) {
-        logger.info('Old users failed to be found')
-        logger.error(error)
-        await closeConnections(db, oldDb)
+        console.log('Old users failed to be found');
+        console.log(error);
+        await closeConnections(db, oldDb);
       }
 
-      const createUsers = []
+      const createUsers = [];
       for (let oldUser of oldUsers) {
         if (oldUser.isactive) {
           const userData = {
@@ -113,162 +112,164 @@ db.on('connected', async () => {
               length: 5,
               capitalization: 'lowercase'
             })}`
-          }
+          };
 
           switch (oldUser.disabilitytype.toLowerCase()) {
             case 'audio':
-              userData.disabilities = ['audio']
-              break
+              userData.disabilities = ['audio'];
+              break;
 
             case 'other':
-              userData.disabilities = ['other']
-              break
+              userData.disabilities = ['other'];
+              break;
 
             case 'private':
-              userData.disabilities = ['private']
-              break
+              userData.disabilities = ['private'];
+              break;
 
             case 'visual':
-              userData.disabilities = ['vision']
-              break
+              userData.disabilities = ['vision'];
+              break;
 
             case 'wheelchair':
-              userData.disabilities = ['physical']
-              break
+              userData.disabilities = ['physical'];
+              break;
 
             default:
-              userData.disabilities = ['none']
+              userData.disabilities = ['none'];
           }
 
           switch (oldUser.gender.toLowerCase()) {
             case 'female':
-              userData.gender = 'female'
-              break
+              userData.gender = 'female';
+              break;
 
             case 'male':
-              userData.gender = 'male'
-              break
+              userData.gender = 'male';
+              break;
 
             case 'other':
-              userData.gender = 'other'
-              break
+              userData.gender = 'other';
+              break;
 
             case 'transgender':
-              userData.gender = 'transgender'
-              break
+              userData.gender = 'transgender';
+              break;
 
             default:
-              userData.gender = 'private'
+              userData.gender = 'private';
           }
 
           if (oldUser.zip && oldUser.zip.length <= 32) {
-            userData.zip = oldUser.zip
+            userData.zip = oldUser.zip;
           }
 
-          createUsers.push(User.create(userData))
+          createUsers.push(User.create(userData));
         }
       }
 
       try {
-        await Promise.all(createUsers)
+        await Promise.all(createUsers);
       } catch (error) {
-        logger.info(
+        console.log(
           `Users failed to be created.\nData: ${JSON.stringify({
             page,
             i
           })}`
-        )
-        logger.error(error)
-        await closeConnections(db, oldDb)
+        );
+        console.log(error);
+        await closeConnections(db, oldDb);
       }
 
-      page = page + 1
-      i = i + oldUsers.length
-      logger.info(i)
-    } while (i < totalOldUsers)
+      page = page + 1;
+      i = i + oldUsers.length;
+      console.log(i);
+    } while (i < totalOldUsers);
 
-    console.timeEnd('createUsers')
+    console.timeEnd('createUsers');
 
-    const Review = db.model('Review', reviewSchema)
+    const Review = db.model('Review', reviewSchema);
 
-    let totalUsers
+    let totalUsers;
     try {
-      totalUsers = await User.count()
+      totalUsers = await User.count();
     } catch (error) {
-      logger.info('Users failed to be count')
-      logger.error(error)
-      await closeConnections(db, oldDb)
+      console.log('Users failed to be count');
+      console.log(error);
+      await closeConnections(db, oldDb);
     }
 
-    logger.info(`Total users: ${totalUsers}`)
+    console.log(`Total users: ${totalUsers}`);
 
-    console.time('updateReviewsAmount')
+    console.time('updateReviewsAmount');
 
-    i = 0
-    page = 0
+    i = 0;
+    page = 0;
     do {
-      let users
+      let users;
       try {
-        users = await User.find({}).skip(page * pageLimit).limit(pageLimit)
+        users = await User.find({})
+          .skip(page * pageLimit)
+          .limit(pageLimit);
       } catch (error) {
-        logger.info('Users failed to be found')
-        logger.error(error)
-        await closeConnections(db, oldDb)
+        console.log('Users failed to be found');
+        console.log(error);
+        await closeConnections(db, oldDb);
       }
 
-      const updateUsers = []
+      const updateUsers = [];
       for (let user of users) {
-        let userReviews
+        let userReviews;
         try {
-          userReviews = await Review.find({ user: user.id }).count()
+          userReviews = await Review.find({ user: user.id }).count();
         } catch (err) {
-          logger.info('User reviews failed to be count')
-          logger.error(err)
-          await closeConnections(db, oldDb)
+          console.log('User reviews failed to be count');
+          console.log(err);
+          await closeConnections(db, oldDb);
         }
 
-        user.reviewsAmount = userReviews
-        updateUsers.push(user.save())
+        user.reviewsAmount = userReviews;
+        updateUsers.push(user.save());
       }
 
       try {
-        await Promise.all(updateUsers)
+        await Promise.all(updateUsers);
       } catch (err) {
-        logger.info(
+        console.log(
           `Users failed to be updated.\nData: ${JSON.stringify({
             page,
             i
           })}`
-        )
-        logger.error(err)
-        await closeConnections(db, oldDb)
+        );
+        console.log(err);
+        await closeConnections(db, oldDb);
       }
 
-      page = page + 1
-      i = i + users.length
-      logger.info(i)
-    } while (i < totalUsers)
+      page = page + 1;
+      i = i + users.length;
+      console.log(i);
+    } while (i < totalUsers);
 
-    console.timeEnd('updateReviewsAmount')
+    console.timeEnd('updateReviewsAmount');
 
-    await closeConnections(db, oldDb)
-  })
+    await closeConnections(db, oldDb);
+  });
 
   oldDb.on('error', err => {
-    logger.error('Connection to old DB failed ' + err)
-    process.exit(0)
-  })
+    console.log('Connection to old DB failed ' + err);
+    process.exit(0);
+  });
 
   oldDb.on('disconnected', () => {
-    logger.info('Connection from old DB closed')
-  })
-})
+    console.log('Connection from old DB closed');
+  });
+});
 
 db.on('error', err => {
-  logger.error('Connection to DB failed ' + err)
-  process.exit(0)
-})
+  console.log('Connection to DB failed ' + err);
+  process.exit(0);
+});
 
 db.on('disconnected', () => {
-  logger.info('Connection from DB closed')
-})
+  console.log('Connection from DB closed');
+});

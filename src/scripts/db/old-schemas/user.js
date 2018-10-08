@@ -1,4 +1,4 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
   schema_version: Number,
@@ -120,6 +120,6 @@ const userSchema = new mongoose.Schema({
     default: false
   },
   username: String
-})
+});
 
-module.exports = userSchema
+module.exports = userSchema;

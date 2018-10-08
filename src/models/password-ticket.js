@@ -1,4 +1,4 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 
 const passwordTicketSchema = new mongoose.Schema(
   {
@@ -18,9 +18,9 @@ const passwordTicketSchema = new mongoose.Schema(
     }
   },
   { timestamps: true }
-)
+);
 
 module.exports = {
   PasswordTicket: mongoose.model('PasswordTicket', passwordTicketSchema),
   passwordTicketSchema
-}
+};

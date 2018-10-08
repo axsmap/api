@@ -1,13 +1,12 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 
-const logger = require('../../helpers/logger')
-const { User } = require('../../models/user')
+const { User } = require('../../models/user');
 
 module.exports = async (req, res, next) => {
-  const userId = req.params.userId
+  const userId = req.params.userId;
 
-  const userIdObj = mongoose.Types.ObjectId(userId)
-  let user
+  const userIdObj = mongoose.Types.ObjectId(userId);
+  let user;
   try {
     user = await User.aggregate([
       {
@@ -107,22 +106,22 @@ module.exports = async (req, res, next) => {
           zip: 1
         }
       }
-    ])
+    ]);
   } catch (err) {
     if (err.name === 'CastError') {
-      return res.status(404).json({ general: 'User not found' })
+      return res.status(404).json({ general: 'User not found' });
     }
 
-    logger.error(`User ${userId} failed to be found at get-user`)
-    return next(err)
+    console.log(`User ${userId} failed to be found at get-user`);
+    return next(err);
   }
 
   if (!user) {
-    return res.status(404).json({ general: 'User not found' })
+    return res.status(404).json({ general: 'User not found' });
   }
 
   const dataResponse = Object.assign({}, user[0], {
     ranking: user[0].ranking.length ? user[0].ranking[0].ranking + 1 : 1
-  })
-  return res.status(200).json(dataResponse)
-}
+  });
+  return res.status(200).json(dataResponse);
+};

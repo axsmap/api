@@ -1,54 +1,55 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 
-const { compact } = require('lodash')
-const logger = require('../../helpers/logger')
-const { Petition } = require('../../models/petition')
-const { Team } = require('../../models/team')
-const { Event } = require('../../models/event')
+const { compact } = require('lodash');
+const { Petition } = require('../../models/petition');
+const { Team } = require('../../models/team');
+const { Event } = require('../../models/event');
 
 module.exports = async (req, res, next) => {
-  const queryParams = req.query
-  const userId = mongoose.Types.ObjectId(req.user.id)
+  const queryParams = req.query;
+  const userId = mongoose.Types.ObjectId(req.user.id);
 
-  const petitionsQuery = { state: { $in: ['accepted', 'pending', 'rejected'] } }
+  const petitionsQuery = {
+    state: { $in: ['accepted', 'pending', 'rejected'] }
+  };
 
   if (queryParams.filter === 'sent') {
-    petitionsQuery.sender = userId
+    petitionsQuery.sender = userId;
   } else {
     // get the user's events
-    const getUserEvents = req.user.events.map(e => Event.findOne({ _id: e }))
+    const getUserEvents = req.user.events.map(e => Event.findOne({ _id: e }));
     // get the user's teams
-    const getUserTeams = req.user.teams.map(t => Team.findOne({ _id: t }))
+    const getUserTeams = req.user.teams.map(t => Team.findOne({ _id: t }));
 
-    let userEvents = []
-    let userTeams = []
+    let userEvents = [];
+    let userTeams = [];
     try {
-      userEvents = await Promise.all(getUserEvents)
+      userEvents = await Promise.all(getUserEvents);
       // remove null values from array
-      userEvents = compact(userEvents)
-      userTeams = await Promise.all(getUserTeams)
+      userEvents = compact(userEvents);
+      userTeams = await Promise.all(getUserTeams);
       // remove null values from array
-      userTeams = compact(userTeams)
+      userTeams = compact(userTeams);
     } catch (err) {
-      logger.error('Events/Teams failed to be found at list-petitions')
-      return next(err)
+      console.log('Events/Teams failed to be found at list-petitions');
+      return next(err);
     }
 
-    const managedEvents = []
+    const managedEvents = [];
     userEvents.map(e => {
-      const eventManagers = e.managers.map(m => m.toString())
+      const eventManagers = e.managers.map(m => m.toString());
       if (eventManagers.includes(req.user.id)) {
-        managedEvents.push(mongoose.Types.ObjectId(e.id))
+        managedEvents.push(mongoose.Types.ObjectId(e.id));
       }
-    })
+    });
 
-    const managedTeams = []
+    const managedTeams = [];
     userTeams.map(t => {
-      const teamManagers = t.managers.map(m => m.toString())
+      const teamManagers = t.managers.map(m => m.toString());
       if (teamManagers.includes(req.user.id)) {
-        managedTeams.push(mongoose.Types.ObjectId(t.id))
+        managedTeams.push(mongoose.Types.ObjectId(t.id));
       }
-    })
+    });
 
     petitionsQuery.$or = [
       {
@@ -69,19 +70,19 @@ module.exports = async (req, res, next) => {
           { type: { $in: ['invite-team-event', 'request-user-team'] } }
         ]
       }
-    ]
+    ];
   }
 
-  const sortBy = '-createdAt'
+  const sortBy = '-createdAt';
 
-  let page = queryParams.page || 1
-  const pageLimit = 12
+  let page = queryParams.page || 1;
+  const pageLimit = 12;
   if (page > 0) {
-    page -= 1
+    page -= 1;
   } else {
     return res
       .status(400)
-      .json({ page: 'Should be equal to or greater than 1' })
+      .json({ page: 'Should be equal to or greater than 1' });
   }
 
   // Fetch data
@@ -228,7 +229,7 @@ module.exports = async (req, res, next) => {
         user: 1
       }
     }
-  ]
+  ];
 
   // paginate
   aggregateQuery.push(
@@ -238,31 +239,31 @@ module.exports = async (req, res, next) => {
     {
       $limit: pageLimit
     }
-  )
+  );
 
-  let petitions
-  let total
+  let petitions;
+  let total;
   try {
-    ;[petitions, total] = await Promise.all([
+    [petitions, total] = await Promise.all([
       Petition.aggregate(aggregateQuery),
       Petition.find(petitionsQuery).count()
-    ])
+    ]);
   } catch (err) {
-    logger.error('Petitions failed to be found or count at list-petitions')
-    return next(err)
+    console.log('Petitions failed to be found or count at list-petitions');
+    return next(err);
   }
 
-  let lastPage = Math.ceil(total / pageLimit)
+  let lastPage = Math.ceil(total / pageLimit);
   if (lastPage > 0) {
-    page += 1
+    page += 1;
     if (page > lastPage) {
       return res
         .status(400)
-        .json({ page: `Should be equal to or less than ${lastPage}` })
+        .json({ page: `Should be equal to or less than ${lastPage}` });
     }
   } else {
-    page = null
-    lastPage = null
+    page = null;
+    lastPage = null;
   }
 
   return res.status(200).json({
@@ -272,5 +273,5 @@ module.exports = async (req, res, next) => {
     total,
     sortBy,
     results: petitions
-  })
-}
+  });
+};

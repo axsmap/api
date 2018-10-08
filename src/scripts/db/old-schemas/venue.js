@@ -1,4 +1,4 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 
 const venueSchema = new mongoose.Schema({
   schema_version: Number,
@@ -114,6 +114,6 @@ const venueSchema = new mongoose.Schema({
       ref: 'photos'
     }
   ]
-})
+});
 
-module.exports = venueSchema
+module.exports = venueSchema;

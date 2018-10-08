@@ -1,4 +1,4 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 
 const activationTicketSchema = new mongoose.Schema(
   {
@@ -40,9 +40,9 @@ const activationTicketSchema = new mongoose.Schema(
     }
   },
   { timestamps: true }
-)
+);
 
 module.exports = {
   ActivationTicket: mongoose.model('ActivationTicket', activationTicketSchema),
   activationTicketSchema
-}
+};

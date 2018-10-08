@@ -1,21 +1,20 @@
-const crypto = require('crypto')
+const crypto = require('crypto');
 
-const moment = require('moment')
-const { pick } = require('lodash')
-const randomstring = require('randomstring')
-const slugify = require('speakingurl')
+const moment = require('moment');
+const { pick } = require('lodash');
+const randomstring = require('randomstring');
+const slugify = require('speakingurl');
 
-const { ActivationTicket } = require('../../models/activation-ticket')
-const logger = require('../../helpers/logger')
-const { cleanSpaces, sendEmail } = require('../../helpers')
-const { User } = require('../../models/user')
+const { ActivationTicket } = require('../../models/activation-ticket');
+const { cleanSpaces, sendEmail } = require('../../helpers');
+const { User } = require('../../models/user');
 
-const { validateSignUp } = require('./validations')
+const { validateSignUp } = require('./validations');
 
 module.exports = async (req, res, next) => {
-  const { errors, isValid } = validateSignUp(req.body)
+  const { errors, isValid } = validateSignUp(req.body);
   if (!isValid) {
-    return res.status(400).json(errors)
+    return res.status(400).json(errors);
   }
 
   const data = pick(req.body, [
@@ -24,79 +23,86 @@ module.exports = async (req, res, next) => {
     'isSubscribed',
     'lastName',
     'password'
-  ])
-  data.firstName = cleanSpaces(data.firstName)
-  data.lastName = cleanSpaces(data.lastName)
-  data.username = `${slugify(data.firstName)}-${slugify(data.lastName)}`
+  ]);
+  data.firstName = cleanSpaces(data.firstName);
+  data.lastName = cleanSpaces(data.lastName);
+  data.username = `${slugify(data.firstName)}-${slugify(data.lastName)}`;
 
-  let activationTicket
+  let activationTicket;
   try {
-    activationTicket = await ActivationTicket.findOne({ email: data.email })
+    activationTicket = await ActivationTicket.findOne({ email: data.email });
   } catch (err) {
-    logger.error(
-      `Activation ticket with email ${data.email} failed to be found at sign-up.`
-    )
-    return next(err)
+    console.log(
+      `Activation ticket with email ${
+        data.email
+      } failed to be found at sign-up.`
+    );
+    return next(err);
   }
 
   if (activationTicket) {
-    const expiresAt = moment(activationTicket.expiresAt).utc()
-    const today = moment.utc()
+    const expiresAt = moment(activationTicket.expiresAt).utc();
+    const today = moment.utc();
     if (expiresAt.isBefore(today)) {
       try {
-        await activationTicket.remove()
+        await activationTicket.remove();
       } catch (err) {
-        logger.error(
-          `Activation ticket with email ${activationTicket.email} failed to be removed at sign-up.`
-        )
-        return next(err)
+        console.log(
+          `Activation ticket with email ${
+            activationTicket.email
+          } failed to be removed at sign-up.`
+        );
+        return next(err);
       }
     }
   }
 
-  let repeatedUsers
+  let repeatedUsers;
   try {
     repeatedUsers = await User.find({
       $or: [{ email: data.email }, { username: data.username }],
       isArchived: false
-    })
+    });
   } catch (err) {
-    logger.error('Users failed to be found at sign-up.')
-    return next(err)
+    console.log('Users failed to be found at sign-up.');
+    return next(err);
   }
 
   if (repeatedUsers && repeatedUsers.length > 0) {
     for (const user of repeatedUsers) {
       if (user.email === data.email) {
-        return res.status(400).json({ email: 'Is already taken' })
+        return res.status(400).json({ email: 'Is already taken' });
       }
 
-      let repeatedUser
+      let repeatedUser;
       do {
         data.username = `${slugify(data.firstName)}-${slugify(
           data.lastName
-        )}-${randomstring.generate({ length: 5, capitalization: 'lowercase' })}`
+        )}-${randomstring.generate({
+          length: 5,
+          capitalization: 'lowercase'
+        })}`;
 
         try {
           repeatedUser = await User.findOne({
             username: data.username,
             isArchived: false
-          })
+          });
         } catch (err) {
-          logger.error(
+          console.log(
             `User with username ${data.username} failed to be found at sign-up.`
-          )
-          return next(err)
+          );
+          return next(err);
         }
-      } while (repeatedUser && repeatedUser.username === data.username)
+      } while (repeatedUser && repeatedUser.username === data.username);
     }
   }
 
-  const today = moment.utc()
-  const expiresAt = today.add(1, 'days').toDate()
+  const today = moment.utc();
+  const expiresAt = today.add(1, 'days').toDate();
   const key = `${crypto
     .randomBytes(31)
-    .toString('hex')}${new Date().getTime().toString()}`
+    .toString('hex')}${new Date().getTime().toString()}`;
 
   const activationTicketData = {
     email: data.email,
@@ -109,19 +115,19 @@ module.exports = async (req, res, next) => {
       password: data.password,
       username: data.username
     }
-  }
+  };
   try {
-    activationTicket = await ActivationTicket.create(activationTicketData)
+    activationTicket = await ActivationTicket.create(activationTicketData);
   } catch (err) {
-    logger.error(
+    console.log(
       `Activation ticket failed to be created at sign-up.\nData: ${JSON.stringify(
         activationTicketData
       )}`
-    )
-    return next(err)
+    );
+    return next(err);
   }
 
-  const subject = 'Activate Account'
+  const subject = 'Activate Account';
   const htmlContent = `
     <h3>Welcome to AXS Map!</h3>
     <p>To <strong>activate</strong> your account use the <strong>link</strong> below:</p>
@@ -132,21 +138,21 @@ module.exports = async (req, res, next) => {
     </a>
     <br/><br/>
     <p>Stay awesome.</p>
-  `
+  `;
   const textContent = `
     Welcome to AXS Map!
     To activate your account use the link below:
     ${process.env.API_URL}/auth/activate-account/${activationTicket.key}
     Stay awesome.
-  `
-  const receiversEmails = [activationTicket.email]
+  `;
+  const receiversEmails = [activationTicket.email];
 
   sendEmail({
     subject,
     htmlContent,
     textContent,
     receiversEmails
-  })
+  });
 
-  return res.status(201).json({ general: 'Success' })
-}
+  return res.status(201).json({ general: 'Success' });
+};

@@ -1,11 +1,12 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 
 const teamSchema = new mongoose.Schema(
   {
     avatar: {
       type: String,
-      default: `https://s3.amazonaws.com/${process.env
-        .AWS_S3_BUCKET}/teams/avatars/default.png`,
+      default: `https://s3.amazonaws.com/${
+        process.env.AWS_S3_BUCKET
+      }/teams/avatars/default.png`,
       maxlength: [2000, 'Should be less than 2001 characters'],
       required: [true, 'Is required']
     },
@@ -51,11 +52,11 @@ const teamSchema = new mongoose.Schema(
     }
   },
   { timestamps: true }
-)
+);
 
-teamSchema.index({ name: 'text', reviewsAmount: 1 })
+teamSchema.index({ name: 'text', reviewsAmount: 1 });
 
 module.exports = {
   Team: mongoose.model('Team', teamSchema),
   teamSchema
-}
+};

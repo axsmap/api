@@ -1,52 +1,51 @@
-const { Event } = require('../../models/event')
-const logger = require('../../helpers/logger')
-const { Team } = require('../../models/team')
+const { Event } = require('../../models/event');
+const { Team } = require('../../models/team');
 
 module.exports = async (req, res, next) => {
-  const getUserTeams = req.user.teams.map(t => Team.findOne({ _id: t }))
-  let userTeams
+  const getUserTeams = req.user.teams.map(t => Team.findOne({ _id: t }));
+  let userTeams;
   try {
-    userTeams = await Promise.all(getUserTeams)
+    userTeams = await Promise.all(getUserTeams);
   } catch (err) {
-    logger.error('Teams failed to be found at get-profile')
-    return next(err)
+    console.log('Teams failed to be found at get-profile');
+    return next(err);
   }
 
-  const teams = []
-  const managedTeams = []
+  const teams = [];
+  const managedTeams = [];
   userTeams.map(t => {
     if (t) {
-      const teamManagers = t.managers.map(m => m.toString())
+      const teamManagers = t.managers.map(m => m.toString());
       if (teamManagers.includes(req.user.id)) {
         managedTeams.push({
           id: t.id.toString(),
           avatar: t.avatar,
           name: t.name
-        })
+        });
       } else {
         teams.push({
           id: t.id.toString(),
           avatar: t.avatar,
           name: t.name
-        })
+        });
       }
     }
-  })
+  });
 
-  const getUserEvents = req.user.events.map(e => Event.findOne({ _id: e }))
-  let userEvents
+  const getUserEvents = req.user.events.map(e => Event.findOne({ _id: e }));
+  let userEvents;
   try {
-    userEvents = await Promise.all(getUserEvents)
+    userEvents = await Promise.all(getUserEvents);
   } catch (err) {
-    logger.error('Events failed to be found at get-profile')
-    return next(err)
+    console.log('Events failed to be found at get-profile');
+    return next(err);
   }
 
-  const events = []
-  const managedEvents = []
+  const events = [];
+  const managedEvents = [];
   userEvents.map(e => {
     if (e) {
-      const eventManagers = e.managers.map(m => m.toString())
+      const eventManagers = e.managers.map(m => m.toString());
       if (eventManagers.includes(req.user.id)) {
         managedEvents.push({
           id: e.id.toString(),
@@ -54,7 +53,7 @@ module.exports = async (req, res, next) => {
           name: e.name,
           poster: e.poster,
           startDate: e.startDate
-        })
+        });
       } else {
         events.push({
           id: e.id.toString(),
@@ -62,10 +61,10 @@ module.exports = async (req, res, next) => {
           name: e.name,
           poster: e.poster,
           startDate: e.startDate
-        })
+        });
       }
     }
-  })
+  });
 
   const userData = {
     id: req.user.id,
@@ -87,6 +86,6 @@ module.exports = async (req, res, next) => {
     teams,
     username: req.user.username,
     zip: req.user.zip
-  }
-  return res.status(200).json(userData)
-}
+  };
+  return res.status(200).json(userData);
+};

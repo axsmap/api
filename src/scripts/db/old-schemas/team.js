@@ -1,4 +1,4 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 
 const venueSchema = new mongoose.Schema({
   name: String,
@@ -44,6 +44,6 @@ const venueSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   }
-})
+});
 
-module.exports = venueSchema
+module.exports = venueSchema;

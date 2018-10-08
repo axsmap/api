@@ -1,40 +1,39 @@
-const moment = require('moment')
+const moment = require('moment');
 
-const logger = require('../../helpers/logger')
-const { Review } = require('../../models/review')
+const { Review } = require('../../models/review');
 
 module.exports = async (req, res, next) => {
   if (!req.user.isAdmin) {
-    return res.status(403).json({ general: 'Forbidden action' })
+    return res.status(403).json({ general: 'Forbidden action' });
   }
 
-  const reviewId = req.params.reviewId
+  const reviewId = req.params.reviewId;
 
-  let review
+  let review;
   try {
-    review = await Review.findOne({ _id: reviewId })
+    review = await Review.findOne({ _id: reviewId });
   } catch (err) {
     if (err.name === 'CastError') {
-      return res.status(404).json({ general: 'Review not found' })
+      return res.status(404).json({ general: 'Review not found' });
     }
 
-    logger.error(`Review ${reviewId} failed to be found at ban-review`)
-    return next(err)
+    console.log(`Review ${reviewId} failed to be found at ban-review`);
+    return next(err);
   }
 
   if (!review) {
-    return res.status(404).json({ general: 'Review not found' })
+    return res.status(404).json({ general: 'Review not found' });
   }
 
-  review.isBanned = true
-  review.updatedAt = moment.utc().toDate()
+  review.isBanned = true;
+  review.updatedAt = moment.utc().toDate();
 
   try {
-    await review.save()
+    await review.save();
   } catch (err) {
-    logger.error(`Review ${review.id} failed to be updated at ban-review`)
-    return next(err)
+    console.log(`Review ${review.id} failed to be updated at ban-review`);
+    return next(err);
   }
 
-  return res.status(200).json({ general: 'Success' })
-}
+  return res.status(200).json({ general: 'Success' });
+};

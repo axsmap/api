@@ -1,139 +1,143 @@
-const moment = require('moment')
+const moment = require('moment');
 
-const { cleanSpaces } = require('../../helpers')
-const logger = require('../../helpers/logger')
-const { Photo } = require('../../models/photo')
-const { User } = require('../../models/user')
+const { cleanSpaces } = require('../../helpers');
+const { Photo } = require('../../models/photo');
+const { User } = require('../../models/user');
 
-const { validateEditUser } = require('./validations')
+const { validateEditUser } = require('./validations');
 
 module.exports = async (req, res, next) => {
-  const userId = req.params.userId
+  const userId = req.params.userId;
 
-  let user
+  let user;
   try {
-    user = await User.findOne({ _id: userId, isArchived: false })
+    user = await User.findOne({ _id: userId, isArchived: false });
   } catch (err) {
     if (err.name === 'CastError') {
-      return res.status(404).json({ general: 'User not found' })
+      return res.status(404).json({ general: 'User not found' });
     }
 
-    logger.error(`User with Id ${userId} failed to be found at edit-user.`)
-    return next(err)
+    console.log(`User with Id ${userId} failed to be found at edit-user.`);
+    return next(err);
   }
 
   if (!user) {
-    return res.status(404).json({ general: 'User not found' })
+    return res.status(404).json({ general: 'User not found' });
   }
 
   if (user.id !== req.user.id && !req.user.isAdmin) {
-    return res.status(403).json({ general: 'Forbidden action' })
+    return res.status(403).json({ general: 'Forbidden action' });
   }
 
-  const data = req.body
+  const data = req.body;
 
-  const { errors, isValid } = validateEditUser(data)
-  if (!isValid) return res.status(400).json(errors)
+  const { errors, isValid } = validateEditUser(data);
+  if (!isValid) return res.status(400).json(errors);
 
   if (
     data.avatar &&
     !data.avatar.includes('default') &&
     data.avatar !== user.avatar
   ) {
-    let avatar
+    let avatar;
     try {
-      avatar = await Photo.findOne({ url: data.avatar })
+      avatar = await Photo.findOne({ url: data.avatar });
     } catch (err) {
-      logger.error(`Avatar ${data.avatar} failed to be found at edit-user`)
-      return next(err)
+      console.log(`Avatar ${data.avatar} failed to be found at edit-user`);
+      return next(err);
     }
 
     if (!avatar) {
-      return res.status(404).json({ avatar: 'Not found' })
+      return res.status(404).json({ avatar: 'Not found' });
     }
 
-    user.avatar = data.avatar
+    user.avatar = data.avatar;
   } else if (data.avatar === '') {
-    user.avatar = `https://s3.amazonaws.com/${process.env
-      .AWS_S3_BUCKET}/users/avatars/default.png`
+    user.avatar = `https://s3.amazonaws.com/${
+      process.env.AWS_S3_BUCKET
+    }/users/avatars/default.png`;
   }
 
-  user.description = data.description || user.description
+  user.description = data.description || user.description;
 
-  user.disabilities = data.disabilities || user.disabilities
+  user.disabilities = data.disabilities || user.disabilities;
 
-  user.firstName = data.firstName ? cleanSpaces(data.firstName) : user.firstName
+  user.firstName = data.firstName
+    ? cleanSpaces(data.firstName)
+    : user.firstName;
 
-  user.gender = data.gender || user.gender
+  user.gender = data.gender || user.gender;
 
   user.isSubscribed =
     typeof data.isSubscribed !== 'undefined'
       ? data.isSubscribed
-      : user.isSubscribed
+      : user.isSubscribed;
 
-  user.language = data.language || user.language
+  user.language = data.language || user.language;
 
-  user.lastName = data.lastName ? cleanSpaces(data.lastName) : user.lastName
+  user.lastName = data.lastName ? cleanSpaces(data.lastName) : user.lastName;
 
-  user.phone = data.phone || user.phone
+  user.phone = data.phone || user.phone;
 
   user.showDisabilities =
     typeof data.showDisabilities !== 'undefined'
       ? data.showDisabilities
-      : user.showDisabilities
+      : user.showDisabilities;
 
   user.showEmail =
-    typeof data.showEmail !== 'undefined' ? data.showEmail : user.showEmail
+    typeof data.showEmail !== 'undefined' ? data.showEmail : user.showEmail;
 
   user.showPhone =
-    typeof data.showPhone !== 'undefined' ? data.showPhone : user.showPhone
+    typeof data.showPhone !== 'undefined' ? data.showPhone : user.showPhone;
 
   if (data.username && data.username !== user.username) {
-    let repeatedUser
+    let repeatedUser;
     try {
       repeatedUser = await User.findOne({
         username: data.username,
         isArchived: false
-      })
+      });
     } catch (err) {
-      logger.error(
+      console.log(
         `User with username ${data.username} failed to be found at edit-user.`
-      )
-      return next(err)
+      );
+      return next(err);
     }
 
     if (repeatedUser) {
-      return res.status(400).json({ username: 'Is already taken' })
+      return res.status(400).json({ username: 'Is already taken' });
     }
 
-    user.username = data.username
+    user.username = data.username;
   }
 
-  user.zip = data.zip ? cleanSpaces(data.zip) : user.zip
+  user.zip = data.zip ? cleanSpaces(data.zip) : user.zip;
 
-  user.updatedAt = moment.utc().toDate()
+  user.updatedAt = moment.utc().toDate();
 
   try {
-    await user.save()
+    await user.save();
   } catch (err) {
     if (typeof err.errors === 'object') {
-      const validationErrors = {}
+      const validationErrors = {};
 
       Object.keys(err.errors).forEach(key => {
-        validationErrors[key] = err.errors[key].message
-      })
+        validationErrors[key] = err.errors[key].message;
+      });
 
-      return res.status(400).json(validationErrors)
+      return res.status(400).json(validationErrors);
     }
 
-    logger.error(
-      `User ${user.id} failed to be updated at edit-user.\nData: ${JSON.stringify(
+    console.log(
+      `User ${
+        user.id
+      } failed to be updated at edit-user.\nData: ${JSON.stringify(
         data,
         null,
         2
       )}`
-    )
-    return next(err)
+    );
+    return next(err);
   }
 
   const dataResponse = {
@@ -151,6 +155,6 @@ module.exports = async (req, res, next) => {
     showPhone: user.showPhone,
     username: user.username,
     zip: user.zip
-  }
-  return res.status(200).json(dataResponse)
-}
+  };
+  return res.status(200).json(dataResponse);
+};

@@ -126,4 +126,4 @@ module.exports = {
     'sublocality_level_1',
     'subpremise'
   ]
-}
+};

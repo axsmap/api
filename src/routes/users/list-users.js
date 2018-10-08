@@ -1,29 +1,28 @@
-const logger = require('../../helpers/logger')
-const { User } = require('../../models/user')
+const { User } = require('../../models/user');
 
-const { validateListUsers } = require('./validations')
+const { validateListUsers } = require('./validations');
 
 module.exports = async (req, res, next) => {
-  const { errors, isValid } = validateListUsers(req.query)
-  if (!isValid) return res.status(400).json(errors)
+  const { errors, isValid } = validateListUsers(req.query);
+  if (!isValid) return res.status(400).json(errors);
 
-  const queryParams = req.query
+  const queryParams = req.query;
 
-  const usersQuery = { isArchived: false }
-  usersQuery.$text = { $search: queryParams.keywords || '' }
+  const usersQuery = { isArchived: false };
+  usersQuery.$text = { $search: queryParams.keywords || '' };
 
   const sort = queryParams.sortBy || {
     score: { $meta: 'textScore' }
-  }
-  let page = queryParams.page ? parseInt(queryParams.page, 10) - 1 : 1
+  };
+  let page = queryParams.page ? parseInt(queryParams.page, 10) - 1 : 1;
   const pageLimit = queryParams.pageLimit
     ? parseInt(queryParams.pageLimit, 10)
-    : 12
+    : 12;
 
-  let total
-  let users
+  let total;
+  let users;
   try {
-    ;[users, total] = await Promise.all([
+    [users, total] = await Promise.all([
       User.aggregate()
         .match(usersQuery)
         .project({
@@ -41,27 +40,27 @@ module.exports = async (req, res, next) => {
         .skip(page * pageLimit)
         .limit(pageLimit),
       User.find(usersQuery).count()
-    ])
+    ]);
   } catch (err) {
-    logger.error(
+    console.log(
       `Users failed to be found or count at list-users.\nusersQuery: ${JSON.stringify(
         usersQuery
       )}`
-    )
-    return next(err)
+    );
+    return next(err);
   }
 
-  let lastPage = Math.ceil(total / pageLimit)
+  let lastPage = Math.ceil(total / pageLimit);
   if (lastPage > 0) {
-    page += 1
+    page += 1;
     if (page > lastPage) {
       return res
         .status(400)
-        .json({ page: `Should be less than or equal to ${lastPage}` })
+        .json({ page: `Should be less than or equal to ${lastPage}` });
     }
   } else {
-    page = null
-    lastPage = null
+    page = null;
+    lastPage = null;
   }
 
   const dataResponse = {
@@ -71,6 +70,6 @@ module.exports = async (req, res, next) => {
     total,
     sortBy: queryParams.sortBy,
     results: users
-  }
-  return res.status(200).json(dataResponse)
-}
+  };
+  return res.status(200).json(dataResponse);
+};
