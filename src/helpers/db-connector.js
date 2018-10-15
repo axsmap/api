@@ -11,7 +11,8 @@ const dbName = mongoUri.parse(mongodbURI).database;
 const options = {
   connectTimeoutMS: 30000,
   keepAlive: 120,
-  useMongoClient: true
+  useCreateIndex: true,
+  useNewUrlParser: true
 };
 
 function logging(db) {
