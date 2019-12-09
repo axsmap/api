@@ -11,6 +11,7 @@ const raven = require('raven');
 
 // Fill process.env with environment variables
 require('dotenv').config();
+//console.log(process.env)
 
 const connectToDB = require('./helpers/db-connector');
 const routes = require('./routes');

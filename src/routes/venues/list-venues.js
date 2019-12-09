@@ -144,10 +144,6 @@ module.exports = async (req, res, next) => {
   let dataResponse;
 
   if (!isEmpty(venuesFilters)) {
-    if (queryParams.name) {
-      venuesFilters.name = { $regex: queryParams.name, $options: 'i' };
-    }
-
     venuesFilters.location = {
       $near: {
         $geometry: {
@@ -230,10 +226,6 @@ module.exports = async (req, res, next) => {
       nearbyParams = `${nearbyParams}&location=${coordinates[0]},${
         coordinates[1]
       }&rankby=distance`;
-
-      if (queryParams.name) {
-        nearbyParams = `${nearbyParams}&keyword=${queryParams.name}`;
-      }
 
       if (queryParams.type) {
         nearbyParams = `${nearbyParams}&type=${queryParams.type}`;
