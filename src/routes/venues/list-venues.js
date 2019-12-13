@@ -185,7 +185,7 @@ module.exports = async (req, res, next) => {
         )
           .skip(page * pageLimit)
           .limit(pageLimit),
-        Venue.find(venuesFilters).count()
+        Venue.find(venuesFilters).countDocuments()
       ]);
     } catch (err) {
       console.log(
@@ -234,6 +234,18 @@ module.exports = async (req, res, next) => {
       }
     } else {
       nearbyParams = `${nearbyParams}&pagetoken=${queryParams.page}`;
+    }
+    if (queryParams.rankby) {
+      nearbyParams = `${nearbyParams}&rankby=${queryParams.rankby}`;
+    }
+    if (queryParams.opennow) {
+      nearbyParams = `${nearbyParams}&opennow=${queryParams.opennow}`;
+    }
+    if (queryParams.minprice) {
+      nearbyParams = `${nearbyParams}&minprice=${queryParams.minprice}`;
+    }
+    if (queryParams.maxprice) {
+      nearbyParams = `${nearbyParams}&maxprice=${queryParams.maxprice}`;
     }
 
     let placesResponse;
