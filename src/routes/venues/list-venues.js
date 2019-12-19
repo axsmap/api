@@ -15,6 +15,7 @@ module.exports = async (req, res, next) => {
 
   let coordinates = queryParams.location.split(',');
   if (queryParams.address && !queryParams.page) {
+    queryParams.name = queryParams.address;
     const geocodeParams = `?key=${process.env.PLACES_API_KEY}&address=${slugify(
       queryParams.address
     )}`;
