@@ -14,6 +14,43 @@ module.exports = async (req, res, next) => {
   if (!isValid) return res.status(400).json(errors);
 
   let coordinates = queryParams.location.split(',');
+  if (queryParams.address && !queryParams.page) {
+    const geocodeParams = `?key=${process.env.PLACES_API_KEY}&address=${slugify(
+      queryParams.address
+    )}`;
+
+    let geocodeResponse;
+    try {
+      geocodeResponse = await axios.get(
+        `https://maps.googleapis.com/maps/api/geocode/json${geocodeParams}`
+      );
+    } catch (err) {
+      console.log(
+        `Geocode failed to be found at list-venues.\nQuery Params: ${JSON.stringify(
+          queryParams
+        )}`
+      );
+      return next(err);
+    }
+
+    const statusCode = geocodeResponse.data.status;
+    if (statusCode === 'ZERO_RESULTS') {
+      return res.status(404).json({ keywords: 'Address not found' });
+    } else if (statusCode === 'OVER_QUERY_LIMIT') {
+      return next(new Error('Over query limit with Google Places API'));
+    } else if (statusCode === 'REQUEST_DENIED') {
+      return next(new Error('Request denied with Google Places API'));
+    } else if (statusCode === 'INVALID_REQUEST') {
+      return next(new Error('Invalid request with Google Places API'));
+    } else if (statusCode === 'UNKNOWN_ERROR') {
+      return next(new Error('Unknown error with Google Places API'));
+    }
+
+    coordinates = [
+      geocodeResponse.data.results[0].geometry.location.lat,
+      geocodeResponse.data.results[0].geometry.location.lng
+    ];
+  }
 
   let venuesFilters = {};
 
@@ -107,6 +144,10 @@ module.exports = async (req, res, next) => {
   let dataResponse;
 
   if (!isEmpty(venuesFilters)) {
+    if (queryParams.name) {
+      venuesFilters.name = { $regex: queryParams.name, $options: 'i' };
+    }
+
     venuesFilters.location = {
       $near: {
         $geometry: {
@@ -116,6 +157,7 @@ module.exports = async (req, res, next) => {
         $maxDistance: 50000
       }
     };
+
     if (queryParams.type) {
       venuesFilters.types = queryParams.type;
     }
@@ -147,7 +189,7 @@ module.exports = async (req, res, next) => {
         )
           .skip(page * pageLimit)
           .limit(pageLimit),
-        Venue.find(venuesFilters).countDocuments()
+        Venue.find(venuesFilters).count()
       ]);
     } catch (err) {
       console.log(
@@ -182,13 +224,16 @@ module.exports = async (req, res, next) => {
       results: venues
     };
   } else {
-    let nearbyParams = `?key=${process.env.PLACES_API_KEY}&query=${
-      queryParams.address
-    }`;
-    if (!queryParams.page || !queryParams.address) {
+    let nearbyParams = `?key=${process.env.PLACES_API_KEY}`;
+
+    if (!queryParams.page) {
       nearbyParams = `${nearbyParams}&location=${coordinates[0]},${
         coordinates[1]
       }&rankby=distance`;
+
+      if (queryParams.name) {
+        nearbyParams = `${nearbyParams}&keyword=${queryParams.name}`;
+      }
 
       if (queryParams.type) {
         nearbyParams = `${nearbyParams}&type=${queryParams.type}`;
@@ -214,7 +259,7 @@ module.exports = async (req, res, next) => {
     let placesResponse;
     try {
       placesResponse = await axios.get(
-        `https://maps.googleapis.com/maps/api/place/textsearch/json${nearbyParams}`
+        `https://maps.googleapis.com/maps/api/place/nearbysearch/json${nearbyParams}`
       );
     } catch (err) {
       console.log(
