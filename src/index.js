@@ -59,7 +59,7 @@ function connectedToDB() {
 
   // App Initialization
   if (process.env.NODE_ENV === 'production') {
-    console.log(`Listening on http://${ip.address()}:8000`);
+    console.log(`Listening on http://${ip.address()}:80`);
     app.listen(8000);
   } else {
     https
@@ -71,7 +71,7 @@ function connectedToDB() {
         app
       )
       .listen(8000, () =>
-        console.log(`Listening on https://${ip.address()}:8000`)
+        console.log(`Listening on https://${ip.address()}:80`)
       );
   }
 }
