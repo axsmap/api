@@ -13,7 +13,7 @@ const raven = require('raven');
 require('dotenv').config();
 //console.log(process.env)
 
-const port = process.env.PORT || 8000;
+const port = process.env.WEBSITES_PORT  || 8000;
 
 const connectToDB = require('./helpers/db-connector');
 const routes = require('./routes');
