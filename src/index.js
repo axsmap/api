@@ -13,6 +13,8 @@ const raven = require('raven');
 require('dotenv').config();
 //console.log(process.env)
 
+const port = process.env.PORT || 8000;
+
 const connectToDB = require('./helpers/db-connector');
 const routes = require('./routes');
 
@@ -59,8 +61,8 @@ function connectedToDB() {
 
   // App Initialization
   if (process.env.NODE_ENV === 'production') {
-    console.log(`Listening on http://${ip.address()}:80`);
-    app.listen(8000);
+    console.log(`Listening on http://${ip.address()}:${port}`);
+    app.listen(port);
   } else {
     https
       .createServer(
@@ -70,8 +72,8 @@ function connectedToDB() {
         },
         app
       )
-      .listen(8000, () =>
-        console.log(`Listening on https://${ip.address()}:80`)
+      .listen(port, () =>
+        console.log(`Listening on https://${ip.address()}:${port}`)
       );
   }
 }
