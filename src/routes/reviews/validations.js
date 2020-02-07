@@ -117,7 +117,7 @@ module.exports = {
     }
 
     if (typeof data.entryScore === 'undefined') {
-      errors.entryScore = 'Is required';
+      //errors.entryScore = 'Is required';
     } else if (typeof data.entryScore !== 'number') {
       errors.entryScore = 'Should be a number';
     } else if (data.entryScore < 1 || data.entryScore > 9) {
