@@ -115,7 +115,7 @@ const venueSchema = new mongoose.Schema(
     },
     interiorScore: {
       type: Number,
-      max: [4, 'Should be less than 5'],
+      max: [7, 'Should be less than 8'],
       min: [1, 'Should be more than 0']
     },
 
@@ -141,7 +141,7 @@ const venueSchema = new mongoose.Schema(
     },
     bathroomScore: {
       type: Number,
-      max: [7, 'Should be less than 8'],
+      max: [4, 'Should be less than 5'],
       min: [1, 'Should be more than 0']
     },
     entryReviews: {
@@ -151,7 +151,7 @@ const venueSchema = new mongoose.Schema(
     },
     entryScore: {
       type: Number,
-      max: [13, 'Should be less than 14'],
+      max: [9, 'Should be less than 10'],
       min: [1, 'Should be more than 0']
     },
     hasParking: {
