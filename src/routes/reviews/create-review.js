@@ -10,6 +10,7 @@ const { Venue } = require('../../models/venue');
 const { validateCreateEditReview } = require('./validations');
 
 module.exports = async (req, res, next) => {
+  console.log('body: ', req.body);
   const { errors, isValid } = validateCreateEditReview(req.body);
   if (!isValid) return res.status(400).json(errors);
 

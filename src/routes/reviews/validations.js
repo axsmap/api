@@ -90,7 +90,8 @@ module.exports = {
       if (typeof data.interiorScore !== 'number') {
         errors.interiorScore = 'Should be a number';
       } else if (data.interiorScore < 1 || data.interiorScore > 7) {
-        errors.interiorScore = 'Should be between 1 and 7';
+        //Remove required interiorScore
+        //errors.interiorScore = 'Should be between 1 and 7';
       }
     }
 
@@ -108,7 +109,8 @@ module.exports = {
       if (typeof data.bathroomScore !== 'number') {
         errors.bathroomScore = 'Should be a number';
       } else if (data.bathroomScore < 1 || data.bathroomScore > 4) {
-        errors.bathroomScore = 'Should be between 1 and 4';
+        //Remove required entryScore
+        //errors.bathroomScore = 'Should be between 1 and 4';
       }
     }
 
@@ -117,11 +119,13 @@ module.exports = {
     }
 
     if (typeof data.entryScore === 'undefined') {
+      //Remove required entryScore
       //errors.entryScore = 'Is required';
     } else if (typeof data.entryScore !== 'number') {
       errors.entryScore = 'Should be a number';
     } else if (data.entryScore < 1 || data.entryScore > 9) {
-      errors.entryScore = 'Should be between 1 and 9';
+      //Remove required entryScore
+      //errors.entryScore = 'Should be between 1 and 9';
     }
 
     if (data.event) {
@@ -201,6 +205,8 @@ module.exports = {
     if (queryParams.bathroomScore) {
       const limits = queryParams.bathroomScore.split(',');
 
+      //Remove bathroomScore validation
+      /*
       if (limits.length !== 2) {
         errors.bathroomScore = 'Should be two integers split by a comma';
       } else if (
@@ -209,11 +215,14 @@ module.exports = {
       ) {
         errors.bathroomScore = 'Both should be integers between 1 and 4';
       }
+      */
     }
 
     if (queryParams.entryScore) {
       const limits = queryParams.entryScore.split(',');
 
+      //Remove entryScore validation
+      /*
       if (limits.length !== 2) {
         errors.entryScore = 'Should be two integers split by a comma';
       } else if (
@@ -222,6 +231,7 @@ module.exports = {
       ) {
         errors.entryScore = 'Both should be integers between 1 and 9';
       }
+      */
     }
 
     if (queryParams.event && !isMongoId(queryParams.event)) {
@@ -370,6 +380,8 @@ module.exports = {
     if (queryParams.interiorScore) {
       const limits = queryParams.interiorScore.split(',');
 
+      //Remove interior score validation
+      /*
       if (limits.length !== 2) {
         errors.interiorScore = 'Should be two integers split by a comma';
       } else if (
@@ -378,6 +390,7 @@ module.exports = {
       ) {
         errors.interiorScore = 'Both should be integers between 1 and 7';
       }
+      */
     }
 
     return { errors, isValid: isEmpty(errors) };

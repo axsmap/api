@@ -15,17 +15,17 @@ const reviewSchema = new mongoose.Schema(
     hasSupportAroundToilet: Boolean,
     hasLoweredSinks: Boolean,
     interiorScore: {
-      type: Number,
-      max: [7, 'Should be less than 8'],
-      min: [1, 'Should be more than 0']
+      type: Number
+      //max: [7, 'Should be less than 8'],
+      //min: [1, 'Should be more than 0']
     },
 
     //original fields
     allowsGuideDog: Boolean,
     bathroomScore: {
-      type: Number,
-      max: [4, 'Should be less than 5'],
-      min: [1, 'Should be more than 0']
+      type: Number
+      //max: [4, 'Should be less than 5'],
+      //min: [1, 'Should be more than 0']
     },
     comments: {
       type: String,
@@ -66,9 +66,9 @@ const reviewSchema = new mongoose.Schema(
       }
     ],
     entryScore: {
-      type: Number,
-      max: [9, 'Should be less than 10'],
-      min: [1, 'Should be more than 0']
+      type: Number
+      //max: [9, 'Should be less than 10'],
+      //min: [1, 'Should be more than 0']
     },
     event: {
       type: mongoose.Schema.Types.ObjectId,

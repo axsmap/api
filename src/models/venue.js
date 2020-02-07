@@ -114,9 +114,9 @@ const venueSchema = new mongoose.Schema(
       }
     },
     interiorScore: {
-      type: Number,
-      max: [7, 'Should be less than 8'],
-      min: [1, 'Should be more than 0']
+      type: Number
+      //max: [7, 'Should be less than 8'],
+      //min: [1, 'Should be more than 0']
     },
 
     //original fields
@@ -136,23 +136,23 @@ const venueSchema = new mongoose.Schema(
     },
     bathroomReviews: {
       type: Number,
-      default: 0,
-      min: [0, 'Should be more than 1']
+      default: 0
+      //min: [0, 'Should be more than 1']
     },
     bathroomScore: {
-      type: Number,
-      max: [4, 'Should be less than 5'],
-      min: [1, 'Should be more than 0']
+      type: Number
+      //max: [4, 'Should be less than 5'],
+      //min: [1, 'Should be more than 0']
     },
     entryReviews: {
       type: Number,
-      default: 0,
-      min: [0, 'Should be more than -1']
+      default: 0
+      //min: [0, 'Should be more than -1']
     },
     entryScore: {
-      type: Number,
-      max: [9, 'Should be less than 10'],
-      min: [1, 'Should be more than 0']
+      type: Number
+      //max: [9, 'Should be less than 10'],
+      //min: [1, 'Should be more than 0']
     },
     hasParking: {
       yes: {
