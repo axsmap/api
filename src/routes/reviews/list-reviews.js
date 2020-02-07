@@ -76,6 +76,64 @@ module.exports = async (req, res, next) => {
     reviewsQuery.wellLit = toBoolean(queryParams.wellLit);
   }
 
+  //
+  // new expanded fields
+  //
+  if (queryParams.hasPermanentRamp) {
+    reviewsQuery.hasPermanentRamp = toBoolean(queryParams.hasPermanentRamp);
+  }
+
+  if (queryParams.hasPortableRamp) {
+    reviewsQuery.hasPortableRamp = toBoolean(queryParams.hasPortableRamp);
+  }
+
+  if (queryParams.hasWideEntrance) {
+    reviewsQuery.hasWideEntrance = toBoolean(queryParams.hasWideEntrance);
+  }
+
+  if (queryParams.hasAccessibleTableHeight) {
+    reviewsQuery.hasAccessibleTableHeight = toBoolean(
+      queryParams.hasAccessibleTableHeight
+    );
+  }
+
+  if (queryParams.hasAccessibleElevator) {
+    reviewsQuery.hasAccessibleElevator = toBoolean(
+      queryParams.hasAccessibleElevator
+    );
+  }
+
+  if (queryParams.hasInteriorRamp) {
+    reviewsQuery.hasInteriorRamp = toBoolean(queryParams.hasInteriorRamp);
+  }
+
+  if (queryParams.hasSwingInDoor) {
+    reviewsQuery.hasSwingInDoor = toBoolean(queryParams.hasSwingInDoor);
+  }
+
+  if (queryParams.hasSwingOutDoor) {
+    reviewsQuery.hasSwingOutDoor = toBoolean(queryParams.hasSwingOutDoor);
+  }
+
+  if (queryParams.hasLargeStall) {
+    reviewsQuery.hasLargeStall = toBoolean(queryParams.hasLargeStall);
+  }
+
+  if (queryParams.hasSupportAroundToilet) {
+    reviewsQuery.hasSupportAroundToilet = toBoolean(
+      queryParams.hasSupportAroundToilet
+    );
+  }
+
+  if (queryParams.hasLoweredSinks) {
+    reviewsQuery.hasLoweredSinks = toBoolean(queryParams.hasLoweredSinks);
+  }
+
+  if (queryParams.interiorScore) {
+    const limits = queryParams.interiorScore.split(',');
+    reviewsQuery.interiorScore = { $gte: limits[0], $lte: limits[1] };
+  }
+
   let page = queryParams.page || 1;
   const pageLimit = 18;
 

@@ -61,6 +61,20 @@ module.exports = async (req, res, next) => {
     moreThanTwo: 0
   };
 
+  //new expanded fields
+  dataResponse.hasPermanentRamp = { yes: 0, no: 0 };
+  dataResponse.hasPortableRamp = { yes: 0, no: 0 };
+  dataResponse.hasWideEntrance = { yes: 0, no: 0 };
+  dataResponse.hasAccessibleTableHeight = { yes: 0, no: 0 };
+  dataResponse.hasAccessibleElevator = { yes: 0, no: 0 };
+  dataResponse.hasInteriorRamp = { yes: 0, no: 0 };
+  dataResponse.hasSwingInDoor = { yes: 0, no: 0 };
+  dataResponse.hasSwingOutDoor = { yes: 0, no: 0 };
+  dataResponse.hasLargeStall = { yes: 0, no: 0 };
+  dataResponse.hasSupportAroundToilet = { yes: 0, no: 0 };
+  dataResponse.hasLoweredSinks = { yes: 0, no: 0 };
+  dataResponse.interiorScore = null;
+
   let venue;
   let venueToSave;
   try {
@@ -115,7 +129,8 @@ module.exports = async (req, res, next) => {
                   createdAt: 1,
                   entryScore: 1,
                   user: 1,
-                  voters: 1
+                  voters: 1,
+                  interiorScore: 1
                 }
               }
             ],
@@ -167,7 +182,19 @@ module.exports = async (req, res, next) => {
             placeId: 1,
             steps: 1,
             types: 1,
-            reviews: 1
+            reviews: 1,
+            hasPermanentRamp: 1,
+            hasPortableRamp: 1,
+            hasWideEntrance: 1,
+            hasAccessibleTableHeight: 1,
+            hasAccessibleElevator: 1,
+            hasInteriorRamp: 1,
+            hasSwingInDoor: 1,
+            hasSwingOutDoor: 1,
+            hasLargeStall: 1,
+            hasSupportAroundToilet: 1,
+            hasLoweredSinks: 1,
+            interiorScore: 1
           }
         }
       ]),
@@ -230,6 +257,19 @@ module.exports = async (req, res, next) => {
     dataResponse.photos = venue[0].photos;
     dataResponse.steps = venue[0].steps;
     dataResponse.reviews = venue[0].reviews;
+    //new expanded fields
+    dataResponse.hasPermanentRamp = venue[0].hasPermanentRamp;
+    dataResponse.hasPortableRamp = venue[0].hasPortableRamp;
+    dataResponse.hasWideEntrance = venue[0].hasWideEntrance;
+    dataResponse.hasAccessibleTableHeight = venue[0].hasAccessibleTableHeight;
+    dataResponse.hasAccessibleElevator = venue[0].hasAccessibleElevator;
+    dataResponse.hasInteriorRamp = venue[0].hasInteriorRamp;
+    dataResponse.hasSwingInDoor = venue[0].hasSwingInDoor;
+    dataResponse.hasSwingOutDoor = venue[0].hasSwingOutDoor;
+    dataResponse.hasLargeStall = venue[0].hasLargeStall;
+    dataResponse.hasSupportAroundToilet = venue[0].hasSupportAroundToilet;
+    dataResponse.hasLoweredSinks = venue[0].hasLoweredSinks;
+    dataResponse.interiorScore = venue[0].interiorScore;
   }
 
   return res.status(200).json(dataResponse);

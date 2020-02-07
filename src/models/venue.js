@@ -2,6 +2,124 @@ const mongoose = require('mongoose');
 
 const venueSchema = new mongoose.Schema(
   {
+    //new expanded fields
+    hasPermanentRamp: {
+      yes: {
+        type: Number,
+        default: 0
+      },
+      no: {
+        type: Number,
+        default: 0
+      }
+    },
+    hasPortableRamp: {
+      yes: {
+        type: Number,
+        default: 0
+      },
+      no: {
+        type: Number,
+        default: 0
+      }
+    },
+    hasWideEntrance: {
+      yes: {
+        type: Number,
+        default: 0
+      },
+      no: {
+        type: Number,
+        default: 0
+      }
+    },
+    hasAccessibleTableHeight: {
+      yes: {
+        type: Number,
+        default: 0
+      },
+      no: {
+        type: Number,
+        default: 0
+      }
+    },
+    hasAccessibleElevator: {
+      yes: {
+        type: Number,
+        default: 0
+      },
+      no: {
+        type: Number,
+        default: 0
+      }
+    },
+    hasInteriorRamp: {
+      yes: {
+        type: Number,
+        default: 0
+      },
+      no: {
+        type: Number,
+        default: 0
+      }
+    },
+    hasSwingInDoor: {
+      yes: {
+        type: Number,
+        default: 0
+      },
+      no: {
+        type: Number,
+        default: 0
+      }
+    },
+    hasSwingOutDoor: {
+      yes: {
+        type: Number,
+        default: 0
+      },
+      no: {
+        type: Number,
+        default: 0
+      }
+    },
+    hasLargeStall: {
+      yes: {
+        type: Number,
+        default: 0
+      },
+      no: {
+        type: Number,
+        default: 0
+      }
+    },
+    hasSupportAroundToilet: {
+      yes: {
+        type: Number,
+        default: 0
+      },
+      no: {
+        type: Number,
+        default: 0
+      }
+    },
+    hasLoweredSinks: {
+      yes: {
+        type: Number,
+        default: 0
+      },
+      no: {
+        type: Number,
+        default: 0
+      }
+    },
+    interiorScore: {
+      type: Number,
+      max: [4, 'Should be less than 5'],
+      min: [1, 'Should be more than 0']
+    },
+
+    //original fields
     address: {
       type: String,
       maxlength: [255, 'Should be less than 256 characters']
@@ -23,7 +141,7 @@ const venueSchema = new mongoose.Schema(
     },
     bathroomScore: {
       type: Number,
-      max: [5, 'Should be less than 6'],
+      max: [7, 'Should be less than 8'],
       min: [1, 'Should be more than 0']
     },
     entryReviews: {
@@ -33,7 +151,7 @@ const venueSchema = new mongoose.Schema(
     },
     entryScore: {
       type: Number,
-      max: [5, 'Should be less than 6'],
+      max: [13, 'Should be less than 14'],
       min: [1, 'Should be more than 0']
     },
     hasParking: {

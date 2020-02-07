@@ -67,6 +67,12 @@ module.exports = async (req, res, next) => {
     };
   }
 
+  if (queryParams.interiorScore) {
+    venuesFilters.interiorScore = {
+      $gte: parseFloat(queryParams.interiorScore)
+    };
+  }
+
   if (queryParams.allowsGuideDog) {
     const allowsGuideDog = parseFloat(queryParams.allowsGuideDog) === 1;
     if (allowsGuideDog) {
@@ -186,7 +192,7 @@ module.exports = async (req, res, next) => {
       [venues, total] = await Promise.all([
         Venue.find(
           venuesFilters,
-          'address allowsGuideDog bathroomScore entryScore hasParking hasSecondEntry hasWellLit isQuiet isSpacious location name photos placeId steps types'
+          'address allowsGuideDog bathroomScore entryScore interiorScore hasParking hasSecondEntry hasWellLit isQuiet isSpacious location name photos placeId steps types'
         )
           .skip(page * pageLimit)
           .limit(pageLimit),
@@ -320,6 +326,21 @@ module.exports = async (req, res, next) => {
       const venue = find(venues, venue => venue.placeId === place.placeId);
       if (venue) {
         return Object.assign({}, place, {
+          //new expanded fields
+          hasPermanentRamp: venue.hasPermanentRamp,
+          hasPortableRamp: venue.hasPortableRamp,
+          hasWideEntrance: venue.hasWideEntrance,
+          hasAccessibleTableHeight: venue.hasAccessibleTableHeight,
+          hasAccessibleElevator: venue.hasAccessibleElevator,
+          hasInteriorRamp: venue.hasInteriorRamp,
+          hasSwingInDoor: venue.hasSwingInDoor,
+          hasSwingOutDoor: venue.hasSwingOutDoor,
+          hasLargeStall: venue.hasLargeStall,
+          hasSupportAroundToilet: venue.hasSupportAroundToilet,
+          hasLoweredSinks: venue.hasLoweredSinks,
+          interiorScore: venue.interiorScore,
+
+          //original fields
           allowsGuideDog: venue.allowsGuideDog,
           bathroomScore: venue.bathroomScore,
           entryScore: venue.entryScore,
@@ -333,6 +354,21 @@ module.exports = async (req, res, next) => {
       }
 
       return Object.assign({}, place, {
+        //new expanded fields
+        hasPermanentRamp: { yes: 0, no: 0 },
+        hasPortableRamp: { yes: 0, no: 0 },
+        hasWideEntrance: { yes: 0, no: 0 },
+        hasAccessibleTableHeight: { yes: 0, no: 0 },
+        hasAccessibleElevator: { yes: 0, no: 0 },
+        hasInteriorRamp: { yes: 0, no: 0 },
+        hasSwingInDoor: { yes: 0, no: 0 },
+        hasSwingOutDoor: { yes: 0, no: 0 },
+        hasLargeStall: { yes: 0, no: 0 },
+        hasSupportAroundToilet: { yes: 0, no: 0 },
+        hasLoweredSinks: { yes: 0, no: 0 },
+        interiorScore: null,
+
+        //original fields
         allowsGuideDog: { yes: 0, no: 0 },
         bathroomReviews: 0,
         bathroomScore: null,

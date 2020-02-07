@@ -2,10 +2,29 @@ const mongoose = require('mongoose');
 
 const reviewSchema = new mongoose.Schema(
   {
+    //new expanded fields
+    hasPermanentRamp: Boolean,
+    hasPortableRamp: Boolean,
+    hasWideEntrance: Boolean,
+    hasAccessibleTableHeight: Boolean,
+    hasAccessibleElevator: Boolean,
+    hasInteriorRamp: Boolean,
+    hasSwingInDoor: Boolean,
+    hasSwingOutDoor: Boolean,
+    hasLargeStall: Boolean,
+    hasSupportAroundToilet: Boolean,
+    hasLoweredSinks: Boolean,
+    interiorScore: {
+      type: Number,
+      max: [4, 'Should be less than 5'],
+      min: [1, 'Should be more than 0']
+    },
+
+    //original fields
     allowsGuideDog: Boolean,
     bathroomScore: {
       type: Number,
-      max: [5, 'Should be less than 6'],
+      max: [7, 'Should be less than 8'],
       min: [1, 'Should be more than 0']
     },
     comments: {
@@ -48,7 +67,7 @@ const reviewSchema = new mongoose.Schema(
     ],
     entryScore: {
       type: Number,
-      max: [5, 'Should be less than 6'],
+      max: [13, 'Should be less than 14'],
       min: [1, 'Should be more than 0']
     },
     event: {

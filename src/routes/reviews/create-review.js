@@ -14,6 +14,21 @@ module.exports = async (req, res, next) => {
   if (!isValid) return res.status(400).json(errors);
 
   const data = {
+    //new expanded fields
+    hasPermanentRamp: req.body.hasPermanentRamp,
+    hasPortableRamp: req.body.hasPortableRamp,
+    hasWideEntrance: req.body.hasWideEntrance,
+    hasAccessibleTableHeight: req.body.hasAccessibleTableHeight,
+    hasAccessibleElevator: req.body.hasAccessibleElevator,
+    hasInteriorRamp: req.body.hasInteriorRamp,
+    hasSwingInDoor: req.body.hasSwingInDoor,
+    hasSwingOutDoor: req.body.hasSwingOutDoor,
+    hasLargeStall: req.body.hasLargeStall,
+    hasSupportAroundToilet: req.body.hasSupportAroundToilet,
+    hasLoweredSinks: req.body.hasLoweredSinks,
+    interiorScore: req.body.interiorScore,
+
+    //original fields
     allowsGuideDog: req.body.allowsGuideDog,
     bathroomScore: req.body.bathroomScore,
     comments: req.body.comments,
@@ -221,6 +236,146 @@ module.exports = async (req, res, next) => {
     }
   }
 
+  //
+  //new expanded fields
+  //
+  if (typeof review.hasPermanentRamp !== 'undefined') {
+    venue.hasPermanentRamp = {
+      yes: review.hasPermanentRamp
+        ? venue.hasPermanentRamp.yes + 1
+        : venue.hasPermanentRamp.yes,
+      no: review.hasPermanentRamp
+        ? venue.hasPermanentRamp.no
+        : venue.hasPermanentRamp.no + 1
+    };
+  }
+
+  if (typeof review.hasPortableRamp !== 'undefined') {
+    venue.hasPortableRamp = {
+      yes: review.hasPortableRamp
+        ? venue.hasPortableRamp.yes + 1
+        : venue.hasPortableRamp.yes,
+      no: review.hasPortableRamp
+        ? venue.hasPortableRamp.no
+        : venue.hasPortableRamp.no + 1
+    };
+  }
+
+  if (typeof review.hasWideEntrance !== 'undefined') {
+    venue.hasWideEntrance = {
+      yes: review.hasWideEntrance
+        ? venue.hasWideEntrance.yes + 1
+        : venue.hasWideEntrance.yes,
+      no: review.hasWideEntrance
+        ? venue.hasWideEntrance.no
+        : venue.hasWideEntrance.no + 1
+    };
+  }
+
+  if (typeof review.hasAccessibleTableHeight !== 'undefined') {
+    venue.hasAccessibleTableHeight = {
+      yes: review.hasAccessibleTableHeight
+        ? venue.hasAccessibleTableHeight.yes + 1
+        : venue.hasAccessibleTableHeight.yes,
+      no: review.hasAccessibleTableHeight
+        ? venue.hasAccessibleTableHeight.no
+        : venue.hasAccessibleTableHeight.no + 1
+    };
+  }
+
+  if (typeof review.hasAccessibleElevator !== 'undefined') {
+    venue.hasAccessibleElevator = {
+      yes: review.hasAccessibleElevator
+        ? venue.hasAccessibleElevator.yes + 1
+        : venue.hasAccessibleElevator.yes,
+      no: review.hasAccessibleElevator
+        ? venue.hasAccessibleElevator.no
+        : venue.hasAccessibleElevator.no + 1
+    };
+  }
+
+  if (typeof review.hasInteriorRamp !== 'undefined') {
+    venue.hasInteriorRamp = {
+      yes: review.hasInteriorRamp
+        ? venue.hasInteriorRamp.yes + 1
+        : venue.hasInteriorRamp.yes,
+      no: review.hasInteriorRamp
+        ? venue.hasInteriorRamp.no
+        : venue.hasInteriorRamp.no + 1
+    };
+  }
+
+  if (typeof review.hasSwingInDoor !== 'undefined') {
+    venue.hasSwingInDoor = {
+      yes: review.hasSwingInDoor
+        ? venue.hasSwingInDoor.yes + 1
+        : venue.hasSwingInDoor.yes,
+      no: review.hasSwingInDoor
+        ? venue.hasSwingInDoor.no
+        : venue.hasSwingInDoor.no + 1
+    };
+  }
+
+  if (typeof review.hasSwingOutDoor !== 'undefined') {
+    venue.hasSwingOutDoor = {
+      yes: review.hasSwingOutDoor
+        ? venue.hasSwingOutDoor.yes + 1
+        : venue.hasSwingOutDoor.yes,
+      no: review.hasSwingOutDoor
+        ? venue.hasSwingOutDoor.no
+        : venue.hasSwingOutDoor.no + 1
+    };
+  }
+
+  if (typeof review.hasLargeStall !== 'undefined') {
+    venue.hasLargeStall = {
+      yes: review.hasLargeStall
+        ? venue.hasLargeStall.yes + 1
+        : venue.hasLargeStall.yes,
+      no: review.hasLargeStall
+        ? venue.hasLargeStall.no
+        : venue.hasLargeStall.no + 1
+    };
+  }
+
+  if (typeof review.hasSupportAroundToilet !== 'undefined') {
+    venue.hasSupportAroundToilet = {
+      yes: review.hasSupportAroundToilet
+        ? venue.hasSupportAroundToilet.yes + 1
+        : venue.hasSupportAroundToilet.yes,
+      no: review.hasSupportAroundToilet
+        ? venue.hasSupportAroundToilet.no
+        : venue.hasSupportAroundToilet.no + 1
+    };
+  }
+
+  if (typeof review.hasLoweredSinks !== 'undefined') {
+    venue.hasLoweredSinks = {
+      yes: review.hasLoweredSinks
+        ? venue.hasLoweredSinks.yes + 1
+        : venue.hasLoweredSinks.yes,
+      no: review.hasLoweredSinks
+        ? venue.hasLoweredSinks.no
+        : venue.hasLoweredSinks.no + 1
+    };
+  }
+
+  //TBD: score calculation (need total # reviews)
+  if (typeof review.interiorScore !== 'undefined') {
+    if (venue.bathroomReviews > 0) {
+      venue.interiorScore =
+        (venue.interiorScore * venue.bathroomReviews + review.interiorScore) /
+        (venue.bathroomReviews + 1);
+      venue.bathroomReviews += 1;
+    } else {
+      venue.interiorScore = review.interiorScore;
+      venue.bathroomReviews = 1;
+    }
+  }
+
+  //
+  //original fields
+  //
   if (typeof review.allowsGuideDog !== 'undefined') {
     venue.allowsGuideDog = {
       yes: review.allowsGuideDog
@@ -315,6 +470,21 @@ module.exports = async (req, res, next) => {
   }
 
   const dataResponse = {
+    //new expanded fields
+    hasPermanentRamp: review.hasPermanentRamp,
+    hasPortableRamp: req.body.hasPortableRamp,
+    hasWideEntrance: review.hasWideEntrance,
+    hasAccessibleTableHeight: review.hasAccessibleTableHeight,
+    hasAccessibleElevator: review.hasAccessibleElevator,
+    hasInteriorRamp: review.hasInteriorRamp,
+    hasSwingInDoor: review.hasSwingInDoor,
+    hasSwingOutDoor: review.hasSwingOutDoor,
+    hasLargeStall: review.hasLargeStall,
+    hasSupportAroundToilet: review.hasSupportAroundToilet,
+    hasLoweredSinks: review.hasLoweredSinks,
+    interiorScore: review.interiorScore,
+
+    //original fields
     id: review.id,
     allowsGuideDog: review.allowsGuideDog,
     bathroomScore: review.bathroomScore,

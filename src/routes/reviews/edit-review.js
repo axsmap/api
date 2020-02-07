@@ -57,6 +57,21 @@ module.exports = async (req, res, next) => {
   }
 
   const data = pick(req.body, [
+    //new expanded fields
+    'hasPermanentRamp',
+    'hasPortableRamp',
+    'hasWideEntrance',
+    'hasAccessibleTableHeight',
+    'hasAccessibleElevator',
+    'hasInteriorRamp',
+    'hasSwingInDoor',
+    'hasSwingOutDoor',
+    'hasLargeStall',
+    'hasSupportAroundToilet',
+    'hasLoweredSinks',
+    'interiorScore',
+
+    //original fields
     'bathroomScore',
     'comments',
     'entryScore',
@@ -80,6 +95,7 @@ module.exports = async (req, res, next) => {
   review.bathroomScore = data.bathroomScore || review.bathroomScore;
   review.comments = data.comments || review.comments;
   review.entryScore = data.entryScore || review.entryScore;
+  review.interiorScore = data.interiorScore || review.interiorScore; //expanded field
 
   if (data.event) {
     let event;
@@ -118,6 +134,22 @@ module.exports = async (req, res, next) => {
   review.ramp = data.ramp || review.ramp;
   review.secondEntry = data.secondEntry || review.secondEntry;
   review.spacious = data.spacious || review.spacious;
+
+  //new expanded fields
+  review.hasPermanentRamp = data.hasPermanentRamp || review.hasPermanentRamp;
+  review.hasPortableRamp = data.hasPortableRamp || review.hasPortableRamp;
+  review.hasWideEntrance = data.hasWideEntrance || review.hasWideEntrance;
+  review.hasAccessibleTableHeight =
+    data.hasAccessibleTableHeight || review.hasAccessibleTableHeight;
+  review.hasAccessibleElevator =
+    data.hasAccessibleElevator || review.hasAccessibleElevator;
+  review.hasInteriorRamp = data.hasInteriorRamp || review.hasInteriorRamp;
+  review.hasSwingInDoor = data.hasSwingInDoor || review.hasSwingInDoor;
+  review.hasSwingOutDoor = data.hasSwingOutDoor || review.hasSwingOutDoor;
+  review.hasLargeStall = data.hasLargeStall || review.hasLargeStall;
+  review.hasSupportAroundToilet =
+    data.hasSupportAroundToilet || review.hasSupportAroundToilet;
+  review.hasLoweredSinks = data.hasLoweredSinks || review.hasLoweredSinks;
 
   if (data.steps) {
     venue.stepsReviews[review.steps] -= 1;
