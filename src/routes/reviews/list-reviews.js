@@ -18,14 +18,14 @@ module.exports = async (req, res, next) => {
 
   const reviewsQuery = {};
 
-  if (queryParams.bathroomScore) {
-    const limits = queryParams.bathroomScore.split(',');
-    reviewsQuery.bathroomScore = { $gte: limits[0], $lte: limits[1] };
+  if (queryParams.restroomScore) {
+    //const limits = queryParams.bathroomScore.split(',');
+    reviewsQuery.bathroomScore = { $gte: toInt(queryParams.bathroomScore) };
   }
 
-  if (queryParams.entryScore) {
-    const limits = queryParams.entryScore.split(',');
-    reviewsQuery.entryScore = { $gte: limits[0], $lte: limits[1] };
+  if (queryParams.entranceScore) {
+    //const limits = queryParams.entryScore.split(',');
+    reviewsQuery.entranceScore = { $gte: toInt(queryParams.entranceScore) };
   }
 
   if (queryParams.event) {
@@ -107,10 +107,6 @@ module.exports = async (req, res, next) => {
     reviewsQuery.hasInteriorRamp = toBoolean(queryParams.hasInteriorRamp);
   }
 
-  if (queryParams.hasSwingInDoor) {
-    reviewsQuery.hasSwingInDoor = toBoolean(queryParams.hasSwingInDoor);
-  }
-
   if (queryParams.hasSwingOutDoor) {
     reviewsQuery.hasSwingOutDoor = toBoolean(queryParams.hasSwingOutDoor);
   }
@@ -130,8 +126,7 @@ module.exports = async (req, res, next) => {
   }
 
   if (queryParams.interiorScore) {
-    const limits = queryParams.interiorScore.split(',');
-    reviewsQuery.interiorScore = { $gte: limits[0], $lte: limits[1] };
+    reviewsQuery.interiorScore = { $gte: toInt(queryParams.interiorScore) };
   }
 
   let page = queryParams.page || 1;
