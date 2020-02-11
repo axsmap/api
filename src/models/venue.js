@@ -104,19 +104,37 @@ const venueSchema = new mongoose.Schema(
       }
     },
     entranceScore: {
-      enum: ['alert', 'caution', 'accessible', 'default'],
-      description: 'can only be one of the enum values and is required',
-      default: 'default'
+      //enum: ['alert', 'caution', 'accessible', 'default'],
+      //description: 'can only be one of the enum values and is required',
+      //default: 'default'
+      type: Number,
+      default: 0
+    },
+    entranceGlyphs: {
+      type: String,
+      maxlength: [32, 'Should be less than 256 characters']
     },
     interiorScore: {
-      enum: ['alert', 'caution', 'accessible', 'default'],
-      description: 'can only be one of the enum values and is required',
-      default: 'default'
+      //enum: ['alert', 'caution', 'accessible', 'default'],
+      //description: 'can only be one of the enum values and is required',
+      //: 'default'
+      type: Number,
+      default: 0
+    },
+    interiorGlyphs: {
+      type: String,
+      maxlength: [32, 'Should be less than 256 characters']
     },
     restroomScore: {
-      enum: ['alert', 'caution', 'accessible', 'default'],
-      description: 'can only be one of the enum values and is required',
-      default: 'default'
+      //enum: ['alert', 'caution', 'accessible', 'default'],
+      //: 'can only be one of the enum values and is required',
+      //default: 'default'
+      type: Number,
+      default: 0
+    },
+    restroomGlyphs: {
+      type: String,
+      maxlength: [32, 'Should be less than 256 characters']
     },
 
     //original fields
