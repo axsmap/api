@@ -9,7 +9,6 @@ const reviewSchema = new mongoose.Schema(
     hasAccessibleTableHeight: Boolean,
     hasAccessibleElevator: Boolean,
     hasInteriorRamp: Boolean,
-    hasSwingInDoor: Boolean,
     hasSwingOutDoor: Boolean,
     hasLargeStall: Boolean,
     hasSupportAroundToilet: Boolean,
