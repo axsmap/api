@@ -63,16 +63,6 @@ const venueSchema = new mongoose.Schema(
         default: 0
       }
     },
-    hasSwingInDoor: {
-      yes: {
-        type: Number,
-        default: 0
-      },
-      no: {
-        type: Number,
-        default: 0
-      }
-    },
     hasSwingOutDoor: {
       yes: {
         type: Number,
@@ -113,10 +103,20 @@ const venueSchema = new mongoose.Schema(
         default: 0
       }
     },
+    entranceScore: {
+      enum: ['alert', 'caution', 'accessible', 'default'],
+      description: 'can only be one of the enum values and is required',
+      default: 'default'
+    },
     interiorScore: {
-      type: Number
-      //max: [7, 'Should be less than 8'],
-      //min: [1, 'Should be more than 0']
+      enum: ['alert', 'caution', 'accessible', 'default'],
+      description: 'can only be one of the enum values and is required',
+      default: 'default'
+    },
+    restroomScore: {
+      enum: ['alert', 'caution', 'accessible', 'default'],
+      description: 'can only be one of the enum values and is required',
+      default: 'default'
     },
 
     //original fields
@@ -134,6 +134,8 @@ const venueSchema = new mongoose.Schema(
         default: 0
       }
     },
+    /*
+     * remove 5-star scoring
     bathroomReviews: {
       type: Number,
       default: 0
@@ -154,6 +156,7 @@ const venueSchema = new mongoose.Schema(
       //max: [9, 'Should be less than 10'],
       //min: [1, 'Should be more than 0']
     },
+     */
     hasParking: {
       yes: {
         type: Number,
