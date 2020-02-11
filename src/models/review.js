@@ -14,19 +14,17 @@ const reviewSchema = new mongoose.Schema(
     hasLargeStall: Boolean,
     hasSupportAroundToilet: Boolean,
     hasLoweredSinks: Boolean,
-    interiorScore: {
-      type: Number
-      //max: [7, 'Should be less than 8'],
-      //min: [1, 'Should be more than 0']
-    },
 
     //original fields
     allowsGuideDog: Boolean,
+    /*
+     * remove 5-star scoring
     bathroomScore: {
       type: Number
       //max: [4, 'Should be less than 5'],
       //min: [1, 'Should be more than 0']
     },
+     */
     comments: {
       type: String,
       maxlength: [300, 'Should be less than 301 characters']
@@ -65,11 +63,14 @@ const reviewSchema = new mongoose.Schema(
         }
       }
     ],
+    /*
+     * remove 5-star scoring
     entryScore: {
       type: Number
       //max: [9, 'Should be less than 10'],
       //min: [1, 'Should be more than 0']
     },
+     */
     event: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Event'
