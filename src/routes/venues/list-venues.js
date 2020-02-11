@@ -374,7 +374,7 @@ module.exports = async (req, res, next) => {
         hasSupportAroundToilet: { yes: 0, no: 0 },
         hasLoweredSinks: { yes: 0, no: 0 },
         interiorScore: 0,
-        interiorGlyphs: 'interiror',
+        interiorGlyphs: 'interior',
         restroomScore: 0,
         restroomGlyphs: 'restroom',
         entranceScore: 0,
