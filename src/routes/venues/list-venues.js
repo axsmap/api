@@ -239,7 +239,8 @@ module.exports = async (req, res, next) => {
       }&rankby=distance`;
 
       if (queryParams.name) {
-        nearbyParams = `${nearbyParams}&keyword=${queryParams.name}`;
+        //nearbyParams = `${nearbyParams}&keyword=${queryParams.name}`;
+        nearbyParams = `${nearbyParams}&query=${queryParams.name}`;
       }
 
       if (queryParams.type) {
@@ -266,7 +267,7 @@ module.exports = async (req, res, next) => {
     let placesResponse;
     try {
       placesResponse = await axios.get(
-        `https://maps.googleapis.com/maps/api/place/nearbysearch/json${nearbyParams}`
+        `https://maps.googleapis.com/maps/api/place/textsearch/json${nearbyParams}`
       );
     } catch (err) {
       console.log(
