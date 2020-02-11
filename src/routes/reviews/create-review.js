@@ -22,7 +22,6 @@ module.exports = async (req, res, next) => {
     hasAccessibleTableHeight: req.body.hasAccessibleTableHeight,
     hasAccessibleElevator: req.body.hasAccessibleElevator,
     hasInteriorRamp: req.body.hasInteriorRamp,
-    //hasSwingInDoor: req.body.hasSwingInDoor,
     hasSwingOutDoor: req.body.hasSwingOutDoor,
     hasLargeStall: req.body.hasLargeStall,
     hasSupportAroundToilet: req.body.hasSupportAroundToilet,
