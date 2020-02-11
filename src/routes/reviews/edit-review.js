@@ -64,17 +64,15 @@ module.exports = async (req, res, next) => {
     'hasAccessibleTableHeight',
     'hasAccessibleElevator',
     'hasInteriorRamp',
-    'hasSwingInDoor',
     'hasSwingOutDoor',
     'hasLargeStall',
     'hasSupportAroundToilet',
     'hasLoweredSinks',
-    'interiorScore',
 
     //original fields
-    'bathroomScore',
+    //'bathroomScore',
     'comments',
-    'entryScore',
+    //'entryScore',
     'event',
     'guideDog',
     'parking',
@@ -92,10 +90,9 @@ module.exports = async (req, res, next) => {
     return res.status(400).json(errors);
   }
 
-  review.bathroomScore = data.bathroomScore || review.bathroomScore;
+  //review.bathroomScore = data.bathroomScore || review.bathroomScore;
   review.comments = data.comments || review.comments;
-  review.entryScore = data.entryScore || review.entryScore;
-  review.interiorScore = data.interiorScore || review.interiorScore; //expanded field
+  //review.entryScore = data.entryScore || review.entryScore;
 
   if (data.event) {
     let event;
@@ -144,7 +141,6 @@ module.exports = async (req, res, next) => {
   review.hasAccessibleElevator =
     data.hasAccessibleElevator || review.hasAccessibleElevator;
   review.hasInteriorRamp = data.hasInteriorRamp || review.hasInteriorRamp;
-  review.hasSwingInDoor = data.hasSwingInDoor || review.hasSwingInDoor;
   review.hasSwingOutDoor = data.hasSwingOutDoor || review.hasSwingOutDoor;
   review.hasLargeStall = data.hasLargeStall || review.hasLargeStall;
   review.hasSupportAroundToilet =
