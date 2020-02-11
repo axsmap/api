@@ -1,0 +1,187 @@
+[
+  {
+    "_comments": "Entry: If 0 Steps = YES -> Blue 0 STEPS ICON; If Ramp = NO and Temporary Ramp = YES -> YELLOW TEMPORARY RAMP PIC; If Ramp = YES and the rest are empty or NO -> BLUE RAMP PIC; If Ramp = NO and 2 STEPS = YES or 2 STEPS = YES - Image = RED RAMP PIC; If Ramp = NO and 1 STEP = YES - Image = YELLOW 1 STEP PIC",
+    "sectionName": "entrance",
+    "defaultIcon": "",
+    "defaultColor": "",
+    "defaultYesColor": "BLUE",
+    "defaultNoColor": "YELLOW",
+    "sectionLogic": "skipDefined",
+    "sectionFields": [
+      {
+        "fieldName": "has0Steps",
+        "fieldOrder": 1,
+        "fieldIcon": "",
+        "fieldWeight": 1,
+        "fieldNegative": false,
+        "fieldSkips": true
+      },
+      {
+        "fieldName": "hasPermanentRamp",
+        "fieldOrder": 2,
+        "fieldIcon": "permanentRamp",
+        "fieldWeight": 1,
+        "fieldNegative": false,
+        "fieldSkips": true
+      },
+      {
+        "fieldName": "hasPortableRamp",
+        "fieldOrder": 3,
+        "fieldIcon": "portableRamp",
+        "fieldYesColor": "YELLOW",
+        "fieldWeight": 1,
+        "fieldNegative": false,
+        "fieldSkips": true
+      },
+      {
+        "fieldName": "has1Steps",
+        "fieldOrder": 4,
+        "fieldIcon": "",
+        "fieldYesColor": "YELLOW",
+        "fieldWeight": 1,
+        "fieldNegative": false,
+        "fieldSkips": true
+      },
+      {
+        "fieldName": "has2Steps",
+        "fieldOrder": 5,
+        "fieldIcon": "",
+        "fieldYesColor": "RED",
+        "fieldWeight": 1,
+        "fieldNegative": true,
+        "fieldSkips": true
+      },
+      {
+        "fieldName": "has3Steps",
+        "fieldOrder": 6,
+        "fieldIcon": "",
+        "fieldYesColor": "RED",
+        "fieldWeight": 1,
+        "fieldNegative": true,
+        "fieldSkips": true
+      },
+      {
+        "fieldName": "hasParking",
+        "fieldOrder": 7,
+        "fieldIcon": "",
+        "fieldWeight": 2,
+        "fieldNegative": false
+      },
+      {
+        "fieldName": "hasSecondEntry",
+        "fieldOrder": 8,
+        "fieldIcon": "",
+        "fieldWeight": 2,
+        "fieldNegative": false
+      },
+      {
+        "fieldName": "hasWideEntrance",
+        "fieldOrder": 9,
+        "fieldIcon": "",
+        "fieldWeight": 2,
+        "fieldNegative": false
+      }
+    ]
+  },
+
+  {
+    "_comments": "Use the pictures in the order of the data. If any of them = NO -> ITEM IN YELLOW. If any items are YES and we have no items listed as NO -> YES ITEM BLUE",
+    "sectionName": "interior",
+    "defaultIcon": "",
+    "defaultColor": "",
+    "defaultYesColor": "BLUE",
+    "defaultNoColor": "YELLOW",
+    "sectionLogic": "softHighlightNo",
+    "sectionFields": [
+      {
+        "fieldName": "isSpacious",
+        "fieldOrder": 1,
+        "fieldIcon": "",
+        "fieldWeight": 1,
+        "fieldNegative": false
+      },
+      {
+        "fieldName": "hasInteriorRamp",
+        "fieldOrder": 2,
+        "fieldIcon": "",
+        "fieldWeight": 1,
+        "fieldNegative": false
+      },
+      {
+        "fieldName": "hasAccessibleElevator",
+        "fieldOrder": 3,
+        "fieldIcon": "",
+        "fieldWeight": 1,
+        "fieldNegative": false
+      },
+      {
+        "fieldName": "hasAccessibleTableHeight",
+        "fieldOrder": 4,
+        "fieldIcon": "",
+        "fieldWeight": 1,
+        "fieldNegative": false
+      },
+      {
+        "fieldName": "hasWellLit",
+        "fieldOrder": 5,
+        "fieldIcon": "",
+        "fieldWeight": 2,
+        "fieldNegative": false
+      },
+      {
+        "fieldName": "isQuiet",
+        "fieldOrder": 6,
+        "fieldIcon": "",
+        "fieldWeight": 2,
+        "fieldNegative": false
+      },
+      {
+        "fieldName": "allowsGuideDog",
+        "fieldOrder": 7,
+        "fieldIcon": "",
+        "fieldWeight": 2,
+        "fieldNegative": false
+      }
+    ]
+  },
+
+  {
+    "_comments": "Use the pictures in the order of the data. If any item = NO -> ITEM IN YELLOW; If any items = YES and others are blank (or negative items are NO) -> ITEM IN BLUE; If some items are NO and no items are YES -> RESTROOM IMAGE IN RED; If some = YES and (all?) negative items are NO -> RESTROOM IMAGE IN BLUE",
+    "sectionName": "restroom",
+    "defaultIcon": "",
+    "defaultColor": "",
+    "defaultYesColor": "BLUE",
+    "defaultNoColor": "YELLOW",
+    "sectionLogic": "softHighlightNo",
+    "sectionFields": [
+      {
+        "fieldName": "hasSwingOutDoor",
+        "fieldOrder": 1,
+        "fieldIcon": "",
+        "fieldWeight": 1,
+        "fieldNegative": false
+      },
+      {
+        "fieldName": "hasLargeStall",
+        "fieldOrder": 2,
+        "fieldIcon": "",
+        "fieldWeight": 1,
+        "fieldNegative": false
+      },
+      {
+        "fieldName": "hasSupportAroundToilet",
+        "fieldOrder": 3,
+        "fieldIcon": "",
+        "fieldWeight": 1,
+        "fieldNegative": false
+      },
+      {
+        "fieldName": "hasLoweredSinks",
+        "fieldOrder": 4,
+        "fieldIcon": "",
+        "fieldWeight": 1,
+        "fieldNegative": false
+      }
+    ]
+  }
+]
