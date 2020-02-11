@@ -30,9 +30,9 @@ module.exports = async (req, res, next) => {
 
     //original fields
     allowsGuideDog: req.body.allowsGuideDog,
-    bathroomScore: req.body.bathroomScore,
+    //bathroomScore: req.body.bathroomScore,
     comments: req.body.comments,
-    entryScore: req.body.entryScore,
+    //entryScore: req.body.entryScore,
     event: req.body.event,
     hasParking: req.body.hasParking,
     hasSecondEntry: req.body.hasSecondEntry,
@@ -455,18 +455,19 @@ module.exports = async (req, res, next) => {
     hasAccessibleTableHeight: review.hasAccessibleTableHeight,
     hasAccessibleElevator: review.hasAccessibleElevator,
     hasInteriorRamp: review.hasInteriorRamp,
-    //hasSwingInDoor: review.hasSwingInDoor,
     hasSwingOutDoor: review.hasSwingOutDoor,
     hasLargeStall: review.hasLargeStall,
     hasSupportAroundToilet: review.hasSupportAroundToilet,
     hasLoweredSinks: review.hasLoweredSinks,
 
+    /*
     entranceScore: review.entranceScore,
     entranceGlyph: review.entryGlyph,
     interiorScore: review.interiorScore,
     interiorGlyph: review.interiorGlyph,
-    bathroomScore: review.restroomScore,
+    restroomScore: review.restroomScore,
     restroomGlyph: review.restroomGlyph,
+    */
 
     //original fields
     id: review.id,
