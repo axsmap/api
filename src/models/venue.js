@@ -136,6 +136,10 @@ const venueSchema = new mongoose.Schema(
       type: String,
       maxlength: [32, 'Should be less than 256 characters']
     },
+    mapMarkerScore: {
+      type: Number,
+      default: 0
+    },
 
     //original fields
     address: {

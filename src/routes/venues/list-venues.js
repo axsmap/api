@@ -55,15 +55,15 @@ module.exports = async (req, res, next) => {
 
   let venuesFilters = {};
 
-  if (queryParams.entryScore) {
-    venuesFilters.entryScore = {
-      $gte: parseFloat(queryParams.entryScore)
+  if (queryParams.entranceScore) {
+    venuesFilters.entranceScore = {
+      $gte: parseFloat(queryParams.entranceScore)
     };
   }
 
-  if (queryParams.bathroomScore) {
-    venuesFilters.bathroomScore = {
-      $gte: parseFloat(queryParams.bathroomScore)
+  if (queryParams.restroomScore) {
+    venuesFilters.restroomScore = {
+      $gte: parseFloat(queryParams.restroomScore)
     };
   }
 
@@ -340,11 +340,17 @@ module.exports = async (req, res, next) => {
           hasSupportAroundToilet: venue.hasSupportAroundToilet,
           hasLoweredSinks: venue.hasLoweredSinks,
           interiorScore: venue.interiorScore,
+          interiorGlyphs: venue.interiorGlyphs,
+          restroomScore: venue.restroomScore,
+          restroomGlyphs: venue.restroomGlyphs,
+          entranceScore: venue.entranceScore,
+          entranceGlyphs: venue.entranceGlyphs,
+          mapMarkerScore: venue.mapMarkerScore,
 
           //original fields
           allowsGuideDog: venue.allowsGuideDog,
-          bathroomScore: venue.bathroomScore,
-          entryScore: venue.entryScore,
+          //bathroomScore: venue.bathroomScore,
+          //entryScore: venue.entryScore,
           hasParking: venue.hasParking,
           hasSecondEntry: venue.hasSecondEntry,
           hasWellLit: venue.hasWellLit,
@@ -367,14 +373,20 @@ module.exports = async (req, res, next) => {
         hasLargeStall: { yes: 0, no: 0 },
         hasSupportAroundToilet: { yes: 0, no: 0 },
         hasLoweredSinks: { yes: 0, no: 0 },
-        interiorScore: null,
+        interiorScore: 0,
+        interiorGlyphs: 'interiror',
+        restroomScore: 0,
+        restroomGlyphs: 'restroom',
+        entranceScore: 0,
+        entranceGlyphs: 'entrylg',
+        mapMarkerScore: 0,
 
         //original fields
         allowsGuideDog: { yes: 0, no: 0 },
-        bathroomReviews: 0,
-        bathroomScore: null,
-        entryReviews: 0,
-        entryScore: null,
+        //bathroomReviews: 0,
+        //bathroomScore: null,
+        //entryReviews: 0,
+        //entryScore: null,
         hasParking: { yes: 0, no: 0 },
         hasSecondEntry: { yes: 0, no: 0 },
         hasWellLit: { yes: 0, no: 0 },
