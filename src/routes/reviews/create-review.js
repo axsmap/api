@@ -22,7 +22,7 @@ module.exports = async (req, res, next) => {
     hasAccessibleTableHeight: req.body.hasAccessibleTableHeight,
     hasAccessibleElevator: req.body.hasAccessibleElevator,
     hasInteriorRamp: req.body.hasInteriorRamp,
-    hasSwingInDoor: req.body.hasSwingInDoor,
+    //hasSwingInDoor: req.body.hasSwingInDoor,
     hasSwingOutDoor: req.body.hasSwingOutDoor,
     hasLargeStall: req.body.hasLargeStall,
     hasSupportAroundToilet: req.body.hasSupportAroundToilet,
@@ -306,17 +306,6 @@ module.exports = async (req, res, next) => {
     };
   }
 
-  if (typeof review.hasSwingInDoor !== 'undefined') {
-    venue.hasSwingInDoor = {
-      yes: review.hasSwingInDoor
-        ? venue.hasSwingInDoor.yes + 1
-        : venue.hasSwingInDoor.yes,
-      no: review.hasSwingInDoor
-        ? venue.hasSwingInDoor.no
-        : venue.hasSwingInDoor.no + 1
-    };
-  }
-
   if (typeof review.hasSwingOutDoor !== 'undefined') {
     venue.hasSwingOutDoor = {
       yes: review.hasSwingOutDoor
@@ -361,19 +350,6 @@ module.exports = async (req, res, next) => {
     };
   }
 
-  //TBD: score calculation (need total # reviews)
-  if (typeof review.interiorScore !== 'undefined') {
-    if (venue.bathroomReviews > 0) {
-      venue.interiorScore =
-        (venue.interiorScore * venue.bathroomReviews + review.interiorScore) /
-        (venue.bathroomReviews + 1);
-      venue.bathroomReviews += 1;
-    } else {
-      venue.interiorScore = review.interiorScore;
-      venue.bathroomReviews = 1;
-    }
-  }
-
   //
   //original fields
   //
@@ -388,6 +364,7 @@ module.exports = async (req, res, next) => {
     };
   }
 
+  /*
   if (typeof review.bathroomScore !== 'undefined') {
     if (venue.bathroomReviews > 0) {
       venue.bathroomScore =
@@ -409,6 +386,7 @@ module.exports = async (req, res, next) => {
     venue.entryScore = review.entryScore;
     venue.entryReviews = 1;
   }
+  */
 
   if (typeof review.hasParking !== 'undefined') {
     venue.hasParking = {
@@ -478,19 +456,25 @@ module.exports = async (req, res, next) => {
     hasAccessibleTableHeight: review.hasAccessibleTableHeight,
     hasAccessibleElevator: review.hasAccessibleElevator,
     hasInteriorRamp: review.hasInteriorRamp,
-    hasSwingInDoor: review.hasSwingInDoor,
+    //hasSwingInDoor: review.hasSwingInDoor,
     hasSwingOutDoor: review.hasSwingOutDoor,
     hasLargeStall: review.hasLargeStall,
     hasSupportAroundToilet: review.hasSupportAroundToilet,
     hasLoweredSinks: review.hasLoweredSinks,
+
+    entranceScore: review.entranceScore,
+    entranceGlyph: review.entryGlyph,
     interiorScore: review.interiorScore,
+    interiorGlyph: review.interiorGlyph,
+    bathroomScore: review.restroomScore,
+    restroomGlyph: review.restroomGlyph,
 
     //original fields
     id: review.id,
     allowsGuideDog: review.allowsGuideDog,
-    bathroomScore: review.bathroomScore,
+    //bathroomScore: review.bathroomScore,
     comments: review.comments,
-    entryScore: review.entryScore,
+    //entryScore: review.entryScore,
     event: review.event,
     hasParking: review.hasParking,
     hasSecondEntry: review.hasSecondEntry,

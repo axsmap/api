@@ -51,13 +51,6 @@ module.exports = {
     }
 
     if (
-      typeof data.hasSwingInDoor !== 'undefined' &&
-      typeof data.hasSwingInDoor !== 'boolean'
-    ) {
-      errors.hasSwingInDoor = 'Should be a boolean';
-    }
-
-    if (
       typeof data.hasSwingOutDoor !== 'undefined' &&
       typeof data.hasSwingOutDoor !== 'boolean'
     ) {
@@ -85,7 +78,8 @@ module.exports = {
       errors.hasLoweredSinks = 'Should be a boolean';
     }
 
-    //interiorScore
+    /*
+     *interiorScore
     if (typeof data.interiorScore !== 'undefined') {
       if (typeof data.interiorScore !== 'number') {
         errors.interiorScore = 'Should be a number';
@@ -94,6 +88,7 @@ module.exports = {
         //errors.interiorScore = 'Should be between 1 and 7';
       }
     }
+     */
 
     //
     //original fields
@@ -105,6 +100,8 @@ module.exports = {
       errors.allowsGuideDog = 'Should be a boolean';
     }
 
+    /*
+     * bathroomScore
     if (typeof data.bathroomScore !== 'undefined') {
       if (typeof data.bathroomScore !== 'number') {
         errors.bathroomScore = 'Should be a number';
@@ -113,11 +110,14 @@ module.exports = {
         //errors.bathroomScore = 'Should be between 1 and 4';
       }
     }
+     */
 
     if (data.comments && typeof data.comments !== 'string') {
       errors.comments = 'Should be a string';
     }
 
+    /*
+     * entryScore
     if (typeof data.entryScore === 'undefined') {
       //Remove required entryScore
       //errors.entryScore = 'Is required';
@@ -127,6 +127,7 @@ module.exports = {
       //Remove required entryScore
       //errors.entryScore = 'Should be between 1 and 9';
     }
+     */
 
     if (data.event) {
       if (typeof data.event !== 'string') {
@@ -202,11 +203,11 @@ module.exports = {
   validateListReviews(queryParams) {
     const errors = {};
 
+    //Remove bathroomScore validation
     if (queryParams.bathroomScore) {
+      /*
       const limits = queryParams.bathroomScore.split(',');
 
-      //Remove bathroomScore validation
-      /*
       if (limits.length !== 2) {
         errors.bathroomScore = 'Should be two integers split by a comma';
       } else if (
@@ -218,11 +219,11 @@ module.exports = {
       */
     }
 
+    //Remove entryScore validation
     if (queryParams.entryScore) {
+      /*
       const limits = queryParams.entryScore.split(',');
 
-      //Remove entryScore validation
-      /*
       if (limits.length !== 2) {
         errors.entryScore = 'Should be two integers split by a comma';
       } else if (
@@ -343,13 +344,6 @@ module.exports = {
     }
 
     if (
-      queryParams.hasSwingInDoor &&
-      !isInt(queryParams.hasSwingInDoor, { min: 0, max: 1 })
-    ) {
-      errors.hasSwingInDoor = 'Should be an integer between 0 and 1';
-    }
-
-    if (
       queryParams.hasSwingOutDoor &&
       !isInt(queryParams.hasSwingOutDoor, { min: 0, max: 1 })
     ) {
@@ -375,22 +369,6 @@ module.exports = {
       !isInt(queryParams.hasLoweredSinks, { min: 0, max: 1 })
     ) {
       errors.hasLoweredSinks = 'Should be an integer between 0 and 1';
-    }
-
-    if (queryParams.interiorScore) {
-      const limits = queryParams.interiorScore.split(',');
-
-      //Remove interior score validation
-      /*
-      if (limits.length !== 2) {
-        errors.interiorScore = 'Should be two integers split by a comma';
-      } else if (
-        !isInt(limits[0], { min: 1, max: 7 }) ||
-        !isInt(limits[1], { min: 1, max: 7 })
-      ) {
-        errors.interiorScore = 'Both should be integers between 1 and 7';
-      }
-      */
     }
 
     return { errors, isValid: isEmpty(errors) };
