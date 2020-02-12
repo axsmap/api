@@ -440,6 +440,32 @@ module.exports = async (req, res, next) => {
     };
   }
 
+  //calculate entranceScore, glyphs
+
+  //calculate interiorScore, glyphs
+
+  //calculate restroomScore, glyphs
+
+  //use three scores to calculate the map-marker score
+  if (entranceScore === 1 || interiorScore === 1 || restroomScore === 1) {
+    venue.mapMarkerScore = 1;
+  } else if (
+    entranceScore === 3 ||
+    interiorScore === 3 ||
+    restroomScore === 3
+  ) {
+    venue.mapMarkerScore = 3;
+  } else if (
+    entranceScore === 5 ||
+    interiorScore === 5 ||
+    restroomScore === 5
+  ) {
+    venue.mapMarkerScore = 5;
+  } else {
+    // all scores are set to 0?
+    venue.mapMarkerScore = 0;
+  }
+
   try {
     await venue.save();
   } catch (err) {
