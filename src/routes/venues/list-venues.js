@@ -300,7 +300,8 @@ module.exports = async (req, res, next) => {
       }
 
       places.push({
-        address: place.vicinity,
+        //address: place.vicinity,
+        address: place.formatted_address,
         location: {
           lat: place.geometry.location.lat,
           lng: place.geometry.location.lng
