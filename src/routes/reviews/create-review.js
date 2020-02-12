@@ -8,6 +8,7 @@ const { Team } = require('../../models/team');
 const { Venue } = require('../../models/venue');
 
 const { validateCreateEditReview } = require('./validations');
+const { venueReviewSummary } = require('../../helpers/venue-review-summary');
 
 module.exports = async (req, res, next) => {
   console.log('body: ', req.body);
