@@ -8,7 +8,7 @@ const { Team } = require('../../models/team');
 const { Venue } = require('../../models/venue');
 
 const { validateCreateEditReview } = require('./validations');
-const { venueReviewSummary } = require('../../helpers/venue-review-summary');
+const venueReviewSummary = require('../../helpers/venue-review-summary.js');
 
 module.exports = async (req, res, next) => {
   console.log('body: ', req.body);
@@ -186,7 +186,11 @@ module.exports = async (req, res, next) => {
   try {
     await req.user.save();
   } catch (err) {
-    console.log(`User ${req.user.id} failed to be updated at create-review`);
+    console.log(
+      `User ${
+        req.user.id
+      } failed to be updated at create-review, after updated review count`
+    );
     return next(err);
   }
 
@@ -196,7 +200,9 @@ module.exports = async (req, res, next) => {
     try {
       await event.save();
     } catch (err) {
-      console.log(`Event ${event.id} failed to be updated at create-review`);
+      console.log(
+        `Event ${event.id} failed to be updated at create-review, after event`
+      );
       return next(err);
     }
   }
@@ -221,7 +227,9 @@ module.exports = async (req, res, next) => {
     try {
       await venue.save();
     } catch (err) {
-      console.log(`Venue ${venue.id} failed to be updated at create-review`);
+      console.log(
+        `Venue ${venue.id} failed to be updated at create-review, after photos`
+      );
       return next(err);
     }
   }
@@ -232,7 +240,9 @@ module.exports = async (req, res, next) => {
     try {
       await team.save();
     } catch (err) {
-      console.log(`Team ${team.id} failed to be updated at create-review`);
+      console.log(
+        `Team ${team.id} failed to be updated at create-review, after team`
+      );
       return next(err);
     }
   }
@@ -441,25 +451,42 @@ module.exports = async (req, res, next) => {
     };
   }
 
+  let scoring;
   //calculate entranceScore, glyphs
+  scoring = venueReviewSummary.calculateRatingLevel('entrance', venue);
+  console.log('entrance score: ', scoring);
+  venue.entranceScore = scoring.ratingLevel;
+  venue.entranceGlyphs = scoring.ratingGlyphs;
 
   //calculate interiorScore, glyphs
+  scoring = venueReviewSummary.calculateRatingLevel('interior', venue);
+  console.log('interior score: ', scoring);
+  venue.interiorScore = scoring.ratingLevel;
+  venue.interiorGlyphs = scoring.ratingGlyphs;
 
   //calculate restroomScore, glyphs
+  scoring = venueReviewSummary.calculateRatingLevel('restroom', venue);
+  console.log('restroom score: ', scoring);
+  venue.restroomScore = scoring.ratingLevel;
+  venue.restroomGlyphs = scoring.ratingGlyphs;
 
   //use three scores to calculate the map-marker score
-  if (entranceScore === 1 || interiorScore === 1 || restroomScore === 1) {
+  if (
+    venue.entranceScore === 1 ||
+    venue.interiorScore === 1 ||
+    venue.restroomScore === 1
+  ) {
     venue.mapMarkerScore = 1;
   } else if (
-    entranceScore === 3 ||
-    interiorScore === 3 ||
-    restroomScore === 3
+    venue.entranceScore === 3 ||
+    venue.interiorScore === 3 ||
+    venue.restroomScore === 3
   ) {
     venue.mapMarkerScore = 3;
   } else if (
-    entranceScore === 5 ||
-    interiorScore === 5 ||
-    restroomScore === 5
+    venue.entranceScore === 5 ||
+    venue.interiorScore === 5 ||
+    venue.restroomScore === 5
   ) {
     venue.mapMarkerScore = 5;
   } else {
@@ -467,10 +494,14 @@ module.exports = async (req, res, next) => {
     venue.mapMarkerScore = 0;
   }
 
+  console.log('venue: ', venue);
+
   try {
     await venue.save();
   } catch (err) {
-    console.log(`Venue ${venue.id} failed to be updated at create-review`);
+    console.log(
+      `Venue ${venue.id} failed to be updated at create-review, at final step`
+    );
     return next(err);
   }
 
