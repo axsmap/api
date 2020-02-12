@@ -122,7 +122,9 @@ module.exports = async (req, res, next) => {
         }`
       );
     } catch (err) {
-      console.log(`Place ${placeId} failed to be found at create-review.`);
+      console.log(
+        `Place ${placeId} failed to be found at create-review, after Google search`
+      );
       return next(err);
     }
 

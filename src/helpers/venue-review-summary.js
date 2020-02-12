@@ -88,6 +88,7 @@ module.exports = {
     let ratingLevel,
       ratingGlyphs = null;
 
+    //alert loop
     if (sectionLogic.alert && sectionLogic.alert.length > 0) {
       for (idx = 0; idx < sectionLogic.alert.length; idx++) {
         ratingDefinition = sectionLogic.alert[idx];
@@ -125,28 +126,26 @@ module.exports = {
             ratingDefinition.and.field &&
             venueData[ratingDefinition.and.field]
           ) {
-            if (
+            ratingDefinitionMatch =
               venueData[ratingDefinition.and.field] ==
                 ratingDefinition.and.matchValue ||
               (ratingDefinition.and.notMatchValue &&
                 venueData[ratingDefinition.and.field] !==
-                  ratingDefinition.notMatchValue)
-            ) {
-              ratingDefinitionMatch = true;
-            }
+                  ratingDefinition.notMatchValue);
           }
-
-          //not handling "fields" array in the "and" portion
         }
+
+        //not handling "fields" array in the "and" portion
 
         if (ratingDefinitionMatch === true) {
           ratingLevel = 1;
-          ratingGlyphs = ratingDefinition.showGlyphs;
+          ratingGlyphs = ratingDefinition.showGlyph;
           break;
         }
       }
     }
 
+    //caution loop
     if (
       !ratingLevel &&
       sectionLogic.caution &&
@@ -155,6 +154,7 @@ module.exports = {
       for (idx = 0; idx < sectionLogic.caution.length; idx++) {}
     }
 
+    //accessible loop
     if (
       !ratingLevel &&
       sectionLogic.accessible &&
@@ -163,9 +163,17 @@ module.exports = {
       for (idx = 0; idx < sectionLogic.accessible.length; idx++) {}
     }
 
+    //set defaults
+    if (!ratingLevel) {
+      ratingLevel = 0;
+      ratingGlyphs = sectionLogic.default.showGlyph
+        ? sectionLogic.default.showGlyph
+        : '';
+    }
+
     return {
-      ratingLevel: 0,
-      ratingGlyphs: ''
+      ratingLevel: ratingLevel,
+      ratingGlyphs: ratingGlyphs
     };
   }
 };

@@ -56,12 +56,12 @@
         {
           "field": "steps",
           "matchValue": 3,
-          "showGlyphs": ["steps", "three"]
+          "showGlyph": "steps,three"
         },
         {
           "field": "steps",
           "matchValue": 2,
-          "showGlyphs": ["steps", "two"]
+          "showGlyph": "steps,two"
         },
         {
           "fields": ["hasPermanentRamp", "hasPortableRamp", "steps"],
@@ -70,7 +70,7 @@
             "field": "hasParking",
             "matchValue": 0
           },
-          "showGlyphs": ["parking"]
+          "showGlyph": "parking"
         },
         {
           "fields": ["hasPermanentRamp", "hasPortableRamp", "steps"],
@@ -79,7 +79,7 @@
             "field": "hasSecondEntry",
             "matchValue": 0
           },
-          "showGlyphs": ["secondEntry"]
+          "showGlyph": "secondEntry"
         },
         {
           "fields": ["hasPermanentRamp", "hasPortableRamp", "steps"],
@@ -88,31 +88,31 @@
             "field": "hasWideEntrance",
             "matchValue": 0
           },
-          "showGlyphs": ["wideEntry"]
+          "showGlyph": "wideEntry"
         }
       ],
       "caution": [
         {
           "field": "hasPortableRamp",
           "matchValue": 1,
-          "showGlyphs": ["portableRamp"]
+          "showGlyph": "portableRamp"
         },
         {
           "field": "steps",
           "matchValue": 1,
-          "showGlyphs": ["steps", "one"]
+          "showGlyph": "steps,one"
         }
       ],
       "accessible": [
         {
           "field": "steps",
           "matchValue": 0,
-          "showGlyphs": ["steps", "zero"]
+          "showGlyph": "steps,zero"
         },
         {
           "field": "hasPermanentRamp",
           "matchValue": 1,
-          "showGlyphs": ["permanentRamp"]
+          "showGlyph": "permanentRamp"
         },
         {
           "fields": ["hasPermanentRamp", "hasPortableRamp", "steps"],
@@ -121,7 +121,7 @@
             "field": "hasParking",
             "matchValue": 1
           },
-          "showGlyphs": ["parking"]
+          "showGlyph": "parking"
         },
         {
           "fields": ["hasPermanentRamp", "hasPortableRamp", "steps"],
@@ -130,7 +130,7 @@
             "field": "hasSecondEntry",
             "matchValue": 1
           },
-          "showGlyphs": ["secondEntry"]
+          "showGlyph": "secondEntry"
         },
         {
           "fields": ["hasPermanentRamp", "hasPortableRamp", "steps"],
@@ -139,7 +139,7 @@
             "field": "hasWideEntrance",
             "matchValue": 1
           },
-          "showGlyphs": ["wideEntry"]
+          "showGlyph": "wideEntry"
         }
       ],
       "default": [
