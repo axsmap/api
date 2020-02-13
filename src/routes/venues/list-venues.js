@@ -6,6 +6,7 @@ const { isNumber } = require('../../helpers');
 const { Venue } = require('../../models/venue');
 
 const { validateListVenues } = require('./validations');
+const venueReviewSummary = require('../../helpers/venue-review-summary.js');
 
 module.exports = async (req, res, next) => {
   const queryParams = req.query;
@@ -327,6 +328,32 @@ module.exports = async (req, res, next) => {
     places = places.map(place => {
       const venue = find(venues, venue => venue.placeId === place.placeId);
       if (venue) {
+        //TEMP:
+        let scoring;
+        //calculate entranceScore, glyphs
+        scoring = venueReviewSummary.calculateRatingLevel('entrance', venue);
+        console.log('entrance score: ', scoring);
+        venue.entranceScore = scoring.ratingLevel;
+        venue.entranceGlyphs = scoring.ratingGlyphs;
+
+        //calculate interiorScore, glyphs
+        scoring = venueReviewSummary.calculateRatingLevel('interior', venue);
+        console.log('interior score: ', scoring);
+        venue.interiorScore = scoring.ratingLevel;
+        venue.interiorGlyphs = scoring.ratingGlyphs;
+
+        //calculate restroomScore, glyphs
+        scoring = venueReviewSummary.calculateRatingLevel('restroom', venue);
+        console.log('restroom score: ', scoring);
+        venue.restroomScore = scoring.ratingLevel;
+        venue.restroomGlyphs = scoring.ratingGlyphs;
+
+        venue.mapMarkerScore = venueReviewSummary.calculateMapMarkerScore(
+          venue.entranceScore,
+          venue.interiorScore,
+          venue.restroomScore
+        );
+
         return Object.assign({}, place, {
           //new expanded fields
           hasPermanentRamp: venue.hasPermanentRamp,
@@ -340,6 +367,7 @@ module.exports = async (req, res, next) => {
           hasLargeStall: venue.hasLargeStall,
           hasSupportAroundToilet: venue.hasSupportAroundToilet,
           hasLoweredSinks: venue.hasLoweredSinks,
+
           interiorScore: venue.interiorScore,
           interiorGlyphs: venue.interiorGlyphs,
           restroomScore: venue.restroomScore,
@@ -361,6 +389,7 @@ module.exports = async (req, res, next) => {
         });
       }
 
+      //venue not found
       return Object.assign({}, place, {
         //new expanded fields
         hasPermanentRamp: { yes: 0, no: 0 },

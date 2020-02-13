@@ -472,29 +472,11 @@ module.exports = async (req, res, next) => {
   venue.restroomScore = scoring.ratingLevel;
   venue.restroomGlyphs = scoring.ratingGlyphs;
 
-  //use three scores to calculate the map-marker score
-  if (
-    venue.entranceScore === 1 ||
-    venue.interiorScore === 1 ||
-    venue.restroomScore === 1
-  ) {
-    venue.mapMarkerScore = 1;
-  } else if (
-    venue.entranceScore === 3 ||
-    venue.interiorScore === 3 ||
-    venue.restroomScore === 3
-  ) {
-    venue.mapMarkerScore = 3;
-  } else if (
-    venue.entranceScore === 5 ||
-    venue.interiorScore === 5 ||
-    venue.restroomScore === 5
-  ) {
-    venue.mapMarkerScore = 5;
-  } else {
-    // all scores are set to 0?
-    venue.mapMarkerScore = 0;
-  }
+  venue.mapMarkerScore = venueReviewSummary.calculateMapMarkerScore(
+    venue.entranceScore,
+    venue.interiorScore,
+    venue.restroomScore
+  );
 
   console.log('venue: ', venue);
 

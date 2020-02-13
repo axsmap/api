@@ -19,12 +19,12 @@ function assignFromYesNo(venueField) {
 }
 
 function assignFromSteps(stepField) {
-  var moreThanTwo = stepField.hasOwnProperty('moreThanTwo')
+  let moreThanTwo = stepField.hasOwnProperty('moreThanTwo')
     ? stepField.moreThanTwo
     : 0;
-  var two = stepField.hasOwnProperty('two') ? stepField.two : 0;
-  var one = stepField.hasOwnProperty('hasOwnProperty') ? stepField.one : 0;
-  var zero = stepField.hasOwnProperty('zero') ? stepField.zero : 0;
+  let two = stepField.hasOwnProperty('two') ? stepField.two : 0;
+  let one = stepField.hasOwnProperty('one') ? stepField.one : 0;
+  let zero = stepField.hasOwnProperty('zero') ? stepField.zero : 0;
 
   if (moreThanTwo === 0 && two === 0 && one === 0 && zero === 0) {
     return null;
@@ -37,16 +37,29 @@ function assignFromSteps(stepField) {
   } else if (two >= zero && two >= one && two >= moreThanTwo) {
     return 2;
   } else if (moreThanTwo >= zero && moreThanTwo >= one && moreThanTwo >= two) {
-    return 0;
+    return 3;
   }
 }
 
 module.exports = {
+  calculateMapMarkerScore(entrance, interior, accessible) {
+    //use three scores to calculate the map-marker score
+    //@TBD: migrate to review-summary logic file
+    if (entrance === 1 || interior === 1 || accessible === 1) {
+      return 1;
+    } else if (entrance === 3 || interior === 3 || accessible === 3) {
+      return 3;
+    } else if (entrance === 5 || interior === 5 || accessible === 5) {
+      return 5;
+    }
+
+    return 0; //default
+  },
+
   calculateRatingLevel(sectionName, venueRawData) {
     //console.log('in calculateRatingLevel', venueRawData);
 
     let reviewSummaryLogic = reviewLogic.reviewSummaryLogic;
-    let sectionLogic, ratingDefinition;
 
     let venueData = {}; // = venueRawData;
     venueData.hasPermanentRamp = assignFromYesNo(venueRawData.hasPermanentRamp);
@@ -74,258 +87,122 @@ module.exports = {
     venueData.isSpacious = assignFromYesNo(venueRawData.isSpacious);
     venueData.steps = assignFromSteps(venueRawData.steps);
 
-    console.log('in calculateRatingLevel', venueRawData);
-    console.log('in calculateRatingLevel', venueData);
+    console.log('in calculateRatingLevel, raw data: ', venueRawData);
+    console.log('in calculateRatingLevel, select venue data: ', venueData);
 
-    if (sectionName == 'entrance') {
-      sectionLogic = reviewSummaryLogic.entrance;
-    } else if (sectionName == 'restroom') {
-      sectionLogic = reviewSummaryLogic.restroom;
-    } else if (sectionName == 'interior') {
-      //console.log('interior: ', reviewSummaryLogic);
-      sectionLogic = reviewSummaryLogic.interior;
+    let sectionLogic, ratingDefinition;
+    if (reviewSummaryLogic.hasOwnProperty(sectionName)) {
+      //valid values: entrance, restroom, interior
+      sectionLogic = reviewSummaryLogic[sectionName];
     } else {
+      console.log('Error: Logic not found for sectionLogic: ' + sectionName);
       return {
         errors: 'Logic not found for sectionLogic: ' + sectionName
       };
     }
 
     let ratingLevel, ratingGlyphs;
+    const ratingLevels = ['alert', 'caution', 'accessible'];
 
-    //alert loop
-    if (sectionLogic.alert && sectionLogic.alert.length > 0) {
-      for (idx = 0; idx < sectionLogic.alert.length; idx++) {
-        ratingDefinition = sectionLogic.alert[idx];
-        ratingDefinitionMatch = false;
+    for (rl = 0; rl < ratingLevels.length; rl++) {
+      if (
+        sectionLogic.hasOwnProperty(ratingLevels[rl]) &&
+        sectionLogic[ratingLevels[rl]].length > 0
+      ) {
+        //level loop
+        for (idx = 0; idx < sectionLogic[ratingLevels[rl]].length; idx++) {
+          ratingDefinition = sectionLogic[ratingLevels[rl]][idx];
+          let ratingDefinitionMatch = false;
 
-        if (
-          ratingDefinition.hasOwnProperty('field') &&
-          venueData.hasOwnProperty(ratingDefinition.field)
-        ) {
           if (
-            (ratingDefinition.hasOwnProperty('matchValue') &&
-              venueData[ratingDefinition.field] ==
-                ratingDefinition.matchValue) ||
-            (ratingDefinition.hasOwnProperty('notMatchValue') &&
-              venueData[ratingDefinition.field] !==
-                ratingDefinition.notMatchValue)
+            ratingDefinition.hasOwnProperty('field') &&
+            venueData.hasOwnProperty(ratingDefinition.field)
           ) {
-            ratingDefinitionMatch = true;
-          }
-        } else if (ratingDefinition.hasOwnProperty('fields')) {
-          let fieldMatchCount = 0;
-          for (field in ratingDefinition.fields) {
             if (
               (ratingDefinition.hasOwnProperty('matchValue') &&
-                venueData[field] == ratingDefinition.matchValue) ||
+                venueData[ratingDefinition.field] ==
+                  ratingDefinition.matchValue) ||
               (ratingDefinition.hasOwnProperty('notMatchValue') &&
-                venueData[field] !== ratingDefinition.notMatchValue)
+                venueData[ratingDefinition.field] !==
+                  ratingDefinition.notMatchValue)
             ) {
-              fieldMatchCount++;
+              ratingDefinitionMatch = true;
+            }
+          } else if (ratingDefinition.hasOwnProperty('fields')) {
+            let fieldMatchCount = 0;
+            for (field in ratingDefinition.fields) {
+              if (
+                (ratingDefinition.hasOwnProperty('matchValue') &&
+                  venueData[field] == ratingDefinition.matchValue) ||
+                (ratingDefinition.hasOwnProperty('notMatchValue') &&
+                  venueData[field] !== ratingDefinition.notMatchValue)
+              ) {
+                fieldMatchCount++;
+              }
+            }
+
+            if (fieldMatchCount === ratingDefinition.fields.length) {
+              ratingDefinitionMatch = true;
             }
           }
 
-          if (fieldMatchCount === ratingDefinition.fields.length) {
-            ratingDefinitionMatch = true;
-          }
-        }
-
-        if (
-          ratingDefinitionMatch === true &&
-          ratingDefinition.hasOwnProperty('and')
-        ) {
-          console.log('Evaluate AND condition for alert in ' + sectionName);
           if (
-            ratingDefinition.and.hasOwnProperty('field') &&
-            venueData.hasOwnProperty(ratingDefinition.and.field)
+            ratingDefinitionMatch === true &&
+            ratingDefinition.hasOwnProperty('and')
           ) {
-            //evaluate 'and' condition depending on match or noMatch value
-            if (ratingDefinition.and.hasOwnProperty('matchValue')) {
-              ratingDefinitionMatch =
-                venueData[ratingDefinition.and.field] ==
-                ratingDefinition.and.matchValue;
-            } else if (ratingDefinition.and.hasOwnProperty('notMatchValue')) {
-              ratingDefinitionMatch =
-                venueData[ratingDefinition.and.field] !==
-                ratingDefinition.and.notMatchValue;
-            }
-          }
-        }
-
-        //not handling "fields" array in the "and" portion
-
-        if (ratingDefinitionMatch === true) {
-          console.log('Found alert for ' + sectionName);
-          ratingLevel = 1;
-          ratingGlyphs = ratingDefinition.showGlyph;
-          break;
-        }
-      }
-    }
-
-    //caution loop
-    if (
-      ratingLevel === undefined &&
-      sectionLogic.caution &&
-      sectionLogic.caution.length > 0
-    ) {
-      for (idx = 0; idx < sectionLogic.caution.length; idx++) {
-        ratingDefinition = sectionLogic.caution[idx];
-        ratingDefinitionMatch = false;
-
-        if (
-          ratingDefinition.hasOwnProperty('field') &&
-          venueData.hasOwnProperty(ratingDefinition.field)
-        ) {
-          if (
-            (ratingDefinition.hasOwnProperty('matchValue') &&
-              venueData[ratingDefinition.field] ==
-                ratingDefinition.matchValue) ||
-            (ratingDefinition.hasOwnProperty('notMatchValue') &&
-              venueData[ratingDefinition.field] !==
-                ratingDefinition.notMatchValue)
-          ) {
-            ratingDefinitionMatch = true;
-          }
-        } else if (ratingDefinition.hasOwnProperty('fields')) {
-          let fieldMatchCount = 0;
-          for (field in ratingDefinition.fields) {
+            console.log('Evaluate AND condition in ' + sectionName);
             if (
-              (ratingDefinition.hasOwnProperty('matchValue') &&
-                venueData[field] == ratingDefinition.matchValue) ||
-              (ratingDefinition.hasOwnProperty('notMatchValue') &&
-                venueData[field] !== ratingDefinition.notMatchValue)
+              ratingDefinition.and.hasOwnProperty('field') &&
+              venueData.hasOwnProperty(ratingDefinition.and.field)
             ) {
-              fieldMatchCount++;
+              //evaluate 'and' condition depending on match or noMatch value
+              if (ratingDefinition.and.hasOwnProperty('matchValue')) {
+                ratingDefinitionMatch =
+                  venueData[ratingDefinition.and.field] ==
+                  ratingDefinition.and.matchValue;
+              } else if (ratingDefinition.and.hasOwnProperty('notMatchValue')) {
+                ratingDefinitionMatch =
+                  venueData[ratingDefinition.and.field] !==
+                  ratingDefinition.and.notMatchValue;
+              }
             }
           }
 
-          if (fieldMatchCount === ratingDefinition.fields.length) {
-            ratingDefinitionMatch = true;
-          }
-        }
+          //not handling "fields" array in the "and" portion
 
-        if (
-          ratingDefinitionMatch === true &&
-          ratingDefinition.hasOwnProperty('and')
-        ) {
-          if (
-            ratingDefinition.and.hasOwnProperty('field') &&
-            venueData.hasOwnProperty(ratingDefinition.and.field)
-          ) {
-            //evaluate 'and' condition depending on match or noMatch value
-            if (ratingDefinition.and.hasOwnProperty('matchValue')) {
-              ratingDefinitionMatch =
-                venueData[ratingDefinition.and.field] ==
-                ratingDefinition.and.matchValue;
-            } else if (ratingDefinition.and.hasOwnProperty('notMatchValue')) {
-              ratingDefinitionMatch =
-                venueData[ratingDefinition.and.field] !==
-                ratingDefinition.and.notMatchValue;
+          //set rating level
+          if (ratingDefinitionMatch === true) {
+            console.log('Found rule match for ' + sectionName);
+
+            if (ratingLevels[rl] == 'alert') {
+              ratingLevel = 1;
+            } else if (ratingLevels[rl] == 'caution') {
+              ratingLevel = 3;
+            } else if (ratingLevels[rl] == 'accessible') {
+              ratingLevel = 5;
             }
+
+            ratingGlyphs = ratingDefinition.showGlyph;
+            break; //breaks rating-definition loop for level
           }
-        }
+        } //rating-definition loop
 
-        //not handling "fields" array in the "and" portion
-
-        if (ratingDefinitionMatch === true) {
-          console.log('Found caution for ' + sectionName);
-          ratingLevel = 3;
-          ratingGlyphs = ratingDefinition.showGlyph;
+        if (ratingLevel !== undefined) {
           break;
         }
-      }
-    }
-
-    //accessible loop
-    if (
-      ratingLevel === undefined &&
-      sectionLogic.accessible &&
-      sectionLogic.accessible.length > 0
-    ) {
-      for (idx = 0; idx < sectionLogic.accessible.length; idx++) {
-        ratingDefinition = sectionLogic.accessible[idx];
-        ratingDefinitionMatch = false;
-
-        if (
-          ratingDefinition.hasOwnProperty('field') &&
-          venueData.hasOwnProperty(ratingDefinition.field)
-        ) {
-          if (
-            (ratingDefinition.hasOwnProperty('matchValue') &&
-              venueData[ratingDefinition.field] ==
-                ratingDefinition.matchValue) ||
-            (ratingDefinition.hasOwnProperty('notMatchValue') &&
-              venueData[ratingDefinition.field] !==
-                ratingDefinition.notMatchValue)
-          ) {
-            ratingDefinitionMatch = true;
-          }
-          console.log(
-            'venueData[' +
-              ratingDefinition.field +
-              ']: ' +
-              venueData[ratingDefinition.field] +
-              ' ?= ' +
-              ratingDefinition.matchValue
-          );
-        } else if (ratingDefinition.hasOwnProperty('fields')) {
-          let fieldMatchCount = 0;
-          for (field in ratingDefinition.fields) {
-            if (
-              (ratingDefinition.hasOwnProperty('matchValue') &&
-                venueData[field] == ratingDefinition.matchValue) ||
-              (ratingDefinition.hasOwnProperty('notMatchValue') &&
-                venueData[field] !== ratingDefinition.notMatchValue)
-            ) {
-              fieldMatchCount++;
-            }
-          }
-
-          if (fieldMatchCount === ratingDefinition.fields.length) {
-            ratingDefinitionMatch = true;
-          }
-        }
-
-        if (
-          ratingDefinitionMatch === true &&
-          ratingDefinition.hasOwnProperty('and')
-        ) {
-          if (
-            ratingDefinition.and.hasOwnProperty('field') &&
-            venueData.hasOwnProperty(ratingDefinition.and.field)
-          ) {
-            //evaluate 'and' condition depending on match or noMatch value
-            if (ratingDefinition.and.hasOwnProperty('matchValue')) {
-              ratingDefinitionMatch =
-                venueData[ratingDefinition.and.field] ==
-                ratingDefinition.and.matchValue;
-            } else if (ratingDefinition.and.hasOwnProperty('notMatchValue')) {
-              ratingDefinitionMatch =
-                venueData[ratingDefinition.and.field] !==
-                ratingDefinition.and.notMatchValue;
-            }
-          }
-        }
-
-        //not handling "fields" array in the "and" portion
-
-        if (ratingDefinitionMatch === true) {
-          console.log('Found accessible for ' + sectionName);
-          ratingLevel = 5;
-          ratingGlyphs = ratingDefinition.showGlyph;
-          break;
-        }
-      }
-    }
+      } //if-condition test level exists in definition
+    } //specific-level loop
 
     //set defaults
     if (ratingLevel === undefined) {
-      console.log('ratingLevel not set');
+      console.log('ratingLevel not set: ', sectionLogic);
       ratingLevel = 0;
-      ratingGlyphs = sectionLogic.default.showGlyph
-        ? sectionLogic.default.showGlyph
-        : '';
+      ratingGlyphs =
+        sectionLogic.hasOwnProperty('default') &&
+        sectionLogic.default.length > 0 &&
+        sectionLogic.default[0].hasOwnProperty('showGlyph')
+          ? sectionLogic.default[0].showGlyph
+          : '';
     }
 
     return {
