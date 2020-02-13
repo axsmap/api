@@ -383,12 +383,12 @@ module.exports = async (req, res, next) => {
           hasSupportAroundToilet: venue.hasSupportAroundToilet,
           hasLoweredSinks: venue.hasLoweredSinks,
 
+          entranceScore: venue.entranceScore,
+          entranceGlyphs: venue.entranceGlyphs,
           interiorScore: venue.interiorScore,
           interiorGlyphs: venue.interiorGlyphs,
           restroomScore: venue.restroomScore,
           restroomGlyphs: venue.restroomGlyphs,
-          entranceScore: venue.entranceScore,
-          entranceGlyphs: venue.entranceGlyphs,
           mapMarkerScore: venue.mapMarkerScore,
 
           //original fields
