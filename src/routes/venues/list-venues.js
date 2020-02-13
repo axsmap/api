@@ -62,15 +62,15 @@ module.exports = async (req, res, next) => {
     };
   }
 
-  if (queryParams.restroomScore) {
-    venuesFilters.restroomScore = {
-      $gte: parseFloat(queryParams.restroomScore)
-    };
-  }
-
   if (queryParams.interiorScore) {
     venuesFilters.interiorScore = {
       $gte: parseFloat(queryParams.interiorScore)
+    };
+  }
+
+  if (queryParams.restroomScore) {
+    venuesFilters.restroomScore = {
+      $gte: parseFloat(queryParams.restroomScore)
     };
   }
 
@@ -193,7 +193,7 @@ module.exports = async (req, res, next) => {
       [venues, total] = await Promise.all([
         Venue.find(
           venuesFilters,
-          'address allowsGuideDog bathroomScore entryScore interiorScore hasParking hasSecondEntry hasWellLit isQuiet isSpacious location name photos placeId steps types'
+          'address allowsGuideDog entranceScore interiorScore restroomScore hasParking hasSecondEntry hasWellLit isQuiet isSpacious location name photos placeId steps types'
         )
           .skip(page * pageLimit)
           .limit(pageLimit),
