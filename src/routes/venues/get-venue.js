@@ -2,6 +2,7 @@ const axios = require('axios');
 const { isEqual } = require('lodash');
 
 const { Venue } = require('../../models/venue');
+const venueReviewSummary = require('../../helpers/venue-review-summary.js');
 
 module.exports = async (req, res, next) => {
   const placeId = req.params.placeId;
@@ -68,12 +69,18 @@ module.exports = async (req, res, next) => {
   dataResponse.hasAccessibleTableHeight = { yes: 0, no: 0 };
   dataResponse.hasAccessibleElevator = { yes: 0, no: 0 };
   dataResponse.hasInteriorRamp = { yes: 0, no: 0 };
-  dataResponse.hasSwingInDoor = { yes: 0, no: 0 };
   dataResponse.hasSwingOutDoor = { yes: 0, no: 0 };
   dataResponse.hasLargeStall = { yes: 0, no: 0 };
   dataResponse.hasSupportAroundToilet = { yes: 0, no: 0 };
   dataResponse.hasLoweredSinks = { yes: 0, no: 0 };
-  dataResponse.interiorScore = null;
+
+  dataResponse.entranceScore = 0;
+  dataResponse.entranceGlyphs = '';
+  dataResponse.interiorScore = 0;
+  dataResponse.interiorGlyphs = '';
+  dataResponse.restroomScore = 0;
+  dataResponse.restroomGlyphs = '';
+  dataResponse.mapMarkerScore = 0;
 
   let venue;
   let venueToSave;
@@ -129,8 +136,7 @@ module.exports = async (req, res, next) => {
                   createdAt: 1,
                   entryScore: 1,
                   user: 1,
-                  voters: 1,
-                  interiorScore: 1
+                  voters: 1
                 }
               }
             ],
@@ -193,8 +199,7 @@ module.exports = async (req, res, next) => {
             hasSwingOutDoor: 1,
             hasLargeStall: 1,
             hasSupportAroundToilet: 1,
-            hasLoweredSinks: 1,
-            interiorScore: 1
+            hasLoweredSinks: 1
           }
         }
       ]),
@@ -243,6 +248,33 @@ module.exports = async (req, res, next) => {
       }
     }
 
+    //TEMP:
+    let scoring;
+    //calculate entranceScore, glyphs
+    console.log('venue0: ', venue[0]);
+    scoring = venueReviewSummary.calculateRatingLevel('entrance', venue[0]);
+    console.log('entrance score: ', scoring);
+    dataResponse.entranceScore = scoring.ratingLevel;
+    dataResponse.entranceGlyphs = scoring.ratingGlyphs;
+
+    //calculate interiorScore, glyphs
+    scoring = venueReviewSummary.calculateRatingLevel('interior', venue[0]);
+    console.log('interior score: ', scoring);
+    dataResponse.interiorScore = scoring.ratingLevel;
+    dataResponse.interiorGlyphs = scoring.ratingGlyphs;
+
+    //calculate restroomScore, glyphs
+    scoring = venueReviewSummary.calculateRatingLevel('restroom', venue[0]);
+    console.log('restroom score: ', scoring);
+    dataResponse.restroomScore = scoring.ratingLevel;
+    dataResponse.restroomGlyphs = scoring.ratingGlyphs;
+
+    dataResponse.mapMarkerScore = venueReviewSummary.calculateMapMarkerScore(
+      dataResponse.entranceScore,
+      dataResponse.interiorScore,
+      dataResponse.restroomScore
+    );
+
     dataResponse.id = venue[0]._id;
     dataResponse.allowsGuideDog = venue[0].allowsGuideDog;
     dataResponse.bathroomReviews = venue[0].bathroomReviews;
@@ -269,7 +301,6 @@ module.exports = async (req, res, next) => {
     dataResponse.hasLargeStall = venue[0].hasLargeStall;
     dataResponse.hasSupportAroundToilet = venue[0].hasSupportAroundToilet;
     dataResponse.hasLoweredSinks = venue[0].hasLoweredSinks;
-    dataResponse.interiorScore = venue[0].interiorScore;
   }
 
   return res.status(200).json(dataResponse);

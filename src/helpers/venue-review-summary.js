@@ -2,8 +2,10 @@
 const reviewLogic = require('./review-icon-logic-2.json');
 
 function assignFromYesNo(venueField) {
+  //field may not exist for old data
   //test if properties exist and both are not set to 0
   if (
+    venueField &&
     venueField.hasOwnProperty('yes') &&
     venueField.hasOwnProperty('no') &&
     !(venueField.yes === 0 && venueField.no === 0)
@@ -87,8 +89,8 @@ module.exports = {
     venueData.isSpacious = assignFromYesNo(venueRawData.isSpacious);
     venueData.steps = assignFromSteps(venueRawData.steps);
 
-    console.log('in calculateRatingLevel, raw data: ', venueRawData);
-    console.log('in calculateRatingLevel, select venue data: ', venueData);
+    //console.log('in calculateRatingLevel, raw data: ', venueRawData);
+    //console.log('in calculateRatingLevel, select venue data: ', venueData);
 
     let sectionLogic, ratingDefinition;
     if (reviewSummaryLogic.hasOwnProperty(sectionName)) {

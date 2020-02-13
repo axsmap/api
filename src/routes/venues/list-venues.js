@@ -267,6 +267,10 @@ module.exports = async (req, res, next) => {
 
     let placesResponse;
     try {
+      console.log(
+        'performing google search: ' +
+          `https://maps.googleapis.com/maps/api/place/textsearch/json${nearbyParams}`
+      );
       placesResponse = await axios.get(
         `https://maps.googleapis.com/maps/api/place/textsearch/json${nearbyParams}`
       );
@@ -288,6 +292,17 @@ module.exports = async (req, res, next) => {
       return next(new Error('Invalid request with Google Places API'));
     } else if (statusCode === 'UNKNOWN_ERROR') {
       return next(new Error('Unknown error with Google Places API'));
+    }
+    //do we need to check for 0?
+
+    if (placesResponse.data.results.length == 1) {
+      if (placesResponse.data.results[0].types[0] == 'locality') {
+        console.log(
+          'Found a city only: ',
+          placesResponse.data.results[0].geometry.location
+        );
+        //TODO: redo search with new coordinates and no query/name or change/add "places in " to the first part of the string
+      }
     }
 
     let places = [];
