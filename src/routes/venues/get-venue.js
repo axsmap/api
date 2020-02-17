@@ -195,7 +195,6 @@ module.exports = async (req, res, next) => {
             hasAccessibleTableHeight: 1,
             hasAccessibleElevator: 1,
             hasInteriorRamp: 1,
-            hasSwingInDoor: 1,
             hasSwingOutDoor: 1,
             hasLargeStall: 1,
             hasSupportAroundToilet: 1,
@@ -276,6 +275,7 @@ module.exports = async (req, res, next) => {
     );
 
     dataResponse.id = venue[0]._id;
+
     dataResponse.allowsGuideDog = venue[0].allowsGuideDog;
     dataResponse.bathroomReviews = venue[0].bathroomReviews;
     dataResponse.bathroomScore = venue[0].bathroomScore;
@@ -288,7 +288,6 @@ module.exports = async (req, res, next) => {
     dataResponse.isSpacious = venue[0].isSpacious;
     dataResponse.photos = venue[0].photos;
     dataResponse.steps = venue[0].steps;
-    dataResponse.reviews = venue[0].reviews;
     //new expanded fields
     dataResponse.hasPermanentRamp = venue[0].hasPermanentRamp;
     dataResponse.hasPortableRamp = venue[0].hasPortableRamp;
@@ -296,11 +295,12 @@ module.exports = async (req, res, next) => {
     dataResponse.hasAccessibleTableHeight = venue[0].hasAccessibleTableHeight;
     dataResponse.hasAccessibleElevator = venue[0].hasAccessibleElevator;
     dataResponse.hasInteriorRamp = venue[0].hasInteriorRamp;
-    dataResponse.hasSwingInDoor = venue[0].hasSwingInDoor;
     dataResponse.hasSwingOutDoor = venue[0].hasSwingOutDoor;
     dataResponse.hasLargeStall = venue[0].hasLargeStall;
     dataResponse.hasSupportAroundToilet = venue[0].hasSupportAroundToilet;
     dataResponse.hasLoweredSinks = venue[0].hasLoweredSinks;
+
+    dataResponse.reviews = venue[0].reviews;
   }
 
   return res.status(200).json(dataResponse);
