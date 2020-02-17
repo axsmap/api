@@ -46,10 +46,10 @@ module.exports = async (req, res, next) => {
   dataResponse.website = placeData.website;
 
   dataResponse.allowsGuideDog = { yes: 0, no: 0 };
-  dataResponse.bathroomReviews = 0;
-  dataResponse.bathroomScore = null;
-  dataResponse.entryReviews = 0;
-  dataResponse.entryScore = null;
+  //dataResponse.bathroomReviews = 0;
+  //dataResponse.bathroomScore = null;
+  //dataResponse.entryReviews = 0;
+  //dataResponse.entryScore = null;
   dataResponse.hasParking = { yes: 0, no: 0 };
   dataResponse.hasSecondEntry = { yes: 0, no: 0 };
   dataResponse.hasWellLit = { yes: 0, no: 0 };
@@ -131,10 +131,10 @@ module.exports = async (req, res, next) => {
                 $project: {
                   _id: 0,
                   id: '$_id',
-                  bathroomScore: 1,
+                  //bathroomScore: 1,
                   comments: 1,
                   createdAt: 1,
-                  entryScore: 1,
+                  //entryScore: 1,
                   user: 1,
                   voters: 1
                 }
@@ -173,10 +173,10 @@ module.exports = async (req, res, next) => {
             address: 1,
             description: 1,
             allowsGuideDog: 1,
-            bathroomReviews: 1,
-            bathroomScore: 1,
-            entryReviews: 1,
-            entryScore: 1,
+            //bathroomReviews: 1,
+            //bathroomScore: 1,
+            //entryReviews: 1,
+            //entryScore: 1,
             hasParking: 1,
             hasSecondEntry: 1,
             hasWellLit: 1,
@@ -277,10 +277,10 @@ module.exports = async (req, res, next) => {
     dataResponse.id = venue[0]._id;
 
     dataResponse.allowsGuideDog = venue[0].allowsGuideDog;
-    dataResponse.bathroomReviews = venue[0].bathroomReviews;
-    dataResponse.bathroomScore = venue[0].bathroomScore;
-    dataResponse.entryReviews = venue[0].entryReviews;
-    dataResponse.entryScore = venue[0].entryScore;
+    //dataResponse.bathroomReviews = venue[0].bathroomReviews;
+    //dataResponse.bathroomScore = venue[0].bathroomScore;
+    //dataResponse.entryReviews = venue[0].entryReviews;
+    //dataResponse.entryScore = venue[0].entryScore;
     dataResponse.hasParking = venue[0].hasParking;
     dataResponse.hasSecondEntry = venue[0].hasSecondEntry;
     dataResponse.hasWellLit = venue[0].hasWellLit;
