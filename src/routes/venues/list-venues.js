@@ -239,11 +239,14 @@ module.exports = async (req, res, next) => {
       nearbyParams = `${nearbyParams}&location=${coordinates[0]},${
         coordinates[1]
         //}&rankby=distance`;
-      }&radius=5000`;
+      }`;
 
       if (queryParams.name) {
         //nearbyParams = `${nearbyParams}&keyword=${queryParams.name}`;
-        nearbyParams = `${nearbyParams}&query=${queryParams.name}`;
+        nearbyParams = `${nearbyParams}&query=${queryParams.name}&radius=5000`;
+      } else {
+        //empty search, such as on load
+        nearbyParams = `${nearbyParams}&rankby=distance`;
       }
 
       if (queryParams.type) {
