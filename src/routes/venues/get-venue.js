@@ -26,8 +26,14 @@ module.exports = async (req, res, next) => {
 
   const placeData = response.data.result;
   const dataResponse = {};
+
+  const useStreetviewCover = true;
   dataResponse.address = placeData.formatted_address;
-  if (placeData.photos && placeData.photos.length > 0) {
+  if (useStreetviewCover) {
+    dataResponse.coverPhoto = `https://maps.googleapis.com/maps/api/streetview?key=${
+      process.env.PLACES_API_KEY
+    }&size=800x400&fov=120&location=${dataResponse.address}`;
+  } else if (placeData.photos && placeData.photos.length > 0) {
     dataResponse.coverPhoto = `https://maps.googleapis.com/maps/api/place/photo?key=${
       process.env.PLACES_API_KEY
     }&maxwidth=500&photoreference=${placeData.photos[0].photo_reference}`;
