@@ -16,6 +16,7 @@ module.exports = async (req, res, next) => {
 
   let coordinates = queryParams.location.split(',');
   if (queryParams.address && !queryParams.page) {
+    console.log('in address conditional, ', queryParams);
     queryParams.name = queryParams.address;
     const geocodeParams = `?key=${process.env.PLACES_API_KEY}&address=${slugify(
       queryParams.address
@@ -237,7 +238,8 @@ module.exports = async (req, res, next) => {
     if (!queryParams.page) {
       nearbyParams = `${nearbyParams}&location=${coordinates[0]},${
         coordinates[1]
-      }&rankby=distance`;
+        //}&rankby=distance`;
+      }&radius=5000`;
 
       if (queryParams.name) {
         //nearbyParams = `${nearbyParams}&keyword=${queryParams.name}`;
@@ -252,6 +254,7 @@ module.exports = async (req, res, next) => {
     } else {
       nearbyParams = `${nearbyParams}&pagetoken=${queryParams.page}`;
     }
+
     if (queryParams.rankby) {
       nearbyParams = `${nearbyParams}&rankby=${queryParams.rankby}`;
     }
@@ -347,19 +350,19 @@ module.exports = async (req, res, next) => {
         let scoring;
         //calculate entranceScore, glyphs
         scoring = venueReviewSummary.calculateRatingLevel('entrance', venue);
-        console.log('entrance score: ', scoring);
+        //console.log('entrance score: ', scoring);
         venue.entranceScore = scoring.ratingLevel;
         venue.entranceGlyphs = scoring.ratingGlyphs;
 
         //calculate interiorScore, glyphs
         scoring = venueReviewSummary.calculateRatingLevel('interior', venue);
-        console.log('interior score: ', scoring);
+        //console.log('interior score: ', scoring);
         venue.interiorScore = scoring.ratingLevel;
         venue.interiorGlyphs = scoring.ratingGlyphs;
 
         //calculate restroomScore, glyphs
         scoring = venueReviewSummary.calculateRatingLevel('restroom', venue);
-        console.log('restroom score: ', scoring);
+        //console.log('restroom score: ', scoring);
         venue.restroomScore = scoring.ratingLevel;
         venue.restroomGlyphs = scoring.ratingGlyphs;
 

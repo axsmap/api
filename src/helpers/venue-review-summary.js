@@ -152,7 +152,7 @@ module.exports = {
             ratingDefinitionMatch === true &&
             ratingDefinition.hasOwnProperty('and')
           ) {
-            console.log('Evaluate AND condition in ' + sectionName);
+            //console.log('Evaluate AND condition in ' + sectionName);
             if (
               ratingDefinition.and.hasOwnProperty('field') &&
               venueData.hasOwnProperty(ratingDefinition.and.field)
@@ -174,7 +174,7 @@ module.exports = {
 
           //set rating level
           if (ratingDefinitionMatch === true) {
-            console.log('Found rule match for ' + sectionName);
+            //console.log('Found rule match for ' + sectionName);
 
             if (ratingLevels[rl] == 'alert') {
               ratingLevel = 1;
@@ -197,7 +197,7 @@ module.exports = {
 
     //set defaults
     if (ratingLevel === undefined) {
-      console.log('ratingLevel not set: ', sectionLogic);
+      //console.log('ratingLevel not set: ', sectionLogic);
       ratingLevel = 0;
       ratingGlyphs =
         sectionLogic.hasOwnProperty('default') &&
