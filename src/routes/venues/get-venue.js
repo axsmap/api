@@ -1,5 +1,6 @@
 const axios = require('axios');
 const { isEqual } = require('lodash');
+const slugify = require('speakingurl');
 
 const { Venue } = require('../../models/venue');
 const venueReviewSummary = require('../../helpers/venue-review-summary.js');
@@ -26,18 +27,50 @@ module.exports = async (req, res, next) => {
 
   const placeData = response.data.result;
   const dataResponse = {};
-
-  const useStreetviewCover = true;
   dataResponse.address = placeData.formatted_address;
+
+  let useStreetviewCover = false;
+  let streetViewError = false;
+  let streetViewResponse;
+  try {
+    streetViewResponse = await axios.get(
+      `https://maps.googleapis.com/maps/api/streetview/metadata?location=${slugify(
+        dataResponse.address
+      )}&key=${process.env.PLACES_API_KEY}`
+    );
+  } catch (err) {
+    console.log(`Streetview for ${placeId} failed to be found at get-venue.`);
+    streetViewError = true;
+  }
+
+  let streetViewPanoId;
+  if (!streetViewError) {
+    const streetViewMetadataStatus = streetViewResponse.data.status;
+    if (streetViewMetadataStatus == 'OK') {
+      useStreetviewCover = true;
+      streetViewPanoId = streetViewResponse.data.pano_id;
+    }
+  }
+
   if (useStreetviewCover) {
     dataResponse.coverPhoto = `https://maps.googleapis.com/maps/api/streetview?key=${
       process.env.PLACES_API_KEY
-    }&size=800x400&fov=120&location=${dataResponse.address}`;
+    }&size=800x400&fov=110&location=${slugify(dataResponse.address)}`;
+    //}&size=800x400&fov=110&heading=0&pano=${streetViewPanoId}`;
+    //seems like heading needs to be set when using pano id but not for the address
   } else if (placeData.photos && placeData.photos.length > 0) {
     dataResponse.coverPhoto = `https://maps.googleapis.com/maps/api/place/photo?key=${
       process.env.PLACES_API_KEY
     }&maxwidth=500&photoreference=${placeData.photos[0].photo_reference}`;
   }
+
+  let coverPhotoLink =
+    //(useStreetviewCover) ?
+    `https://www.google.com/maps/@?api=1&map_action=pano&pano=${streetViewPanoId}&viewpoint=${
+      placeData.geometry.location.lat
+    },${placeData.geometry.location.lng}`;
+  console.log('Cover photo link: ', coverPhotoLink);
+
   dataResponse.formattedPhone = placeData.formatted_phone_number;
   dataResponse.googleRating = placeData.rating;
   dataResponse.googleUrl = placeData.url;
