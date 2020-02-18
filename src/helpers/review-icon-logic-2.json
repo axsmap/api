@@ -249,39 +249,12 @@
           "field": "hasSwingOutDoor",
           "matchValue": 0,
           "showGlyph": "doorSwingsOut"
-        },
-        {
-          "field": "hasLargeStall",
-          "matchValue": 0,
-          "and": {
-            "field": "hasSwingOutDoor",
-            "notMatchValue": 1
-          },
-          "showGlyph": "stallLarge"
-        },
-        {
-          "field": "hasSupportAroundToilet",
-          "matchValue": 0,
-          "and": {
-            "field": "hasSwingOutDoor",
-            "notMatchValue": 1
-          },
-          "showGlyph": "toiletTwoBarSupport"
-        },
-        {
-          "field": "hasLoweredSinks",
-          "matchValue": 0,
-          "and": {
-            "field": "hasSwingOutDoor",
-            "notMatchValue": 1
-          },
-          "showGlyph": "sinkLowered"
         }
       ],
       "caution": [
         {
           "field": "hasSwingOutDoor",
-          "matchValue": 1,
+          "notMatchValue": 0,
           "and": {
             "field": "hasLargeStall",
             "matchValue": 0
@@ -290,7 +263,7 @@
         },
         {
           "field": "hasSwingOutDoor",
-          "matchValue": 1,
+          "notMatchValue": 0,
           "and": {
             "field": "hasSupportAroundToilet",
             "matchValue": 0
@@ -299,7 +272,7 @@
         },
         {
           "field": "hasSwingOutDoor",
-          "matchValue": 1,
+          "notMatchValue": 0,
           "and": {
             "field": "hasLoweredSinks",
             "matchValue": 0
