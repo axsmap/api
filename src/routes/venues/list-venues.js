@@ -194,7 +194,7 @@ module.exports = async (req, res, next) => {
       [venues, total] = await Promise.all([
         Venue.find(
           venuesFilters,
-          'address allowsGuideDog entranceScore interiorScore restroomScore hasParking hasSecondEntry hasWellLit isQuiet isSpacious location name photos placeId steps types'
+          'address allowsGuideDog hasParking hasSecondEntry hasWellLit isQuiet isSpacious location name photos placeId steps types'
         )
           .skip(page * pageLimit)
           .limit(pageLimit),

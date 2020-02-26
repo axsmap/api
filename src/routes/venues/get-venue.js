@@ -288,8 +288,9 @@ module.exports = async (req, res, next) => {
 
     //TEMP:
     let scoring;
+    //console.log('venue0: ', venue[0]);
+
     //calculate entranceScore, glyphs
-    console.log('venue0: ', venue[0]);
     scoring = venueReviewSummary.calculateRatingLevel('entrance', venue[0]);
     console.log('entrance score: ', scoring);
     dataResponse.entranceScore = scoring.ratingLevel;

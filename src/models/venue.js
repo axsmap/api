@@ -156,29 +156,35 @@ const venueSchema = new mongoose.Schema(
         default: 0
       }
     },
+
     /*
-     * remove 5-star scoring
-    bathroomReviews: {
+     * deprecated 5-star scoring
+     */
+    _bathroomReviews: {
       type: Number,
       default: 0
       //min: [0, 'Should be more than 1']
     },
-    bathroomScore: {
+    _bathroomScore: {
       type: Number
       //max: [4, 'Should be less than 5'],
       //min: [1, 'Should be more than 0']
     },
-    entryReviews: {
+    _entryReviews: {
       type: Number,
       default: 0
       //min: [0, 'Should be more than -1']
     },
-    entryScore: {
+    _entryScore: {
       type: Number
       //max: [9, 'Should be less than 10'],
       //min: [1, 'Should be more than 0']
     },
-     */
+    _isScoreConverted: {
+      type: Boolean,
+      default: false
+    },
+
     hasParking: {
       yes: {
         type: Number,
