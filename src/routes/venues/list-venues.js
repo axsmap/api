@@ -495,8 +495,8 @@ module.exports = async (req, res, next) => {
 
         //original fields
         allowsGuideDog: venue.allowsGuideDog,
-        //bathroomScore: venue.bathroomScore,
-        //entryScore: venue.entryScore,
+        //_bathroomScore: venue.bathroomScore,
+        //_entryScore: venue.entryScore,
         hasParking: venue.hasParking,
         hasSecondEntry: venue.hasSecondEntry,
         hasWellLit: venue.hasWellLit,
@@ -530,10 +530,10 @@ module.exports = async (req, res, next) => {
 
       //original fields
       allowsGuideDog: { yes: 0, no: 0 },
-      //bathroomReviews: 0,
-      //bathroomScore: null,
-      //entryReviews: 0,
-      //entryScore: null,
+      //_bathroomReviews: 0,
+      //_bathroomScore: null,
+      //_entryReviews: 0,
+      //_entryScore: null,
       hasParking: { yes: 0, no: 0 },
       hasSecondEntry: { yes: 0, no: 0 },
       hasWellLit: { yes: 0, no: 0 },
