@@ -64,7 +64,7 @@
           "showGlyph": "steps,two"
         },
         {
-          "fields": ["hasPermanentRamp", "hasPortableRamp", "steps"],
+          "fields": ["steps", "hasPermanentRamp", "hasPortableRamp"],
           "matchValue": null,
           "and": {
             "field": "hasParking",
@@ -73,7 +73,7 @@
           "showGlyph": "parking"
         },
         {
-          "fields": ["hasPermanentRamp", "hasPortableRamp", "steps"],
+          "fields": ["steps", "hasPermanentRamp", "hasPortableRamp"],
           "matchValue": null,
           "and": {
             "field": "hasSecondEntry",
@@ -82,7 +82,7 @@
           "showGlyph": "secondEntry"
         },
         {
-          "fields": ["hasPermanentRamp", "hasPortableRamp", "steps"],
+          "fields": ["steps", "hasPermanentRamp", "hasPortableRamp"],
           "matchValue": null,
           "and": {
             "field": "hasWideEntrance",
@@ -115,7 +115,7 @@
           "showGlyph": "permanentRamp"
         },
         {
-          "fields": ["hasPermanentRamp", "hasPortableRamp", "steps"],
+          "fields": ["steps", "hasPermanentRamp", "hasPortableRamp"],
           "matchValue": null,
           "and": {
             "field": "hasParking",
@@ -124,7 +124,7 @@
           "showGlyph": "parking"
         },
         {
-          "fields": ["hasPermanentRamp", "hasPortableRamp", "steps"],
+          "fields": ["steps", "hasPermanentRamp", "hasPortableRamp"],
           "matchValue": null,
           "and": {
             "field": "hasSecondEntry",
@@ -133,7 +133,7 @@
           "showGlyph": "secondEntry"
         },
         {
-          "fields": ["hasPermanentRamp", "hasPortableRamp", "steps"],
+          "fields": ["steps", "hasPermanentRamp", "hasPortableRamp"],
           "matchValue": null,
           "and": {
             "field": "hasWideEntrance",

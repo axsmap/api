@@ -124,7 +124,7 @@ module.exports = {
           ) {
             if (
               (ratingDefinition.hasOwnProperty('matchValue') &&
-                venueData[ratingDefinition.field] ==
+                venueData[ratingDefinition.field] ===
                   ratingDefinition.matchValue) ||
               (ratingDefinition.hasOwnProperty('notMatchValue') &&
                 venueData[ratingDefinition.field] !==
@@ -134,14 +134,23 @@ module.exports = {
             }
           } else if (ratingDefinition.hasOwnProperty('fields')) {
             let fieldMatchCount = 0;
-            for (field in ratingDefinition.fields) {
+            for (field of ratingDefinition.fields) {
               if (
                 (ratingDefinition.hasOwnProperty('matchValue') &&
-                  venueData[field] == ratingDefinition.matchValue) ||
+                  venueData[field] === ratingDefinition.matchValue) ||
                 (ratingDefinition.hasOwnProperty('notMatchValue') &&
                   venueData[field] !== ratingDefinition.notMatchValue)
               ) {
                 fieldMatchCount++;
+                console.log(
+                  'field: ',
+                  field,
+                  ', matched: ',
+                  venueData[field],
+                  ', with: ',
+                  ratingDefinition.matchValue
+                );
+                //console.log(venueData);
               }
             }
 
