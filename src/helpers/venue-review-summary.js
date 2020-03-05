@@ -142,15 +142,6 @@ module.exports = {
                   venueData[field] !== ratingDefinition.notMatchValue)
               ) {
                 fieldMatchCount++;
-                console.log(
-                  'field: ',
-                  field,
-                  ', matched: ',
-                  venueData[field],
-                  ', with: ',
-                  ratingDefinition.matchValue
-                );
-                //console.log(venueData);
               }
             }
 
