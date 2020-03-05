@@ -56,7 +56,7 @@
         {
           "field": "steps",
           "matchValue": 3,
-          "showGlyph": "steps,three"
+          "showGlyph": "steps,two"
         },
         {
           "field": "steps",

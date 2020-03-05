@@ -259,6 +259,7 @@ module.exports = async (req, res, next) => {
      *  Perform Google search every time to interpret single search bar text
      */
   let nearbyParams = `?key=${process.env.PLACES_API_KEY}`;
+  let searchType = queryParams.name ? 'textsearch' : 'nearbysearch';
 
   if (!queryParams.page) {
     nearbyParams = `${nearbyParams}&location=${coordinates[0]},${
@@ -300,10 +301,10 @@ module.exports = async (req, res, next) => {
   try {
     console.log(
       'performing google search: ' +
-        `https://maps.googleapis.com/maps/api/place/textsearch/json${nearbyParams}`
+        `https://maps.googleapis.com/maps/api/place/${searchType}/json${nearbyParams}`
     );
     placesResponse = await axios.get(
-      `https://maps.googleapis.com/maps/api/place/textsearch/json${nearbyParams}`
+      `https://maps.googleapis.com/maps/api/place/${searchType}/json${nearbyParams}`
     );
   } catch (err) {
     console.log(
@@ -375,23 +376,20 @@ module.exports = async (req, res, next) => {
 
   //Perform ratings logic on all returned venues
   venues.forEach(venue => {
-    console.log('In scoring assignment');
+    //console.log('In scoring assignment');
     let scoring;
     //calculate entranceScore, glyphs
     scoring = venueReviewSummary.calculateRatingLevel('entrance', venue);
-    //console.log('entrance score: ', scoring);
     venue.entranceScore = scoring.ratingLevel;
     venue.entranceGlyphs = scoring.ratingGlyphs;
 
     //calculate interiorScore, glyphs
     scoring = venueReviewSummary.calculateRatingLevel('interior', venue);
-    //console.log('interior score: ', scoring);
     venue.interiorScore = scoring.ratingLevel;
     venue.interiorGlyphs = scoring.ratingGlyphs;
 
     //calculate restroomScore, glyphs
     scoring = venueReviewSummary.calculateRatingLevel('restroom', venue);
-    //console.log('restroom score: ', scoring);
     venue.restroomScore = scoring.ratingLevel;
     venue.restroomGlyphs = scoring.ratingGlyphs;
 

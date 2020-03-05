@@ -4,6 +4,8 @@ const reviewLogic = require('./review-icon-logic-2.json');
 function assignFromYesNo(venueField) {
   //field may not exist for old data
   //test if properties exist and both are not set to 0
+  // At this point, venueField is a JS object, not subject to
+  //  Mongoose hasOwnProperty test issues
   if (
     venueField &&
     venueField.hasOwnProperty('yes') &&
