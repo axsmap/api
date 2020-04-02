@@ -119,9 +119,39 @@ module.exports = async (req, res, next) => {
           dbReview._isScoreConverted = true; //should be performed after venue save?
           //console.log("review (after): ", dbReview);
           //console.log("venue (after): ", venue);
-        }
-      }
-    }
+
+          //dbReview.save();
+
+          //tally User review fields count
+          let dbUser;
+          try {
+            dbUser = await User.findById(review.user);
+          } catch (error) {
+            console.log(
+              'User failed to be found with ID: ' +
+                review.user +
+                ', for Review: ',
+              review
+            );
+            console.log(error);
+            return res.status(404).json(error);
+          }
+
+          if (dbUser) {
+            var reviewedFieldsCount =
+              Object.keys(dbReview.toObject()).length - 10;
+            dbUser.reviewFieldsAmount = dbUser.reviewFieldsAmount
+              ? dbUser.reviewFieldsAmount + reviewedFieldsCount
+              : reviewedFieldsCount;
+
+            //dbUser.save();
+          }
+        } //end review converstion logic
+      } //end reviews for-loop
+
+      venue._isScoreConverted = true;
+      //venue.save();
+    } //end venuesChunk for-loop
 
     pages++;
     venuesProcessed += venueChunk.length;
@@ -134,7 +164,8 @@ module.exports = async (req, res, next) => {
         venuesProcessed +
         '): '
     );
-  }
+  } //end venues while-loop
+
   return res.status(404).json('done');
 
   try {
