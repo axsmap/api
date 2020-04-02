@@ -104,6 +104,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       maxlength: [50, 'Should be less than 51 characters']
     },
+    reviewFieldsAmount: {
+      type: Number,
+      default: 0,
+      required: [true, 'Is required']
+    },
     reviewsAmount: {
       type: Number,
       default: 0,

@@ -28,6 +28,7 @@ module.exports = async (req, res, next) => {
     hasSupportAroundToilet: req.body.hasSupportAroundToilet,
     hasLoweredSinks: req.body.hasLoweredSinks,
     interiorScore: req.body.interiorScore,
+    _isScoreConverted: true,
 
     //original fields
     allowsGuideDog: req.body.allowsGuideDog,
@@ -182,6 +183,28 @@ module.exports = async (req, res, next) => {
     return next(err);
   }
 
+  // Sample review Obj
+  /*
+      _isScoreConverted: false,
+      isBanned: false,
+      voters: [],
+      _id: 5e853db2587b2740c501f12e,
+      hasAccessibleElevator: true,
+      hasInteriorRamp: true,
+      hasSwingOutDoor: false,
+      hasLargeStall: false,
+      user: 5e14e8584701fb22ade354e9,
+      venue: 5e3da8d56d958200424ffdfe,
+      complaints: [],
+      createdAt: 2020-04-02T01:19:46.508Z,
+      updatedAt: 2020-04-02T01:19:46.508Z,
+      __v: 0
+  */
+
+  //subtracts out the 10 standard fields to determine
+  var reviewedFieldsCount = Object.keys(review.toObject()).length - 10;
+  req.user.reviewFieldsAmount =
+    req.user.reviewFieldsAmount + reviewedFieldsCount;
   req.user.reviewsAmount = req.user.reviewsAmount + 1;
   req.user.updatedAt = moment.utc().toDate();
 
@@ -456,19 +479,19 @@ module.exports = async (req, res, next) => {
   let scoring;
   //calculate entranceScore, glyphs
   scoring = venueReviewSummary.calculateRatingLevel('entrance', venue);
-  console.log('entrance score: ', scoring);
+  //console.log('entrance score: ', scoring);
   venue.entranceScore = scoring.ratingLevel;
   venue.entranceGlyphs = scoring.ratingGlyphs;
 
   //calculate interiorScore, glyphs
   scoring = venueReviewSummary.calculateRatingLevel('interior', venue);
-  console.log('interior score: ', scoring);
+  //console.log('interior score: ', scoring);
   venue.interiorScore = scoring.ratingLevel;
   venue.interiorGlyphs = scoring.ratingGlyphs;
 
   //calculate restroomScore, glyphs
   scoring = venueReviewSummary.calculateRatingLevel('restroom', venue);
-  console.log('restroom score: ', scoring);
+  //console.log('restroom score: ', scoring);
   venue.restroomScore = scoring.ratingLevel;
   venue.restroomGlyphs = scoring.ratingGlyphs;
 
@@ -478,7 +501,7 @@ module.exports = async (req, res, next) => {
     venue.restroomScore
   );
 
-  console.log('venue: ', venue);
+  //console.log('venue: ', venue);
 
   try {
     await venue.save();
