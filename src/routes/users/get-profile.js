@@ -80,6 +80,8 @@ module.exports = async (req, res, next) => {
     managedEvents,
     managedTeams,
     phone: req.user.phone,
+    reviewFieldsAmount: req.user.reviewFieldsAmount,
+    reviewsAmount: req.user.reviewsAmount,
     showDisabilities: req.user.showDisabilities,
     showEmail: req.user.showEmail,
     showPhone: req.user.showPhone,
