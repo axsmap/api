@@ -549,6 +549,8 @@ module.exports = async (req, res, next) => {
     steps: review.steps,
     team: review.team,
     user: review.user,
+    userReviewFieldsAmount: req.user.reviewFieldsAmount,
+    userReviewsAmount: req.user.reviewsAmount,
     venue: review.venue
   };
   return res.status(201).json(dataResponse);
