@@ -179,6 +179,42 @@ module.exports = async (req, res, next) => {
     }
     */
 
+    //reformat venuefilters for Mongo
+    if (queryParams.entranceScore) {
+      {
+        $gte: venuesFilters.entranceScore;
+      }
+    }
+
+    if (queryParams.interiorScore) {
+      {
+        $gte: venuesFilters.interiorScore;
+      }
+    }
+
+    if (queryParams.restroomScore) {
+      {
+        $gte: venuesFilters.restroomScore;
+      }
+    }
+
+    if (queryParams.allowsGuideDog) {
+      if (venuesFilters.allowsGuideDog === 1) {
+        venuesFilters['allowsGuideDog.yes'] = { $gte: 1 };
+      } else {
+        venuesFilters['allowsGuideDog.no'] = { $gte: 1 };
+      }
+    }
+
+    if (queryParams.hasParking) {
+      if (venuesFilters.hasParking === 1) {
+        venuesFilters['hasParking.yes'] = { $gte: 1 };
+      } else {
+        venuesFilters['hasParking.no'] = { $gte: 1 };
+      }
+    }
+    //reformatted venuefilters for Mono
+
     venuesFilters.location = {
       $near: {
         $geometry: {
@@ -238,6 +274,33 @@ module.exports = async (req, res, next) => {
         location: venue.coordinates
       })
     );
+
+    //+ADDED
+    //Perform ratings logic on all returned venues
+    venues.forEach(venue => {
+      //console.log('In scoring assignment');
+      let scoring;
+      //calculate entranceScore, glyphs
+      scoring = venueReviewSummary.calculateRatingLevel('entrance', venue);
+      venue.entranceScore = scoring.ratingLevel;
+      venue.entranceGlyphs = scoring.ratingGlyphs;
+
+      //calculate interiorScore, glyphs
+      scoring = venueReviewSummary.calculateRatingLevel('interior', venue);
+      venue.interiorScore = scoring.ratingLevel;
+      venue.interiorGlyphs = scoring.ratingGlyphs;
+
+      //calculate restroomScore, glyphs
+      scoring = venueReviewSummary.calculateRatingLevel('restroom', venue);
+      venue.restroomScore = scoring.ratingLevel;
+      venue.restroomGlyphs = scoring.ratingGlyphs;
+
+      venue.mapMarkerScore = venueReviewSummary.calculateMapMarkerScore(
+        venue.entranceScore,
+        venue.interiorScore,
+        venue.restroomScore
+      );
+    });
 
     const lastPage = Math.ceil(total / pageLimit);
     let nextPage;
