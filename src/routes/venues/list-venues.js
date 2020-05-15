@@ -217,8 +217,8 @@ module.exports = async (req, res, next) => {
     try {
       [venues, total] = await Promise.all([
         Venue.find(
-          dbVenuesFilters,
-          'address allowsGuideDog hasParking hasSecondEntry hasWellLit isQuiet isSpacious location name photos placeId steps types'
+          dbVenuesFilters
+          /*,'address allowsGuideDog hasParking hasSecondEntry hasWellLit isQuiet isSpacious location name photos placeId steps types'*/
         )
           .skip(page * pageLimit)
           .limit(pageLimit),
@@ -230,6 +230,7 @@ module.exports = async (req, res, next) => {
           dbVenuesFilters
         )}`
       );
+      console.log(err);
       return next(err);
     }
 
@@ -267,7 +268,7 @@ module.exports = async (req, res, next) => {
         venue.interiorScore,
         venue.restroomScore
       );
-
+      console.log(venue);
       let passesValidation = true;
       if (venuesFilters.hasOwnProperty('entranceScore')) {
         if (
