@@ -202,7 +202,12 @@ module.exports = async (req, res, next) => {
       page = queryParams.page;
     }
 
-    const pageLimit = 20;
+    const pageLimit =
+      venuesFilters.hasOwnProperty('entranceScore') ||
+      venuesFilters.hasOwnProperty('interiorScore') ||
+      venuesFilters.hasOwnProperty('restroomScore')
+        ? 80
+        : 20;
 
     if (page > 0) {
       page -= 1;
