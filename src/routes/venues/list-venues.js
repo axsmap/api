@@ -172,6 +172,7 @@ module.exports = async (req, res, next) => {
    *  UPDATED 05/2020 TO SUPPORT FILTER ONLY SELF SEARCH
    */
   if (!isEmpty(venuesFilters) && isEmpty(queryParams.name)) {
+    console.log('>> Performing DB search');
     /*
     if (queryParams.name) {
       //performs literal name match against AXS Venue name
@@ -331,13 +332,14 @@ module.exports = async (req, res, next) => {
       nextPage,
       results: venues
     };
-  } else {
     /*
     * End legacy filter
     */
+  } else {
+    console.log('>> Performing Google search');
 
     /*
-     *  Perform Google search every time to interpret single search bar text
+     *  Perform Google search when there text entered or no filters selected
      */
     let nearbyParams = `?key=${process.env.PLACES_API_KEY}`;
     let searchType = queryParams.name ? 'textsearch' : 'nearbysearch';
@@ -484,6 +486,7 @@ module.exports = async (req, res, next) => {
     //Filter out, remove, Google Places that are not AXS Venues
     //  Can't use hasOwnProperty() on mongoose model objects  //
     if (!isEmpty(venuesFilters)) {
+      console.log('>> Performing secondary DB filtering');
       places = places.filter(place => {
         const venue = find(venues, venue => venue.placeId === place.placeId);
         if (venue) {
