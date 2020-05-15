@@ -58,6 +58,7 @@ module.exports = async (req, res, next) => {
   } //end address geocode
 
   let venuesFilters = {};
+  let dbVenuesFilters = {};
 
   /*
    * Legacy filter string building function,
@@ -82,24 +83,24 @@ module.exports = async (req, res, next) => {
 
   if (queryParams.allowsGuideDog) {
     venuesFilters.allowsGuideDog = parseFloat(queryParams.allowsGuideDog);
-    /*
+
     const allowsGuideDog = parseFloat(queryParams.allowsGuideDog) === 1;
     if (allowsGuideDog) {
-      venuesFilters['allowsGuideDog.yes'] = { $gte: 1 };
+      dbVenuesFilters['allowsGuideDog.yes'] = { $gte: 1 };
     } else {
-      venuesFilters['allowsGuideDog.no'] = { $gte: 1 };
-    }*/
+      dbVenuesFilters['allowsGuideDog.no'] = { $gte: 1 };
+    }
   }
 
   if (queryParams.hasParking) {
     venuesFilters.hasParking = queryParams.hasParking;
-    /*
+
     const hasParking = parseFloat(queryParams.hasParking) === 1;
     if (hasParking) {
-      venuesFilters['hasParking.yes'] = { $gte: 1 };
+      dbVenuesFilters['hasParking.yes'] = { $gte: 1 };
     } else {
-      venuesFilters['hasParking.no'] = { $gte: 1 };
-    }*/
+      dbVenuesFilters['hasParking.no'] = { $gte: 1 };
+    }
   }
 
   /*
@@ -180,24 +181,6 @@ module.exports = async (req, res, next) => {
     }
     */
 
-    //reformat venuefilters for Mongo
-    if (queryParams.allowsGuideDog) {
-      if (venuesFilters.allowsGuideDog === 1) {
-        venuesFilters['allowsGuideDog.yes'] = { $gte: 1 };
-      } else {
-        venuesFilters['allowsGuideDog.no'] = { $gte: 1 };
-      }
-    }
-
-    if (queryParams.hasParking) {
-      if (venuesFilters.hasParking === 1) {
-        venuesFilters['hasParking.yes'] = { $gte: 1 };
-      } else {
-        venuesFilters['hasParking.no'] = { $gte: 1 };
-      }
-    }
-    //reformatted venuefilters for Mono
-
     venuesFilters.location = {
       $near: {
         $geometry: {
@@ -234,17 +217,17 @@ module.exports = async (req, res, next) => {
     try {
       [venues, total] = await Promise.all([
         Venue.find(
-          venuesFilters,
+          dbVenuesFilters,
           'address allowsGuideDog hasParking hasSecondEntry hasWellLit isQuiet isSpacious location name photos placeId steps types'
         )
           .skip(page * pageLimit)
           .limit(pageLimit),
-        Venue.find(venuesFilters).count()
+        Venue.find(dbVenuesFilters).count()
       ]);
     } catch (err) {
       console.log(
         `Venues failed to be found or count at list-venues.\nvenuesQuery: ${JSON.stringify(
-          venuesFilters
+          dbVenuesFilters
         )}`
       );
       return next(err);
@@ -260,6 +243,7 @@ module.exports = async (req, res, next) => {
 
     //+ADDED
     //Perform ratings logic on all returned venues
+    console.log('Venue count: ' + venues.length);
     venues = venues.filter(venue => {
       //console.log('In scoring assignment');
       let scoring;
