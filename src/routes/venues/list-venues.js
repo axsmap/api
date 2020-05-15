@@ -249,7 +249,7 @@ module.exports = async (req, res, next) => {
 
     //+ADDED
     //Perform ratings logic on all returned venues
-    console.log('Venue count: ' + venues.length);
+    console.log('Raw venues count: ' + venues.length);
     venues = venues.filter(venue => {
       //console.log('In scoring assignment');
       let scoring;
@@ -273,7 +273,7 @@ module.exports = async (req, res, next) => {
         venue.interiorScore,
         venue.restroomScore
       );
-      console.log(venue);
+
       let passesValidation = true;
       if (venuesFilters.hasOwnProperty('entranceScore')) {
         if (
