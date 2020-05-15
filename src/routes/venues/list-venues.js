@@ -181,7 +181,7 @@ module.exports = async (req, res, next) => {
     }
     */
 
-    venuesFilters.location = {
+    dbVenuesFilters.location = {
       $near: {
         $geometry: {
           type: 'Point',
@@ -192,10 +192,10 @@ module.exports = async (req, res, next) => {
     };
 
     if (queryParams.type) {
-      venuesFilters.types = queryParams.type;
+      dbVenuesFilters.types = queryParams.type;
     }
 
-    venuesFilters.isArchived = false;
+    dbVenuesFilters.isArchived = false;
 
     let page = 1;
     if (isNumber(queryParams.page)) {
