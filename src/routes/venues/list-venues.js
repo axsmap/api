@@ -228,6 +228,9 @@ module.exports = async (req, res, next) => {
           .skip(page * pageLimit)
           .limit(pageLimit),
         Venue.find(dbVenuesFilters).count()
+        /*TODO: count is deprecated in favor of countDocuments, but that does not support $near
+          would need to move to GeoWithin but that does not return sorted results
+          */
       ]);
     } catch (err) {
       console.log(
