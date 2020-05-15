@@ -180,24 +180,6 @@ module.exports = async (req, res, next) => {
     */
 
     //reformat venuefilters for Mongo
-    if (queryParams.entranceScore) {
-      {
-        $gte: venuesFilters.entranceScore;
-      }
-    }
-
-    if (queryParams.interiorScore) {
-      {
-        $gte: venuesFilters.interiorScore;
-      }
-    }
-
-    if (queryParams.restroomScore) {
-      {
-        $gte: venuesFilters.restroomScore;
-      }
-    }
-
     if (queryParams.allowsGuideDog) {
       if (venuesFilters.allowsGuideDog === 1) {
         venuesFilters['allowsGuideDog.yes'] = { $gte: 1 };
@@ -277,7 +259,7 @@ module.exports = async (req, res, next) => {
 
     //+ADDED
     //Perform ratings logic on all returned venues
-    venues.forEach(venue => {
+    venues = venues.filter(venue => {
       //console.log('In scoring assignment');
       let scoring;
       //calculate entranceScore, glyphs
@@ -300,6 +282,38 @@ module.exports = async (req, res, next) => {
         venue.interiorScore,
         venue.restroomScore
       );
+
+      let passesValidation = true;
+      if (venuesFilters.hasOwnProperty('entranceScore')) {
+        if (
+          !venue.entranceScore ||
+          venue.entranceScore < venuesFilters.entranceScore
+        ) {
+          passesValidation = false;
+        }
+      }
+
+      if (passesValidation && venuesFilters.hasOwnProperty('interiorScore')) {
+        if (
+          !venue.interiorScore ||
+          venue.interiorScore < venuesFilters.interiorScore
+        ) {
+          passesValidation = false;
+        }
+      }
+
+      if (passesValidation && venuesFilters.hasOwnProperty('restroomScore')) {
+        if (
+          !venue.restroomScore ||
+          venue.restroomScore < venuesFilters.restroomScore
+        ) {
+          passesValidation = false;
+        }
+      }
+
+      if (passesValidation) {
+        return venue;
+      }
     });
 
     const lastPage = Math.ceil(total / pageLimit);
@@ -473,7 +487,7 @@ module.exports = async (req, res, next) => {
       places = places.filter(place => {
         const venue = find(venues, venue => venue.placeId === place.placeId);
         if (venue) {
-          console.log('In verification of filters');
+          //console.log('In verification of filters');
           let passesValidation = true;
           if (
             passesValidation &&
