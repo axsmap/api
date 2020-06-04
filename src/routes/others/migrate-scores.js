@@ -1,8 +1,12 @@
 const { Venue } = require('../../models/venue');
 const { Review } = require('../../models/review');
+const { User } = require('../../models/user');
 
 module.exports = async (req, res, next) => {
   console.log('In migrate scores');
+  var timeStart = new Date(); //process.hrtime();
+  var timeBlockEnd;
+  var timeTotal;
 
   let venuesTotalCount;
   try {
@@ -18,6 +22,7 @@ module.exports = async (req, res, next) => {
   let venuesProcessed = 0;
   let pages = 0;
   while (venuesProcessed < venuesTotalCount) {
+    timeBlockStart = new Date();
     let venueChunk;
     try {
       venueChunk = await Venue.find({
@@ -120,18 +125,18 @@ module.exports = async (req, res, next) => {
           //console.log("review (after): ", dbReview);
           //console.log("venue (after): ", venue);
 
-          //dbReview.save();
+          dbReview.save();
 
           //tally User review fields count
           let dbUser;
           try {
-            dbUser = await User.findById(review.user);
+            dbUser = await User.findById(dbReview.user);
           } catch (error) {
             console.log(
               'User failed to be found with ID: ' +
-                review.user +
+                dbReview.user +
                 ', for Review: ',
-              review
+              dbReview
             );
             console.log(error);
             return res.status(404).json(error);
@@ -144,38 +149,40 @@ module.exports = async (req, res, next) => {
               ? dbUser.reviewFieldsAmount + reviewedFieldsCount
               : reviewedFieldsCount;
 
-            //dbUser.save();
+            dbUser.save();
           }
         } //end review converstion logic
       } //end reviews for-loop
 
       venue._isScoreConverted = true;
-      //venue.save();
+      venue.save();
     } //end venuesChunk for-loop
 
     pages++;
     venuesProcessed += venueChunk.length;
+    timeBlockEnd = new Date() - timeBlockStart;
+    timeTotal = new Date() - timeStart;
+    var percentComplete = venuesProcessed / venuesTotalCount;
     console.log(
       'Processed ' +
-        ((venuesProcessed / venuesTotalCount) * 100).toFixed(2) +
+        (percentComplete * 100).toFixed(2) +
         '% (page: ' +
         pages +
+        ' of ' +
+        venuesTotalCount / 100 +
         '), (venuesProcessed: ' +
         venuesProcessed +
-        '): '
+        '), block processing time: ' +
+        timeBlockEnd +
+        'ms, total: ' +
+        (new Date() - timeStart) / 1000 +
+        's, remaining: ' +
+        (timeTotal / percentComplete - timeTotal) / 1000 / 60 / 60 +
+        'h'
     );
   } //end venues while-loop
 
-  return res.status(404).json('done');
-
-  try {
-    //await venue.save();
-  } catch (err) {
-    console.log(`Venue ${venue.id} failed to be updated at delete-venue`);
-    return next(err);
-  }
-
-  return res.status(200).json({ message: 'Success' });
+  return res.status(200).json({ message: 'done' });
 };
 
 /*
