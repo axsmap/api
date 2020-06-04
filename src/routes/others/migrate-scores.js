@@ -3,10 +3,12 @@ const { Review } = require('../../models/review');
 const { User } = require('../../models/user');
 
 module.exports = async (req, res, next) => {
-  console.log('In migrate scores');
-  var timeStart = new Date(); //process.hrtime();
-  var timeBlockEnd;
-  var timeTotal;
+  const saveChanges = req.query.save && req.query.save === 'true';
+  console.log('IN MIGRATE SCORES, SAVING CHANGES: ' + saveChanges);
+
+  let timeStart = new Date(); //process.hrtime();
+  let timeBlockEnd;
+  let timeTotal;
 
   let venuesTotalCount;
   try {
@@ -14,8 +16,12 @@ module.exports = async (req, res, next) => {
       _isScoreConverted: { $ne: true }
     });
   } catch (err) {
-    console.log('Venues failed to be counted: ', err);
+    console.log('Venues unconverted failed to be counted: ', err);
     return res.status(404).json(err);
+  }
+
+  if (venuesTotalCount == 0) {
+    console.log('NO VENUES UNCONVERTED FOUND TO PROCESS');
   }
 
   const recordLimit = 100;
@@ -28,7 +34,7 @@ module.exports = async (req, res, next) => {
       venueChunk = await Venue.find({
         _isScoreConverted: { $ne: true }
       })
-        .skip(pages * recordLimit)
+        //.skip(pages * recordLimit)
         .limit(recordLimit);
     } catch (error) {
       console.log(
@@ -40,6 +46,10 @@ module.exports = async (req, res, next) => {
         error
       );
       return res.status(404).json(error);
+    }
+
+    if (venueChunk.length < 1) {
+      console.log('UNEXPECTED AMOUNT OF VENUES UNCONVERTED FOUND');
     }
 
     for (venue of venueChunk) {
@@ -125,7 +135,9 @@ module.exports = async (req, res, next) => {
           //console.log("review (after): ", dbReview);
           //console.log("venue (after): ", venue);
 
-          dbReview.save();
+          if (saveChanges) {
+            dbReview.save();
+          }
 
           //tally User review fields count
           let dbUser;
@@ -143,26 +155,30 @@ module.exports = async (req, res, next) => {
           }
 
           if (dbUser) {
-            var reviewedFieldsCount =
+            let reviewedFieldsCount =
               Object.keys(dbReview.toObject()).length - 10;
             dbUser.reviewFieldsAmount = dbUser.reviewFieldsAmount
               ? dbUser.reviewFieldsAmount + reviewedFieldsCount
               : reviewedFieldsCount;
 
-            dbUser.save();
+            if (saveChanges) {
+              dbUser.save();
+            }
           }
         } //end review converstion logic
       } //end reviews for-loop
 
       venue._isScoreConverted = true;
-      venue.save();
+      if (saveChanges) {
+        venue.save();
+      }
     } //end venuesChunk for-loop
 
     pages++;
     venuesProcessed += venueChunk.length;
     timeBlockEnd = new Date() - timeBlockStart;
     timeTotal = new Date() - timeStart;
-    var percentComplete = venuesProcessed / venuesTotalCount;
+    let percentComplete = venuesProcessed / venuesTotalCount;
     console.log(
       'Processed ' +
         (percentComplete * 100).toFixed(2) +
@@ -172,6 +188,8 @@ module.exports = async (req, res, next) => {
         venuesTotalCount / 100 +
         '), (venuesProcessed: ' +
         venuesProcessed +
+        ' of ' +
+        venuesTotalCount +
         '), block processing time: ' +
         timeBlockEnd +
         'ms, total: ' +
@@ -182,6 +200,44 @@ module.exports = async (req, res, next) => {
     );
   } //end venues while-loop
 
+  try {
+    reviewsTotalCount = await Review.countDocuments({
+      _isScoreConverted: { $ne: true }
+    });
+  } catch (err) {
+    console.log('Reviews unconverted failed to be counted, error: ', err);
+    return res.status(404).json(err);
+  }
+  console.log('THERE ARE ' + reviewsTotalCount + ' UNCONVERTED REVIEWS');
+
+  if (reviewsTotalCount > 0) {
+    let unconvertedReviews;
+
+    try {
+      unconvertedReviews = await Review.find({
+        _isScoreConverted: { $ne: true }
+      });
+    } catch (err) {
+      console.log('Reviews unconverted failed to be found, error: ', err);
+      return res.status(404).json(err);
+    }
+
+    for (unconvertedReview of unconvertedReviews) {
+      try {
+        matchingVenue = await Venue.find({
+          reviews: unconvertedReview.id
+        });
+      } catch (err) {
+        console.log('Reviews unconverted failed to be found, error: ', err);
+        return res.status(404).json(err);
+      }
+
+      console.log('Review ID: ' + unconvertedReview.id);
+      console.log("Review's venue: " + matchingVenue.id);
+    }
+  }
+
+  console.log('FINISHED PROCESSING ALL RECORDS');
   return res.status(200).json({ message: 'done' });
 };
 
