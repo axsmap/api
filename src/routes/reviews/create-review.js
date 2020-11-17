@@ -8,16 +8,33 @@ const { Team } = require('../../models/team');
 const { Venue } = require('../../models/venue');
 
 const { validateCreateEditReview } = require('./validations');
+const venueReviewSummary = require('../../helpers/venue-review-summary.js');
 
 module.exports = async (req, res, next) => {
+  console.log('body: ', req.body);
   const { errors, isValid } = validateCreateEditReview(req.body);
   if (!isValid) return res.status(400).json(errors);
 
   const data = {
+    //new expanded fields
+    hasPermanentRamp: req.body.hasPermanentRamp,
+    hasPortableRamp: req.body.hasPortableRamp,
+    hasWideEntrance: req.body.hasWideEntrance,
+    hasAccessibleTableHeight: req.body.hasAccessibleTableHeight,
+    hasAccessibleElevator: req.body.hasAccessibleElevator,
+    hasInteriorRamp: req.body.hasInteriorRamp,
+    hasSwingOutDoor: req.body.hasSwingOutDoor,
+    hasLargeStall: req.body.hasLargeStall,
+    hasSupportAroundToilet: req.body.hasSupportAroundToilet,
+    hasLoweredSinks: req.body.hasLoweredSinks,
+    interiorScore: req.body.interiorScore,
+    _isScoreConverted: true,
+
+    //original fields
     allowsGuideDog: req.body.allowsGuideDog,
-    bathroomScore: req.body.bathroomScore,
+    //bathroomScore: req.body.bathroomScore,
     comments: req.body.comments,
-    entryScore: req.body.entryScore,
+    //entryScore: req.body.entryScore,
     event: req.body.event,
     hasParking: req.body.hasParking,
     hasSecondEntry: req.body.hasSecondEntry,
@@ -106,7 +123,9 @@ module.exports = async (req, res, next) => {
         }`
       );
     } catch (err) {
-      console.log(`Place ${placeId} failed to be found at create-review.`);
+      console.log(
+        `Place ${placeId} failed to be found at create-review, after Google search`
+      );
       return next(err);
     }
 
@@ -164,13 +183,39 @@ module.exports = async (req, res, next) => {
     return next(err);
   }
 
+  // Sample review Obj
+  /*
+      _isScoreConverted: false,
+      isBanned: false,
+      voters: [],
+      _id: 5e853db2587b2740c501f12e,
+      hasAccessibleElevator: true,
+      hasInteriorRamp: true,
+      hasSwingOutDoor: false,
+      hasLargeStall: false,
+      user: 5e14e8584701fb22ade354e9,
+      venue: 5e3da8d56d958200424ffdfe,
+      complaints: [],
+      createdAt: 2020-04-02T01:19:46.508Z,
+      updatedAt: 2020-04-02T01:19:46.508Z,
+      __v: 0
+  */
+
+  //subtracts out the 10 standard fields to determine
+  var reviewedFieldsCount = Object.keys(review.toObject()).length - 10;
+  req.user.reviewFieldsAmount =
+    req.user.reviewFieldsAmount + reviewedFieldsCount;
   req.user.reviewsAmount = req.user.reviewsAmount + 1;
   req.user.updatedAt = moment.utc().toDate();
 
   try {
     await req.user.save();
   } catch (err) {
-    console.log(`User ${req.user.id} failed to be updated at create-review`);
+    console.log(
+      `User ${
+        req.user.id
+      } failed to be updated at create-review, after updated review count`
+    );
     return next(err);
   }
 
@@ -180,7 +225,9 @@ module.exports = async (req, res, next) => {
     try {
       await event.save();
     } catch (err) {
-      console.log(`Event ${event.id} failed to be updated at create-review`);
+      console.log(
+        `Event ${event.id} failed to be updated at create-review, after event`
+      );
       return next(err);
     }
   }
@@ -205,7 +252,9 @@ module.exports = async (req, res, next) => {
     try {
       await venue.save();
     } catch (err) {
-      console.log(`Venue ${venue.id} failed to be updated at create-review`);
+      console.log(
+        `Venue ${venue.id} failed to be updated at create-review, after photos`
+      );
       return next(err);
     }
   }
@@ -216,11 +265,129 @@ module.exports = async (req, res, next) => {
     try {
       await team.save();
     } catch (err) {
-      console.log(`Team ${team.id} failed to be updated at create-review`);
+      console.log(
+        `Team ${team.id} failed to be updated at create-review, after team`
+      );
       return next(err);
     }
   }
 
+  //
+  //new expanded fields
+  //
+  if (typeof review.hasPermanentRamp !== 'undefined') {
+    venue.hasPermanentRamp = {
+      yes: review.hasPermanentRamp
+        ? venue.hasPermanentRamp.yes + 1
+        : venue.hasPermanentRamp.yes,
+      no: review.hasPermanentRamp
+        ? venue.hasPermanentRamp.no
+        : venue.hasPermanentRamp.no + 1
+    };
+  }
+
+  if (typeof review.hasPortableRamp !== 'undefined') {
+    venue.hasPortableRamp = {
+      yes: review.hasPortableRamp
+        ? venue.hasPortableRamp.yes + 1
+        : venue.hasPortableRamp.yes,
+      no: review.hasPortableRamp
+        ? venue.hasPortableRamp.no
+        : venue.hasPortableRamp.no + 1
+    };
+  }
+
+  if (typeof review.hasWideEntrance !== 'undefined') {
+    venue.hasWideEntrance = {
+      yes: review.hasWideEntrance
+        ? venue.hasWideEntrance.yes + 1
+        : venue.hasWideEntrance.yes,
+      no: review.hasWideEntrance
+        ? venue.hasWideEntrance.no
+        : venue.hasWideEntrance.no + 1
+    };
+  }
+
+  if (typeof review.hasAccessibleTableHeight !== 'undefined') {
+    venue.hasAccessibleTableHeight = {
+      yes: review.hasAccessibleTableHeight
+        ? venue.hasAccessibleTableHeight.yes + 1
+        : venue.hasAccessibleTableHeight.yes,
+      no: review.hasAccessibleTableHeight
+        ? venue.hasAccessibleTableHeight.no
+        : venue.hasAccessibleTableHeight.no + 1
+    };
+  }
+
+  if (typeof review.hasAccessibleElevator !== 'undefined') {
+    venue.hasAccessibleElevator = {
+      yes: review.hasAccessibleElevator
+        ? venue.hasAccessibleElevator.yes + 1
+        : venue.hasAccessibleElevator.yes,
+      no: review.hasAccessibleElevator
+        ? venue.hasAccessibleElevator.no
+        : venue.hasAccessibleElevator.no + 1
+    };
+  }
+
+  if (typeof review.hasInteriorRamp !== 'undefined') {
+    venue.hasInteriorRamp = {
+      yes: review.hasInteriorRamp
+        ? venue.hasInteriorRamp.yes + 1
+        : venue.hasInteriorRamp.yes,
+      no: review.hasInteriorRamp
+        ? venue.hasInteriorRamp.no
+        : venue.hasInteriorRamp.no + 1
+    };
+  }
+
+  if (typeof review.hasSwingOutDoor !== 'undefined') {
+    venue.hasSwingOutDoor = {
+      yes: review.hasSwingOutDoor
+        ? venue.hasSwingOutDoor.yes + 1
+        : venue.hasSwingOutDoor.yes,
+      no: review.hasSwingOutDoor
+        ? venue.hasSwingOutDoor.no
+        : venue.hasSwingOutDoor.no + 1
+    };
+  }
+
+  if (typeof review.hasLargeStall !== 'undefined') {
+    venue.hasLargeStall = {
+      yes: review.hasLargeStall
+        ? venue.hasLargeStall.yes + 1
+        : venue.hasLargeStall.yes,
+      no: review.hasLargeStall
+        ? venue.hasLargeStall.no
+        : venue.hasLargeStall.no + 1
+    };
+  }
+
+  if (typeof review.hasSupportAroundToilet !== 'undefined') {
+    venue.hasSupportAroundToilet = {
+      yes: review.hasSupportAroundToilet
+        ? venue.hasSupportAroundToilet.yes + 1
+        : venue.hasSupportAroundToilet.yes,
+      no: review.hasSupportAroundToilet
+        ? venue.hasSupportAroundToilet.no
+        : venue.hasSupportAroundToilet.no + 1
+    };
+  }
+
+  if (typeof review.hasLoweredSinks !== 'undefined') {
+    venue.hasLoweredSinks = {
+      yes: review.hasLoweredSinks
+        ? venue.hasLoweredSinks.yes + 1
+        : venue.hasLoweredSinks.yes,
+      no: review.hasLoweredSinks
+        ? venue.hasLoweredSinks.no
+        : venue.hasLoweredSinks.no + 1
+    };
+  }
+
+  //
+  //original fields
+  //
   if (typeof review.allowsGuideDog !== 'undefined') {
     venue.allowsGuideDog = {
       yes: review.allowsGuideDog
@@ -232,6 +399,7 @@ module.exports = async (req, res, next) => {
     };
   }
 
+  /*
   if (typeof review.bathroomScore !== 'undefined') {
     if (venue.bathroomReviews > 0) {
       venue.bathroomScore =
@@ -253,6 +421,7 @@ module.exports = async (req, res, next) => {
     venue.entryScore = review.entryScore;
     venue.entryReviews = 1;
   }
+  */
 
   if (typeof review.hasParking !== 'undefined') {
     venue.hasParking = {
@@ -307,19 +476,70 @@ module.exports = async (req, res, next) => {
     };
   }
 
+  let scoring;
+  //calculate entranceScore, glyphs
+  scoring = venueReviewSummary.calculateRatingLevel('entrance', venue);
+  //console.log('entrance score: ', scoring);
+  venue.entranceScore = scoring.ratingLevel;
+  venue.entranceGlyphs = scoring.ratingGlyphs;
+
+  //calculate interiorScore, glyphs
+  scoring = venueReviewSummary.calculateRatingLevel('interior', venue);
+  //console.log('interior score: ', scoring);
+  venue.interiorScore = scoring.ratingLevel;
+  venue.interiorGlyphs = scoring.ratingGlyphs;
+
+  //calculate restroomScore, glyphs
+  scoring = venueReviewSummary.calculateRatingLevel('restroom', venue);
+  //console.log('restroom score: ', scoring);
+  venue.restroomScore = scoring.ratingLevel;
+  venue.restroomGlyphs = scoring.ratingGlyphs;
+
+  venue.mapMarkerScore = venueReviewSummary.calculateMapMarkerScore(
+    venue.entranceScore,
+    venue.interiorScore,
+    venue.restroomScore
+  );
+
+  //console.log('venue: ', venue);
+
   try {
     await venue.save();
   } catch (err) {
-    console.log(`Venue ${venue.id} failed to be updated at create-review`);
+    console.log(
+      `Venue ${venue.id} failed to be updated at create-review, at final step`
+    );
     return next(err);
   }
 
   const dataResponse = {
+    //new expanded fields
+    hasPermanentRamp: review.hasPermanentRamp,
+    hasPortableRamp: req.body.hasPortableRamp,
+    hasWideEntrance: review.hasWideEntrance,
+    hasAccessibleTableHeight: review.hasAccessibleTableHeight,
+    hasAccessibleElevator: review.hasAccessibleElevator,
+    hasInteriorRamp: review.hasInteriorRamp,
+    hasSwingOutDoor: review.hasSwingOutDoor,
+    hasLargeStall: review.hasLargeStall,
+    hasSupportAroundToilet: review.hasSupportAroundToilet,
+    hasLoweredSinks: review.hasLoweredSinks,
+
+    /*
+    entranceScore: review.entranceScore,
+    entranceGlyph: review.entryGlyph,
+    interiorScore: review.interiorScore,
+    interiorGlyph: review.interiorGlyph,
+    restroomScore: review.restroomScore,
+    restroomGlyph: review.restroomGlyph,
+    */
+
+    //original fields
     id: review.id,
     allowsGuideDog: review.allowsGuideDog,
-    bathroomScore: review.bathroomScore,
+    //bathroomScore: review.bathroomScore,
     comments: review.comments,
-    entryScore: review.entryScore,
+    //entryScore: review.entryScore,
     event: review.event,
     hasParking: review.hasParking,
     hasSecondEntry: review.hasSecondEntry,
@@ -329,6 +549,8 @@ module.exports = async (req, res, next) => {
     steps: review.steps,
     team: review.team,
     user: review.user,
+    userReviewFieldsAmount: req.user.reviewFieldsAmount,
+    userReviewsAmount: req.user.reviewsAmount,
     venue: review.venue
   };
   return res.status(201).json(dataResponse);

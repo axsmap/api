@@ -2,12 +2,20 @@ const mongoose = require('mongoose');
 
 const reviewSchema = new mongoose.Schema(
   {
+    //new expanded fields
+    hasPermanentRamp: Boolean,
+    hasPortableRamp: Boolean,
+    hasWideEntrance: Boolean,
+    hasAccessibleTableHeight: Boolean,
+    hasAccessibleElevator: Boolean,
+    hasInteriorRamp: Boolean,
+    hasSwingOutDoor: Boolean,
+    hasLargeStall: Boolean,
+    hasSupportAroundToilet: Boolean,
+    hasLoweredSinks: Boolean,
+
+    //original fields
     allowsGuideDog: Boolean,
-    bathroomScore: {
-      type: Number,
-      max: [5, 'Should be less than 6'],
-      min: [1, 'Should be more than 0']
-    },
     comments: {
       type: String,
       maxlength: [300, 'Should be less than 301 characters']
@@ -46,11 +54,25 @@ const reviewSchema = new mongoose.Schema(
         }
       }
     ],
-    entryScore: {
-      type: Number,
-      max: [5, 'Should be less than 6'],
-      min: [1, 'Should be more than 0']
+
+    /*
+     * deprecated 5-star scoring
+     */
+    _entryScore: {
+      type: Number
+      //max: [9, 'Should be less than 10'],
+      //min: [1, 'Should be more than 0']
     },
+    _bathroomScore: {
+      type: Number
+      //max: [4, 'Should be less than 5'],
+      //min: [1, 'Should be more than 0']
+    },
+    _isScoreConverted: {
+      type: Boolean,
+      default: false
+    },
+
     event: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Event'

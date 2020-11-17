@@ -18,14 +18,14 @@ module.exports = async (req, res, next) => {
 
   const reviewsQuery = {};
 
-  if (queryParams.bathroomScore) {
-    const limits = queryParams.bathroomScore.split(',');
-    reviewsQuery.bathroomScore = { $gte: limits[0], $lte: limits[1] };
+  if (queryParams.restroomScore) {
+    //const limits = queryParams.bathroomScore.split(',');
+    reviewsQuery.bathroomScore = { $gte: toInt(queryParams.bathroomScore) };
   }
 
-  if (queryParams.entryScore) {
-    const limits = queryParams.entryScore.split(',');
-    reviewsQuery.entryScore = { $gte: limits[0], $lte: limits[1] };
+  if (queryParams.entranceScore) {
+    //const limits = queryParams.entryScore.split(',');
+    reviewsQuery.entranceScore = { $gte: toInt(queryParams.entranceScore) };
   }
 
   if (queryParams.event) {
@@ -74,6 +74,59 @@ module.exports = async (req, res, next) => {
 
   if (queryParams.wellLit) {
     reviewsQuery.wellLit = toBoolean(queryParams.wellLit);
+  }
+
+  //
+  // new expanded fields
+  //
+  if (queryParams.hasPermanentRamp) {
+    reviewsQuery.hasPermanentRamp = toBoolean(queryParams.hasPermanentRamp);
+  }
+
+  if (queryParams.hasPortableRamp) {
+    reviewsQuery.hasPortableRamp = toBoolean(queryParams.hasPortableRamp);
+  }
+
+  if (queryParams.hasWideEntrance) {
+    reviewsQuery.hasWideEntrance = toBoolean(queryParams.hasWideEntrance);
+  }
+
+  if (queryParams.hasAccessibleTableHeight) {
+    reviewsQuery.hasAccessibleTableHeight = toBoolean(
+      queryParams.hasAccessibleTableHeight
+    );
+  }
+
+  if (queryParams.hasAccessibleElevator) {
+    reviewsQuery.hasAccessibleElevator = toBoolean(
+      queryParams.hasAccessibleElevator
+    );
+  }
+
+  if (queryParams.hasInteriorRamp) {
+    reviewsQuery.hasInteriorRamp = toBoolean(queryParams.hasInteriorRamp);
+  }
+
+  if (queryParams.hasSwingOutDoor) {
+    reviewsQuery.hasSwingOutDoor = toBoolean(queryParams.hasSwingOutDoor);
+  }
+
+  if (queryParams.hasLargeStall) {
+    reviewsQuery.hasLargeStall = toBoolean(queryParams.hasLargeStall);
+  }
+
+  if (queryParams.hasSupportAroundToilet) {
+    reviewsQuery.hasSupportAroundToilet = toBoolean(
+      queryParams.hasSupportAroundToilet
+    );
+  }
+
+  if (queryParams.hasLoweredSinks) {
+    reviewsQuery.hasLoweredSinks = toBoolean(queryParams.hasLoweredSinks);
+  }
+
+  if (queryParams.interiorScore) {
+    reviewsQuery.interiorScore = { $gte: toInt(queryParams.interiorScore) };
   }
 
   let page = queryParams.page || 1;

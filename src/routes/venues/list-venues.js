@@ -6,6 +6,7 @@ const { isNumber } = require('../../helpers');
 const { Venue } = require('../../models/venue');
 
 const { validateListVenues } = require('./validations');
+const venueReviewSummary = require('../../helpers/venue-review-summary.js');
 
 module.exports = async (req, res, next) => {
   const queryParams = req.query;
@@ -14,7 +15,11 @@ module.exports = async (req, res, next) => {
   if (!isValid) return res.status(400).json(errors);
 
   let coordinates = queryParams.location.split(',');
+
+  //Legacy function from two-bar search, geocodes from string address
   if (queryParams.address && !queryParams.page) {
+    console.log('in address conditional, ', queryParams);
+    queryParams.name = queryParams.address;
     const geocodeParams = `?key=${process.env.PLACES_API_KEY}&address=${slugify(
       queryParams.address
     )}`;
@@ -50,40 +55,57 @@ module.exports = async (req, res, next) => {
       geocodeResponse.data.results[0].geometry.location.lat,
       geocodeResponse.data.results[0].geometry.location.lng
     ];
-  }
+  } //end address geocode
 
   let venuesFilters = {};
+  let dbVenuesFilters = {};
 
-  if (queryParams.entryScore) {
-    venuesFilters.entryScore = {
-      $gte: parseFloat(queryParams.entryScore)
-    };
+  /*
+   * Legacy filter string building function,
+   *  has a critical defect condition where if 
+   *  no > yes but yes is at least 1, then there
+   *  would be a false match.
+   */
+  if (queryParams.entranceScore) {
+    venuesFilters.entranceScore = parseFloat(queryParams.entranceScore);
+    //{ $gte: parseFloat(queryParams.entranceScore) };
   }
 
-  if (queryParams.bathroomScore) {
-    venuesFilters.bathroomScore = {
-      $gte: parseFloat(queryParams.bathroomScore)
-    };
+  if (queryParams.interiorScore) {
+    venuesFilters.interiorScore = parseFloat(queryParams.interiorScore);
+    //{ $gte: parseFloat(queryParams.interiorScore) };
+  }
+
+  if (queryParams.restroomScore) {
+    venuesFilters.restroomScore = parseFloat(queryParams.restroomScore);
+    //{ $gte: parseFloat(queryParams.restroomScore) };
   }
 
   if (queryParams.allowsGuideDog) {
+    venuesFilters.allowsGuideDog = parseFloat(queryParams.allowsGuideDog);
+
     const allowsGuideDog = parseFloat(queryParams.allowsGuideDog) === 1;
     if (allowsGuideDog) {
-      venuesFilters['allowsGuideDog.yes'] = { $gte: 1 };
+      dbVenuesFilters['allowsGuideDog.yes'] = { $gte: 1 };
     } else {
-      venuesFilters['allowsGuideDog.no'] = { $gte: 1 };
+      dbVenuesFilters['allowsGuideDog.no'] = { $gte: 1 };
     }
   }
 
   if (queryParams.hasParking) {
+    venuesFilters.hasParking = queryParams.hasParking;
+
     const hasParking = parseFloat(queryParams.hasParking) === 1;
     if (hasParking) {
-      venuesFilters['hasParking.yes'] = { $gte: 1 };
+      dbVenuesFilters['hasParking.yes'] = { $gte: 1 };
     } else {
-      venuesFilters['hasParking.no'] = { $gte: 1 };
+      dbVenuesFilters['hasParking.no'] = { $gte: 1 };
     }
   }
 
+  /*
+   * Not used
+   *
   if (queryParams.hasRamp) {
     const hasRamp = parseFloat(queryParams.hasRamp) === 1;
     if (hasRamp) {
@@ -140,15 +162,26 @@ module.exports = async (req, res, next) => {
       venuesFilters['steps.moreThanTwo'] = { $gte: 1 };
     }
   }
+  *
+  */
 
   let dataResponse;
 
-  if (!isEmpty(venuesFilters)) {
+  /*
+   * Legacy filtering function that searches solely on
+   *  AXS Venue data and provides it's own pagination of 20
+   *  UPDATED 05/2020 TO SUPPORT FILTER ONLY SELF SEARCH
+   */
+  if (!isEmpty(venuesFilters) && isEmpty(queryParams.name)) {
+    console.log('>> Performing DB search');
+    /*
     if (queryParams.name) {
+      //performs literal name match against AXS Venue name
       venuesFilters.name = { $regex: queryParams.name, $options: 'i' };
     }
+    */
 
-    venuesFilters.location = {
+    dbVenuesFilters.location = {
       $near: {
         $geometry: {
           type: 'Point',
@@ -159,17 +192,22 @@ module.exports = async (req, res, next) => {
     };
 
     if (queryParams.type) {
-      venuesFilters.types = queryParams.type;
+      dbVenuesFilters.types = queryParams.type;
     }
 
-    venuesFilters.isArchived = false;
+    dbVenuesFilters.isArchived = false;
 
     let page = 1;
     if (isNumber(queryParams.page)) {
       page = queryParams.page;
     }
 
-    const pageLimit = 20;
+    const pageLimit =
+      venuesFilters.hasOwnProperty('entranceScore') ||
+      venuesFilters.hasOwnProperty('interiorScore') ||
+      venuesFilters.hasOwnProperty('restroomScore')
+        ? 80
+        : 20;
 
     if (page > 0) {
       page -= 1;
@@ -184,19 +222,23 @@ module.exports = async (req, res, next) => {
     try {
       [venues, total] = await Promise.all([
         Venue.find(
-          venuesFilters,
-          'address allowsGuideDog bathroomScore entryScore hasParking hasSecondEntry hasWellLit isQuiet isSpacious location name photos placeId steps types'
+          dbVenuesFilters
+          /*,'address allowsGuideDog hasParking hasSecondEntry hasWellLit isQuiet isSpacious location name photos placeId steps types'*/
         )
           .skip(page * pageLimit)
           .limit(pageLimit),
-        Venue.find(venuesFilters).count()
+        Venue.find(dbVenuesFilters).count()
+        /*TODO: count is deprecated in favor of countDocuments, but that does not support $near
+          would need to move to GeoWithin but that does not return sorted results
+          */
       ]);
     } catch (err) {
       console.log(
         `Venues failed to be found or count at list-venues.\nvenuesQuery: ${JSON.stringify(
-          venuesFilters
+          dbVenuesFilters
         )}`
       );
+      console.log(err);
       return next(err);
     }
 
@@ -207,6 +249,66 @@ module.exports = async (req, res, next) => {
         location: venue.coordinates
       })
     );
+
+    //+ADDED
+    //Perform ratings logic on all returned venues
+    console.log('Raw venues count: ' + venues.length);
+    venues = venues.filter(venue => {
+      //console.log('In scoring assignment');
+      let scoring;
+      //calculate entranceScore, glyphs
+      scoring = venueReviewSummary.calculateRatingLevel('entrance', venue);
+      venue.entranceScore = scoring.ratingLevel;
+      venue.entranceGlyphs = scoring.ratingGlyphs;
+
+      //calculate interiorScore, glyphs
+      scoring = venueReviewSummary.calculateRatingLevel('interior', venue);
+      venue.interiorScore = scoring.ratingLevel;
+      venue.interiorGlyphs = scoring.ratingGlyphs;
+
+      //calculate restroomScore, glyphs
+      scoring = venueReviewSummary.calculateRatingLevel('restroom', venue);
+      venue.restroomScore = scoring.ratingLevel;
+      venue.restroomGlyphs = scoring.ratingGlyphs;
+
+      venue.mapMarkerScore = venueReviewSummary.calculateMapMarkerScore(
+        venue.entranceScore,
+        venue.interiorScore,
+        venue.restroomScore
+      );
+
+      let passesValidation = true;
+      if (venuesFilters.hasOwnProperty('entranceScore')) {
+        if (
+          !venue.entranceScore ||
+          venue.entranceScore < venuesFilters.entranceScore
+        ) {
+          passesValidation = false;
+        }
+      }
+
+      if (passesValidation && venuesFilters.hasOwnProperty('interiorScore')) {
+        if (
+          !venue.interiorScore ||
+          venue.interiorScore < venuesFilters.interiorScore
+        ) {
+          passesValidation = false;
+        }
+      }
+
+      if (passesValidation && venuesFilters.hasOwnProperty('restroomScore')) {
+        if (
+          !venue.restroomScore ||
+          venue.restroomScore < venuesFilters.restroomScore
+        ) {
+          passesValidation = false;
+        }
+      }
+
+      if (passesValidation) {
+        return venue;
+      }
+    });
 
     const lastPage = Math.ceil(total / pageLimit);
     let nextPage;
@@ -223,16 +325,30 @@ module.exports = async (req, res, next) => {
       nextPage,
       results: venues
     };
+    /*
+    * End legacy filter
+    */
   } else {
+    console.log('>> Performing Google search');
+
+    /*
+     *  Perform Google search when there text entered or no filters selected
+     */
     let nearbyParams = `?key=${process.env.PLACES_API_KEY}`;
+    let searchType = queryParams.name ? 'textsearch' : 'nearbysearch';
 
     if (!queryParams.page) {
       nearbyParams = `${nearbyParams}&location=${coordinates[0]},${
         coordinates[1]
-      }&rankby=distance`;
+        //}&rankby=distance`;
+      }`;
 
       if (queryParams.name) {
-        nearbyParams = `${nearbyParams}&keyword=${queryParams.name}`;
+        //nearbyParams = `${nearbyParams}&keyword=${queryParams.name}`;
+        nearbyParams = `${nearbyParams}&query=${queryParams.name}&radius=5000`;
+      } else {
+        //empty search, such as on load
+        nearbyParams = `${nearbyParams}&rankby=distance`;
       }
 
       if (queryParams.type) {
@@ -244,10 +360,27 @@ module.exports = async (req, res, next) => {
       nearbyParams = `${nearbyParams}&pagetoken=${queryParams.page}`;
     }
 
+    if (queryParams.rankby) {
+      nearbyParams = `${nearbyParams}&rankby=${queryParams.rankby}`;
+    }
+    if (queryParams.opennow) {
+      nearbyParams = `${nearbyParams}&opennow=${queryParams.opennow}`;
+    }
+    if (queryParams.minprice) {
+      nearbyParams = `${nearbyParams}&minprice=${queryParams.minprice}`;
+    }
+    if (queryParams.maxprice) {
+      nearbyParams = `${nearbyParams}&maxprice=${queryParams.maxprice}`;
+    }
+
     let placesResponse;
     try {
+      console.log(
+        'performing google search: ' +
+          `https://maps.googleapis.com/maps/api/place/${searchType}/json${nearbyParams}`
+      );
       placesResponse = await axios.get(
-        `https://maps.googleapis.com/maps/api/place/nearbysearch/json${nearbyParams}`
+        `https://maps.googleapis.com/maps/api/place/${searchType}/json${nearbyParams}`
       );
     } catch (err) {
       console.log(
@@ -268,7 +401,19 @@ module.exports = async (req, res, next) => {
     } else if (statusCode === 'UNKNOWN_ERROR') {
       return next(new Error('Unknown error with Google Places API'));
     }
+    //do we need to check for 0?
 
+    if (placesResponse.data.results.length == 1) {
+      if (placesResponse.data.results[0].types[0] == 'locality') {
+        console.log(
+          'Found a city only: ',
+          placesResponse.data.results[0].geometry.location
+        );
+        //TODO: redo search with new coordinates and no query/name or change/add "places in " to the first part of the string
+      }
+    }
+
+    //Format Google Places results and get array of IDs
     let places = [];
     const placesIds = [];
     placesResponse.data.results.forEach(place => {
@@ -280,7 +425,8 @@ module.exports = async (req, res, next) => {
       }
 
       places.push({
-        address: place.vicinity,
+        //address: place.vicinity,
+        address: place.formatted_address,
         location: {
           lat: place.geometry.location.lat,
           lng: place.geometry.location.lng
@@ -293,6 +439,7 @@ module.exports = async (req, res, next) => {
       placesIds.push(place.place_id);
     });
 
+    //Use array of Google Place IDs to find AXS Venues
     let venues;
     try {
       venues = await Venue.find({ placeId: { $in: placesIds } });
@@ -303,13 +450,137 @@ module.exports = async (req, res, next) => {
       return next(err);
     }
 
+    //Perform ratings logic on all returned venues
+    venues.forEach(venue => {
+      //console.log('In scoring assignment');
+      let scoring;
+      //calculate entranceScore, glyphs
+      scoring = venueReviewSummary.calculateRatingLevel('entrance', venue);
+      venue.entranceScore = scoring.ratingLevel;
+      venue.entranceGlyphs = scoring.ratingGlyphs;
+
+      //calculate interiorScore, glyphs
+      scoring = venueReviewSummary.calculateRatingLevel('interior', venue);
+      venue.interiorScore = scoring.ratingLevel;
+      venue.interiorGlyphs = scoring.ratingGlyphs;
+
+      //calculate restroomScore, glyphs
+      scoring = venueReviewSummary.calculateRatingLevel('restroom', venue);
+      venue.restroomScore = scoring.ratingLevel;
+      venue.restroomGlyphs = scoring.ratingGlyphs;
+
+      venue.mapMarkerScore = venueReviewSummary.calculateMapMarkerScore(
+        venue.entranceScore,
+        venue.interiorScore,
+        venue.restroomScore
+      );
+    });
+
+    //Filter out, remove, Google Places that are not AXS Venues
+    //  Can't use hasOwnProperty() on mongoose model objects  //
+    if (!isEmpty(venuesFilters)) {
+      console.log('>> Performing secondary DB filtering');
+      places = places.filter(place => {
+        const venue = find(venues, venue => venue.placeId === place.placeId);
+        if (venue) {
+          //console.log('In verification of filters');
+          let passesValidation = true;
+          if (
+            passesValidation &&
+            venuesFilters.hasOwnProperty('allowsGuideDog')
+          ) {
+            if (
+              !venue.allowsGuideDog ||
+              venue.allowsGuideDog.yes < venue.allowsGuideDog.no ||
+              venue.allowsGuideDog.yes == 0
+            ) {
+              passesValidation = false;
+            }
+          }
+
+          if (passesValidation && venuesFilters.hasOwnProperty('hasParking')) {
+            if (
+              !venue.hasParking ||
+              venue.hasParking.yes < venue.hasParking.no ||
+              venue.hasParking.yes == 0
+            ) {
+              passesValidation = false;
+            }
+          }
+
+          if (
+            passesValidation &&
+            venuesFilters.hasOwnProperty('entranceScore')
+          ) {
+            if (
+              !venue.entranceScore ||
+              venue.entranceScore < venuesFilters.entranceScore
+            ) {
+              passesValidation = false;
+            }
+          }
+
+          if (
+            passesValidation &&
+            venuesFilters.hasOwnProperty('interiorScore')
+          ) {
+            if (
+              !venue.interiorScore ||
+              venue.interiorScore < venuesFilters.interiorScore
+            ) {
+              passesValidation = false;
+            }
+          }
+
+          if (
+            passesValidation &&
+            venuesFilters.hasOwnProperty('restroomScore')
+          ) {
+            if (
+              !venue.restroomScore ||
+              venue.restroomScore < venuesFilters.restroomScore
+            ) {
+              passesValidation = false;
+            }
+          }
+
+          if (passesValidation) {
+            return venue;
+          }
+        }
+      });
+    } //end filtering Google results
+
+    //
     places = places.map(place => {
       const venue = find(venues, venue => venue.placeId === place.placeId);
       if (venue) {
         return Object.assign({}, place, {
+          //new expanded fields
+          hasPermanentRamp: venue.hasPermanentRamp,
+          hasPortableRamp: venue.hasPortableRamp,
+          hasWideEntrance: venue.hasWideEntrance,
+          hasAccessibleTableHeight: venue.hasAccessibleTableHeight,
+          hasAccessibleElevator: venue.hasAccessibleElevator,
+          hasInteriorRamp: venue.hasInteriorRamp,
+          hasSwingInDoor: venue.hasSwingInDoor,
+          hasSwingOutDoor: venue.hasSwingOutDoor,
+          hasLargeStall: venue.hasLargeStall,
+          hasSupportAroundToilet: venue.hasSupportAroundToilet,
+          hasLoweredSinks: venue.hasLoweredSinks,
+
+          entranceScore: venue.entranceScore,
+          entranceGlyphs: venue.entranceGlyphs,
+          interiorScore: venue.interiorScore,
+          interiorGlyphs: venue.interiorGlyphs,
+          restroomScore: venue.restroomScore,
+          restroomGlyphs: venue.restroomGlyphs,
+          mapMarkerScore: venue.mapMarkerScore,
+
+          //original fields
           allowsGuideDog: venue.allowsGuideDog,
-          bathroomScore: venue.bathroomScore,
-          entryScore: venue.entryScore,
+          //_bathroomScore: venue.bathroomScore,
+          //_entryScore: venue.entryScore,
           hasParking: venue.hasParking,
           hasSecondEntry: venue.hasSecondEntry,
           hasWellLit: venue.hasWellLit,
@@ -319,12 +590,34 @@ module.exports = async (req, res, next) => {
         });
       }
 
+      //venue not found
       return Object.assign({}, place, {
+        //new expanded fields
+        hasPermanentRamp: { yes: 0, no: 0 },
+        hasPortableRamp: { yes: 0, no: 0 },
+        hasWideEntrance: { yes: 0, no: 0 },
+        hasAccessibleTableHeight: { yes: 0, no: 0 },
+        hasAccessibleElevator: { yes: 0, no: 0 },
+        hasInteriorRamp: { yes: 0, no: 0 },
+        hasSwingInDoor: { yes: 0, no: 0 },
+        hasSwingOutDoor: { yes: 0, no: 0 },
+        hasLargeStall: { yes: 0, no: 0 },
+        hasSupportAroundToilet: { yes: 0, no: 0 },
+        hasLoweredSinks: { yes: 0, no: 0 },
+        interiorScore: 0,
+        interiorGlyphs: 'interior',
+        restroomScore: 0,
+        restroomGlyphs: 'restroom',
+        entranceScore: 0,
+        entranceGlyphs: 'entrylg',
+        mapMarkerScore: 0,
+
+        //original fields
         allowsGuideDog: { yes: 0, no: 0 },
-        bathroomReviews: 0,
-        bathroomScore: null,
-        entryReviews: 0,
-        entryScore: null,
+        //_bathroomReviews: 0,
+        //_bathroomScore: null,
+        //_entryReviews: 0,
+        //_entryScore: null,
         hasParking: { yes: 0, no: 0 },
         hasSecondEntry: { yes: 0, no: 0 },
         hasWellLit: { yes: 0, no: 0 },
@@ -343,7 +636,7 @@ module.exports = async (req, res, next) => {
       nextPage: placesResponse.data.next_page_token,
       results: places
     };
-  }
+  } //ends legacy filter logic, false conditional
 
   return res.status(200).json(dataResponse);
 };

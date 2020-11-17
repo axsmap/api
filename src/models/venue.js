@@ -2,6 +2,146 @@ const mongoose = require('mongoose');
 
 const venueSchema = new mongoose.Schema(
   {
+    //new expanded fields
+    hasPermanentRamp: {
+      yes: {
+        type: Number,
+        default: 0
+      },
+      no: {
+        type: Number,
+        default: 0
+      }
+    },
+    hasPortableRamp: {
+      yes: {
+        type: Number,
+        default: 0
+      },
+      no: {
+        type: Number,
+        default: 0
+      }
+    },
+    hasWideEntrance: {
+      yes: {
+        type: Number,
+        default: 0
+      },
+      no: {
+        type: Number,
+        default: 0
+      }
+    },
+    hasAccessibleTableHeight: {
+      yes: {
+        type: Number,
+        default: 0
+      },
+      no: {
+        type: Number,
+        default: 0
+      }
+    },
+    hasAccessibleElevator: {
+      yes: {
+        type: Number,
+        default: 0
+      },
+      no: {
+        type: Number,
+        default: 0
+      }
+    },
+    hasInteriorRamp: {
+      yes: {
+        type: Number,
+        default: 0
+      },
+      no: {
+        type: Number,
+        default: 0
+      }
+    },
+    hasSwingOutDoor: {
+      yes: {
+        type: Number,
+        default: 0
+      },
+      no: {
+        type: Number,
+        default: 0
+      }
+    },
+    hasLargeStall: {
+      yes: {
+        type: Number,
+        default: 0
+      },
+      no: {
+        type: Number,
+        default: 0
+      }
+    },
+    hasSupportAroundToilet: {
+      yes: {
+        type: Number,
+        default: 0
+      },
+      no: {
+        type: Number,
+        default: 0
+      }
+    },
+    hasLoweredSinks: {
+      yes: {
+        type: Number,
+        default: 0
+      },
+      no: {
+        type: Number,
+        default: 0
+      }
+    },
+    entranceScore: {
+      //enum: ['alert', 'caution', 'accessible', 'default'],
+      //description: 'can only be one of the enum values and is required',
+      //default: 'default'
+      type: Number,
+      default: 0
+    },
+    entranceGlyphs: {
+      type: String,
+      maxlength: [32, 'Should be less than 256 characters']
+    },
+    interiorScore: {
+      //enum: ['alert', 'caution', 'accessible', 'default'],
+      //description: 'can only be one of the enum values and is required',
+      //: 'default'
+      type: Number,
+      default: 0
+    },
+    interiorGlyphs: {
+      type: String,
+      maxlength: [32, 'Should be less than 256 characters']
+    },
+    restroomScore: {
+      //enum: ['alert', 'caution', 'accessible', 'default'],
+      //: 'can only be one of the enum values and is required',
+      //default: 'default'
+      type: Number,
+      default: 0
+    },
+    restroomGlyphs: {
+      type: String,
+      maxlength: [32, 'Should be less than 256 characters']
+    },
+    mapMarkerScore: {
+      type: Number,
+      default: 0
+    },
+
+    //original fields
     address: {
       type: String,
       maxlength: [255, 'Should be less than 256 characters']
@@ -16,26 +156,35 @@ const venueSchema = new mongoose.Schema(
         default: 0
       }
     },
-    bathroomReviews: {
+
+    /*
+     * deprecated 5-star scoring
+     */
+    _bathroomReviews: {
       type: Number,
-      default: 0,
-      min: [0, 'Should be more than 1']
+      default: 0
+      //min: [0, 'Should be more than 1']
     },
-    bathroomScore: {
+    _bathroomScore: {
+      type: Number
+      //max: [4, 'Should be less than 5'],
+      //min: [1, 'Should be more than 0']
+    },
+    _entryReviews: {
       type: Number,
-      max: [5, 'Should be less than 6'],
-      min: [1, 'Should be more than 0']
+      default: 0
+      //min: [0, 'Should be more than -1']
     },
-    entryReviews: {
-      type: Number,
-      default: 0,
-      min: [0, 'Should be more than -1']
+    _entryScore: {
+      type: Number
+      //max: [9, 'Should be less than 10'],
+      //min: [1, 'Should be more than 0']
     },
-    entryScore: {
-      type: Number,
-      max: [5, 'Should be less than 6'],
-      min: [1, 'Should be more than 0']
+    _isScoreConverted: {
+      type: Boolean,
+      default: false
     },
+
     hasParking: {
       yes: {
         type: Number,

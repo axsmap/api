@@ -1,0 +1,322 @@
+{
+  "fields": {
+    "entrance": {},
+    "interior": {},
+    "restroom": {}
+  },
+  "displayOrder": [],
+  "reviewSummaryLogic": {
+    "marker": {
+      "alert": [
+        {
+          "field": "entrance",
+          "matchValue": "alert"
+        },
+        {
+          "field": "interior",
+          "matchValue": "alert"
+        },
+        {
+          "field": "restroom",
+          "matchValue": "alert"
+        }
+      ],
+      "caution": [
+        {
+          "field": "entrance",
+          "matchValue": "caution"
+        },
+        {
+          "field": "interior",
+          "matchValue": "caution"
+        },
+        {
+          "field": "restroom",
+          "matchValue": "caution"
+        }
+      ],
+      "accessible": [
+        {
+          "field": "entrance",
+          "matchValue": "accessible"
+        },
+        {
+          "field": "interior",
+          "matchValue": "accessible"
+        },
+        {
+          "field": "restroom",
+          "matchValue": "accessible"
+        }
+      ],
+      "default": []
+    },
+    "entrance": {
+      "alert": [
+        {
+          "field": "steps",
+          "matchValue": 3,
+          "showGlyph": "steps,two"
+        },
+        {
+          "field": "steps",
+          "matchValue": 2,
+          "showGlyph": "steps,two"
+        },
+        {
+          "fields": ["steps", "hasPermanentRamp", "hasPortableRamp"],
+          "matchValue": null,
+          "and": {
+            "field": "hasParking",
+            "matchValue": 0
+          },
+          "showGlyph": "parking"
+        },
+        {
+          "fields": ["steps", "hasPermanentRamp", "hasPortableRamp"],
+          "matchValue": null,
+          "and": {
+            "field": "hasSecondEntry",
+            "matchValue": 0
+          },
+          "showGlyph": "secondEntry"
+        },
+        {
+          "fields": ["steps", "hasPermanentRamp", "hasPortableRamp"],
+          "matchValue": null,
+          "and": {
+            "field": "hasWideEntrance",
+            "matchValue": 0
+          },
+          "showGlyph": "wideEntry"
+        }
+      ],
+      "caution": [
+        {
+          "field": "hasPortableRamp",
+          "matchValue": 1,
+          "showGlyph": "portableRamp"
+        },
+        {
+          "field": "steps",
+          "matchValue": 1,
+          "showGlyph": "steps,one"
+        }
+      ],
+      "accessible": [
+        {
+          "field": "steps",
+          "matchValue": 0,
+          "showGlyph": "steps,zero"
+        },
+        {
+          "field": "hasPermanentRamp",
+          "matchValue": 1,
+          "showGlyph": "permanentRamp"
+        },
+        {
+          "fields": ["steps", "hasPermanentRamp", "hasPortableRamp"],
+          "matchValue": null,
+          "and": {
+            "field": "hasParking",
+            "matchValue": 1
+          },
+          "showGlyph": "parking"
+        },
+        {
+          "fields": ["steps", "hasPermanentRamp", "hasPortableRamp"],
+          "matchValue": null,
+          "and": {
+            "field": "hasSecondEntry",
+            "matchValue": 1
+          },
+          "showGlyph": "secondEntry"
+        },
+        {
+          "fields": ["steps", "hasPermanentRamp", "hasPortableRamp"],
+          "matchValue": null,
+          "and": {
+            "field": "hasWideEntrance",
+            "matchValue": 1
+          },
+          "showGlyph": "wideEntry"
+        }
+      ],
+      "default": [
+        {
+          "showGlyph": "entrylg"
+        }
+      ]
+    },
+    "interior": {
+      "alert": [
+        {
+          "fields": [
+            "isSpacious",
+            "hasAccessibleTableHeight",
+            "hasWellLit",
+            "isQuiet",
+            "allowsGuideDog"
+          ],
+          "matchValue": 0,
+          "showGlyph": "interior"
+        }
+      ],
+      "caution": [
+        {
+          "field": "isSpacious",
+          "matchValue": 0,
+          "showGlyph": "space"
+        },
+        {
+          "field": "hasAccessibleTableHeight",
+          "matchValue": 0,
+          "showGlyph": "table"
+        },
+        {
+          "field": "hasWellLit",
+          "matchValue": 0,
+          "showGlyph": "light"
+        },
+        {
+          "field": "isQuiet",
+          "matchValue": 0,
+          "showGlyph": "sound"
+        },
+        {
+          "field": "allowsGuideDog",
+          "matchValue": 0,
+          "showGlyph": "guideDog"
+        }
+      ],
+      "accessible": [
+        {
+          "fields": [
+            "isSpacious",
+            "hasAccessibleTableHeight",
+            "hasWellLit",
+            "isQuiet",
+            "allowsGuideDog"
+          ],
+          "matchValue": 1,
+          "showGlyph": "interior"
+        },
+        {
+          "field": "isSpacious",
+          "matchValue": 1,
+          "showGlyph": "space"
+        },
+        {
+          "field": "hasAccessibleTableHeight",
+          "matchValue": 1,
+          "showGlyph": "table"
+        },
+        {
+          "field": "hasWellLit",
+          "matchValue": 1,
+          "showGlyph": "light"
+        },
+        {
+          "field": "isQuiet",
+          "matchValue": 1,
+          "showGlyph": "sound"
+        },
+        {
+          "field": "allowsGuideDog",
+          "matchValue": 1,
+          "showGlyph": "guideDog"
+        }
+      ],
+      "default": [
+        {
+          "showGlyph": "interior"
+        }
+      ]
+    },
+    "restroom": {
+      "alert": [
+        {
+          "fields": [
+            "hasSwingOutDoor",
+            "hasLargeStall",
+            "hasSupportAroundToilet",
+            "hasLoweredSinks"
+          ],
+          "matchValue": 0,
+          "showGlyph": "restroom"
+        },
+        {
+          "field": "hasSwingOutDoor",
+          "matchValue": 0,
+          "showGlyph": "doorSwingsOut"
+        }
+      ],
+      "caution": [
+        {
+          "field": "hasSwingOutDoor",
+          "notMatchValue": 0,
+          "and": {
+            "field": "hasLargeStall",
+            "matchValue": 0
+          },
+          "showGlyph": "stallLarge"
+        },
+        {
+          "field": "hasSwingOutDoor",
+          "notMatchValue": 0,
+          "and": {
+            "field": "hasSupportAroundToilet",
+            "matchValue": 0
+          },
+          "showGlyph": "toiletTwoBarSupport"
+        },
+        {
+          "field": "hasSwingOutDoor",
+          "notMatchValue": 0,
+          "and": {
+            "field": "hasLoweredSinks",
+            "matchValue": 0
+          },
+          "showGlyph": "sinkLowered"
+        }
+      ],
+      "accessible": [
+        {
+          "fields": [
+            "hasSwingOutDoor",
+            "hasLargeStall",
+            "hasSupportAroundToilet",
+            "hasLoweredSinks"
+          ],
+          "matchValue": 1,
+          "showGlyph": "restroom"
+        },
+        {
+          "field": "hasSwingOutDoor",
+          "matchValue": 1,
+          "showGlyph": "doorSwingsOut"
+        },
+        {
+          "field": "hasLargeStall",
+          "matchValue": 1,
+          "showGlyph": "stallLarge"
+        },
+        {
+          "field": "hasSupportAroundToilet",
+          "matchValue": 1,
+          "showGlyph": "toiletTwoBarSupport"
+        },
+        {
+          "field": "hasLoweredSinks",
+          "matchValue": 1,
+          "showGlyph": "sinkLowered"
+        }
+      ],
+      "default": [
+        {
+          "showGlyph": "restroom"
+        }
+      ]
+    }
+  }
+}

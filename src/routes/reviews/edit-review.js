@@ -57,9 +57,22 @@ module.exports = async (req, res, next) => {
   }
 
   const data = pick(req.body, [
-    'bathroomScore',
+    //new expanded fields
+    'hasPermanentRamp',
+    'hasPortableRamp',
+    'hasWideEntrance',
+    'hasAccessibleTableHeight',
+    'hasAccessibleElevator',
+    'hasInteriorRamp',
+    'hasSwingOutDoor',
+    'hasLargeStall',
+    'hasSupportAroundToilet',
+    'hasLoweredSinks',
+
+    //original fields
+    //'bathroomScore',
     'comments',
-    'entryScore',
+    //'entryScore',
     'event',
     'guideDog',
     'parking',
@@ -77,9 +90,9 @@ module.exports = async (req, res, next) => {
     return res.status(400).json(errors);
   }
 
-  review.bathroomScore = data.bathroomScore || review.bathroomScore;
+  //review.bathroomScore = data.bathroomScore || review.bathroomScore;
   review.comments = data.comments || review.comments;
-  review.entryScore = data.entryScore || review.entryScore;
+  //review.entryScore = data.entryScore || review.entryScore;
 
   if (data.event) {
     let event;
@@ -118,6 +131,21 @@ module.exports = async (req, res, next) => {
   review.ramp = data.ramp || review.ramp;
   review.secondEntry = data.secondEntry || review.secondEntry;
   review.spacious = data.spacious || review.spacious;
+
+  //new expanded fields
+  review.hasPermanentRamp = data.hasPermanentRamp || review.hasPermanentRamp;
+  review.hasPortableRamp = data.hasPortableRamp || review.hasPortableRamp;
+  review.hasWideEntrance = data.hasWideEntrance || review.hasWideEntrance;
+  review.hasAccessibleTableHeight =
+    data.hasAccessibleTableHeight || review.hasAccessibleTableHeight;
+  review.hasAccessibleElevator =
+    data.hasAccessibleElevator || review.hasAccessibleElevator;
+  review.hasInteriorRamp = data.hasInteriorRamp || review.hasInteriorRamp;
+  review.hasSwingOutDoor = data.hasSwingOutDoor || review.hasSwingOutDoor;
+  review.hasLargeStall = data.hasLargeStall || review.hasLargeStall;
+  review.hasSupportAroundToilet =
+    data.hasSupportAroundToilet || review.hasSupportAroundToilet;
+  review.hasLoweredSinks = data.hasLoweredSinks || review.hasLoweredSinks;
 
   if (data.steps) {
     venue.stepsReviews[review.steps] -= 1;

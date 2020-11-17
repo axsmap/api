@@ -1,6 +1,6 @@
 {
   "name": "api",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "AXS Map API endpoints",
   "main": "src/index.js",
   "repository": "git@github.com:axsmap/api.git",
