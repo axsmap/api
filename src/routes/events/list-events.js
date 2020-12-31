@@ -65,7 +65,10 @@ module.exports = async (req, res, next) => {
     };
   }
 
-  if (queryParams.hideZeroReviews) {
+  if (
+    queryParams.hideZeroReviews &&
+    parseFloat(queryParams.hideZeroReviews) === 1
+  ) {
     eventsQuery.reviewsAmount = { $gte: 1 };
   }
 

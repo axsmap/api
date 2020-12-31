@@ -546,7 +546,10 @@ module.exports = {
     if (queryParams.hideZeroReviews) {
       if (!isNumber(queryParams.hideZeroReviews)) {
         errors.hideZeroReviews = 'Should be a number';
-      } else if (parseFloat(queryParams.hideZeroReviews) !== 1) {
+      } else if (
+        parseFloat(queryParams.hideZeroReviews) !== 1 &&
+        parseFloat(queryParams.hideZeroReviews) !== 0
+      ) {
         errors.hideZeroReviews = 'Should be 0 (false) or 1 (true)';
       }
     }
