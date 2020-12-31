@@ -43,22 +43,23 @@ module.exports = async (req, res, next) => {
 
   const sortObj = {};
   if (queryParams.sortReviews) {
-    sortObj.reviewsAmount = Number(queryParams.sortReviews);
+    sortObj.reviewsAmount = parseFloat(queryParams.sortReviews);
   }
 
   if (queryParams.sortDate) {
-    sortObj.startDate = Number(queryParams.sortDate);
+    sortObj.startDate = parseFloat(queryParams.sortDate);
   } else {
     sortObj.startDate = -1;
   }
 
   const EQUATORIAL_RADIUS = 3963.2;
-  if (queryParams.latitude && queryParams.longitude && queryParams.radius) {
+  if (queryParams.location && queryParams.radius) {
+    const coordinates = queryParams.location.split(',');
     eventsQuery.location = {
       $geoWithin: {
         $centerSphere: [
-          [Number(queryParams.longitude), Number(queryParams.latitude)],
-          Number(queryParams.radius) / EQUATORIAL_RADIUS
+          [coordinates[1], coordinates[0]],
+          parseFloat(queryParams.radius) / EQUATORIAL_RADIUS
         ]
       }
     };

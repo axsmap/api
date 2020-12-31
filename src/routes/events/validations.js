@@ -485,6 +485,72 @@ module.exports = {
       }
     }
 
+    if (queryParams.sortReviews) {
+      if (!isNumber(queryParams.sortReviews)) {
+        errors.sortReviews = 'Should be a number';
+      } else if (
+        parseFloat(queryParams.sortReviews) !== 1 &&
+        parseFloat(queryParams.sortReviews) !== -1
+      ) {
+        errors.sortReviews = 'Should be 1 (ascending) or -1 (descending)';
+      }
+    }
+
+    if (queryParams.sortDate) {
+      if (!isNumber(queryParams.sortDate)) {
+        errors.sortDate = 'Should be a number';
+      } else if (
+        parseFloat(queryParams.sortDate) !== 1 &&
+        parseFloat(queryParams.sortDate) !== -1
+      ) {
+        errors.sortDate = 'Should be 1 (ascending) or -1 (descending)';
+      }
+    }
+
+    if (!queryParams.location) {
+      errors.location = 'Is required';
+    } else {
+      const location = queryParams.location.split(',');
+
+      if (location.length !== 2) {
+        errors.location = 'Should have two coordinates';
+      } else if (!location[0]) {
+        errors.location = 'Latitude is required';
+      } else if (!isNumber(location[0])) {
+        errors.location = 'Latitude should be a number';
+      } else if (
+        parseFloat(location[0]) < -90 ||
+        parseFloat(location[0]) > 90
+      ) {
+        errors.location = 'Latitude value out of bounds';
+      } else if (!location[1]) {
+        errors.location = 'Longitude is required';
+      } else if (!isNumber(location[1])) {
+        errors.location = 'Longitude should be a number';
+      } else if (
+        parseFloat(location[1]) < -180 ||
+        parseFloat(location[1]) > 180
+      ) {
+        errors.location = 'Longitude value out of bounds';
+      }
+    }
+
+    if (queryParams.radius) {
+      if (!isNumber(queryParams.radius)) {
+        errors.radius = 'Should be a number';
+      } else if (parseFloat(queryParams.radius) <= 0) {
+        errors.radius = 'Radius should be greater than 0 miles';
+      }
+    }
+
+    if (queryParams.hideZeroReviews) {
+      if (!isNumber(queryParams.hideZeroReviews)) {
+        errors.hideZeroReviews = 'Should be a number';
+      } else if (parseFloat(queryParams.hideZeroReviews) !== 1) {
+        errors.hideZeroReviews = 'Should be 0 (false) or 1 (true)';
+      }
+    }
+
     return { errors, isValid: isEmpty(errors) };
   }
 };
