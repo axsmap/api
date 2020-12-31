@@ -41,7 +41,33 @@ module.exports = async (req, res, next) => {
     eventsQuery.startDate = { $lte: beforeDate };
   }
 
-  let sortBy = queryParams.sortBy || '-startDate';
+  const sortObj = {};
+  if (queryParams.sortReviews) {
+    sortObj.reviewsAmount = Number(queryParams.sortReviews);
+  }
+
+  if (queryParams.sortDate) {
+    sortObj.startDate = Number(queryParams.sortDate);
+  } else {
+    sortObj.startDate = -1;
+  }
+
+  const EQUATORIAL_RADIUS = 3963.2;
+  if (queryParams.latitude && queryParams.longitude && queryParams.radius) {
+    eventsQuery.location = {
+      $geoWithin: {
+        $centerSphere: [
+          [Number(queryParams.longitude), Number(queryParams.latitude)],
+          Number(queryParams.radius) / EQUATORIAL_RADIUS
+        ]
+      }
+    };
+  }
+
+  if (queryParams.hideZeroReviews) {
+    eventsQuery.reviewsAmount = { $gte: 1 };
+  }
+
   let page = queryParams.page ? queryParams.page - 1 : 0;
   const pageLimit = queryParams.pageLimit || 12;
 
@@ -60,9 +86,10 @@ module.exports = async (req, res, next) => {
           poster: 1,
           reviewsAmount: 1,
           reviewsGoal: 1,
-          startDate: 1
+          startDate: 1,
+          location: 1
         })
-        .sort(sortBy)
+        .sort(sortObj)
         .skip(page * pageLimit)
         .limit(pageLimit),
       Event.find(eventsQuery).count()
@@ -89,7 +116,7 @@ module.exports = async (req, res, next) => {
     lastPage,
     pageLimit,
     total,
-    sortBy,
+    sortObj,
     results: events
   });
 };
