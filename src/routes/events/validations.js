@@ -507,9 +507,7 @@ module.exports = {
       }
     }
 
-    if (!queryParams.location) {
-      errors.location = 'Is required';
-    } else {
+    if (queryParams.location) {
       const location = queryParams.location.split(',');
 
       if (location.length !== 2) {

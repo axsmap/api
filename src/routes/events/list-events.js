@@ -58,7 +58,7 @@ module.exports = async (req, res, next) => {
     eventsQuery.location = {
       $geoWithin: {
         $centerSphere: [
-          [coordinates[1], coordinates[0]],
+          [parseFloat(coordinates[1]), parseFloat(coordinates[0])],
           parseFloat(queryParams.radius) / EQUATORIAL_RADIUS
         ]
       }
