@@ -63,11 +63,11 @@ module.exports = async (req, res, next) => {
         )
         .then(res => {
           const locationObj = res.data.results[0].geometry.location;
-          const coordinates = [locationObj.latitude, locationObj.longitude];
+          const coordinates = [locationObj.lat, locationObj.lng];
           eventsQuery.location = {
             $geoWithin: {
               $centerSphere: [
-                [parseFloat(coordinates[1]), parseFloat(coordinates[0])],
+                [coordinates[1], coordinates[0]],
                 parseFloat(queryParams.radius) / EQUATORIAL_RADIUS
               ]
             }
