@@ -110,12 +110,6 @@ module.exports = {
       errors.firstName = 'Should only have letters';
     } else if (cleanSpaces(data.firstName).length > 24) {
       errors.firstName = 'Should have less than 25 characters';
-    } else {
-      const firstName = cleanSpaces(data.firstName);
-
-      if (firstName.split(' ').length > 1) {
-        errors.firstName = 'Should only be one name';
-      }
     }
 
     if (typeof data.isSubscribed === 'undefined') {
@@ -132,12 +126,6 @@ module.exports = {
       errors.lastName = 'Should only have letters';
     } else if (cleanSpaces(data.lastName).length > 36) {
       errors.lastName = 'Should have less than 37 characters';
-    } else {
-      const lastName = cleanSpaces(data.lastName);
-
-      if (lastName.split(' ').length > 1) {
-        errors.lastName = 'Should only be one surname';
-      }
     }
 
     if (!data.password) {
