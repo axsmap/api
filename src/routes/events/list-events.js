@@ -1,5 +1,5 @@
 const moment = require('moment');
-
+const axios = require('axios');
 const { Event } = require('../../models/event');
 
 const { validateListEvents } = require('./validations');
@@ -41,7 +41,69 @@ module.exports = async (req, res, next) => {
     eventsQuery.startDate = { $lte: beforeDate };
   }
 
-  let sortBy = queryParams.sortBy || '-startDate';
+  const sortObj = {};
+  if (queryParams.sortReviews) {
+    sortObj.reviewsAmount = parseFloat(queryParams.sortReviews);
+  }
+
+  if (queryParams.sortDate) {
+    sortObj.startDate = parseFloat(queryParams.sortDate);
+  } else {
+    sortObj.startDate = -1;
+  }
+
+  const EQUATORIAL_RADIUS = 3963.2;
+  if (queryParams.location && queryParams.radius) {
+    if (queryParams.keywords) {
+      axios
+        .get(
+          `https://maps.googleapis.com/maps/api/geocode/json?address=${
+            queryParams.keywords
+          }&key=${process.env.PLACES_API_KEY}`
+        )
+        .then(res => {
+          const locationObj = res.data.results[0].geometry.location;
+          const coordinates = [locationObj.lat, locationObj.lng];
+          eventsQuery.location = {
+            $geoWithin: {
+              $centerSphere: [
+                [coordinates[1], coordinates[0]],
+                parseFloat(queryParams.radius) / EQUATORIAL_RADIUS
+              ]
+            }
+          };
+        })
+        .catch(error => {
+          console.log(error);
+        });
+    } else {
+      const coordinates = queryParams.location.split(',');
+      eventsQuery.location = {
+        $geoWithin: {
+          $centerSphere: [
+            [parseFloat(coordinates[1]), parseFloat(coordinates[0])],
+            parseFloat(queryParams.radius) / EQUATORIAL_RADIUS
+          ]
+        }
+      };
+    }
+  }
+
+  if (
+    queryParams.hideZeroReviews &&
+    parseFloat(queryParams.hideZeroReviews) === 1
+  ) {
+    eventsQuery.reviewsAmount = { $gte: 1 };
+  }
+
+  if (
+    queryParams.hideInactiveMapathons &&
+    parseFloat(queryParams.hideInactiveMapathons) === 1
+  ) {
+    eventsQuery.startDate = { $lte: new Date() };
+    eventsQuery.endDate = { $gte: new Date() };
+  }
+
   let page = queryParams.page ? queryParams.page - 1 : 0;
   const pageLimit = queryParams.pageLimit || 12;
 
@@ -60,9 +122,10 @@ module.exports = async (req, res, next) => {
           poster: 1,
           reviewsAmount: 1,
           reviewsGoal: 1,
-          startDate: 1
+          startDate: 1,
+          location: 1
         })
-        .sort(sortBy)
+        .sort(sortObj)
         .skip(page * pageLimit)
         .limit(pageLimit),
       Event.find(eventsQuery).count()
@@ -89,7 +152,7 @@ module.exports = async (req, res, next) => {
     lastPage,
     pageLimit,
     total,
-    sortBy,
+    sortObj,
     results: events
   });
 };
