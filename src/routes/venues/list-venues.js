@@ -11,6 +11,9 @@ const venueReviewSummary = require('../../helpers/venue-review-summary.js');
 module.exports = async (req, res, next) => {
   const queryParams = req.query;
 
+  // encode special characters such as â, é, etc.
+  queryParams.name = encodeURIComponent(queryParams.name);
+
   const { errors, isValid } = validateListVenues(queryParams);
   if (!isValid) return res.status(400).json(errors);
 

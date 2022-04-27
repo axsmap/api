@@ -14,6 +14,7 @@ const { User } = require('../../models/user');
 const { validateGoogleSignIn } = require('./validations');
 
 module.exports = async (req, res, next) => {
+  req.body.code = decodeURIComponent(req.body.code);
   const { errors, isValid } = validateGoogleSignIn(req.body);
   if (!isValid) {
     return res.status(400).json(errors);
