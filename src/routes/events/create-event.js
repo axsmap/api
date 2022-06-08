@@ -28,9 +28,13 @@ module.exports = async (req, res, next) => {
   };
 
   const { errors, isValid } = validateCreateEvent(data);
+  console.log(validationErrors);
+  console.log('hello');
   if (!isValid) return res.status(400).json(errors);
 
   data.address = cleanSpaces(data.address);
+
+  data.description = cleanSpaces(data.description);
 
   data.endDate = moment(data.endDate)
     .endOf('day')
@@ -143,6 +147,8 @@ module.exports = async (req, res, next) => {
         validationErrors[key] = err.errors[key].message;
       });
 
+      console.log(validationErrors);
+      console.log(err.errors);
       return res.status(400).json(validationErrors);
     }
 

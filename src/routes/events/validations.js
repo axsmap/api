@@ -14,10 +14,9 @@ module.exports = {
       errors.address = 'Should be a string';
     }
 
-    if (
-      typeof data.description !== 'undefined' &&
-      typeof data.description !== 'string'
-    ) {
+    if (typeof data.description === 'undefined' || data.description === '') {
+      errors.description = 'Is required';
+    } else if (typeof data.description !== 'string') {
       errors.description = 'Should be a string';
     }
 
@@ -207,11 +206,12 @@ module.exports = {
       }
     }
 
-    if (
-      typeof data.description !== 'undefined' &&
-      typeof data.description !== 'string'
-    ) {
-      errors.description = 'Should be a string';
+    if (typeof data.description !== 'undefined') {
+      if (typeof data.description !== 'string') {
+        errors.description = 'Should be a string';
+      } else if (data.description === '') {
+        errors.description = 'Is required';
+      }
     }
 
     let endDateIsValid = false;

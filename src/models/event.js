@@ -9,7 +9,8 @@ const eventSchema = new mongoose.Schema(
     },
     description: {
       type: String,
-      maxlength: [300, 'Should be less than 301 characters']
+      maxlength: [300, 'Should be less than 301 characters'],
+      required: [true, 'Is required']
     },
     donationAmounts: {
       type: [
@@ -129,6 +130,7 @@ const eventSchema = new mongoose.Schema(
 
 eventSchema.index({
   address: 'text',
+  description: 'text',
   name: 'text',
   endDate: 1,
   reviewsAmount: 1,

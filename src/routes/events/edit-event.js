@@ -53,7 +53,9 @@ module.exports = async (req, res, next) => {
   if (!isValid) return res.status(400).json(errors);
 
   event.address = data.address ? cleanSpaces(data.address) : event.address;
-  event.description = data.description || event.description;
+  event.description = data.description
+    ? cleanSpaces(data.description)
+    : event.description;
 
   if (data.endDate) {
     const endDate = moment(data.endDate)
