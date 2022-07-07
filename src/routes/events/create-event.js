@@ -16,14 +16,14 @@ module.exports = async (req, res, next) => {
     donationAmounts: req.body.donationAmounts,
     donationEnabled: req.body.donationEnabled,
     donationGoal: req.body.donationGoal,
-    endDate: req.body.endDate,
+    // endDate: req.body.endDate,
     isOpen: req.body.isOpen,
     locationCoordinates: req.body.locationCoordinates,
     name: req.body.name,
-    participantsGoal: req.body.participantsGoal,
+    // participantsGoal: req.body.participantsGoal,
     poster: req.body.poster,
-    reviewsGoal: req.body.reviewsGoal,
-    startDate: req.body.startDate,
+    // reviewsGoal: req.body.reviewsGoal,
+    // startDate: req.body.startDate,
     teamManager: req.body.teamManager
   };
 
@@ -32,10 +32,10 @@ module.exports = async (req, res, next) => {
 
   data.address = cleanSpaces(data.address);
 
-  data.endDate = moment(data.endDate)
-    .endOf('day')
-    .utc()
-    .toDate();
+  // data.endDate = moment(data.endDate)
+  //   .endOf('day')
+  //   .utc()
+  //   .toDate();
 
   data.location = {
     coordinates: [data.locationCoordinates[1], data.locationCoordinates[0]]
@@ -71,10 +71,10 @@ module.exports = async (req, res, next) => {
     }
   }
 
-  data.startDate = moment(data.startDate)
-    .startOf('day')
-    .utc()
-    .toDate();
+  // data.startDate = moment(data.startDate)
+  //   .startOf('day')
+  //   .utc()
+  //   .toDate();
 
   if (data.teamManager) {
     let team;
@@ -175,14 +175,14 @@ module.exports = async (req, res, next) => {
     id: event.id,
     address: event.address,
     description: event.description,
-    endDate: event.description,
+    // endDate: event.description,
     isOpen: event.isOpen,
     location: eventLocation,
     managers: event.managers,
     name: event.name,
-    participantsGoal: event.participantsGoal,
+    // participantsGoal: event.participantsGoal,
     poster: event.poster,
-    reviewsGoal: event.reviewsGoal,
+    // reviewsGoal: event.reviewsGoal,
     teamManager: event.teamManager
   };
 

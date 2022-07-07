@@ -21,72 +21,72 @@ module.exports = {
       errors.description = 'Should be a string';
     }
 
-    if (data.donationEnabled === true) {
-      if (typeof data.donationAmounts === 'undefined') {
-        errors.donationAmounts = 'Is required';
-      }
-      if (typeof data.donationGoal === 'undefined') {
-        errors.donationGoal = 'Is required';
-      }
-    }
+    // if (data.donationEnabled === true) {
+    //   if (typeof data.donationAmounts === 'undefined') {
+    //     errors.donationAmounts = 'Is required';
+    //   }
+    //   if (typeof data.donationGoal === 'undefined') {
+    //     errors.donationGoal = 'Is required';
+    //   }
+    // }
 
-    if (typeof data.donationAmounts !== 'undefined') {
-      if (!Array.isArray(data.donationAmounts)) {
-        errors.donationAmounts = 'Should be an array';
-      } else {
-        data.donationAmounts.some(d => {
-          if (typeof d.value === 'undefined') {
-            errors.donationAmounts =
-              'All elements should have a value property';
-            return true;
-          } else if (typeof d.value !== 'number') {
-            errors.donationAmounts = 'All value properties should be numbers';
-            return true;
-          } else if (d < 5 || d > 10000) {
-            errors.donationAmounts =
-              'All value properties should be between 5 and 10000';
-            return true;
-          }
-        });
-      }
-    }
+    // if (typeof data.donationAmounts !== 'undefined') {
+    //   if (!Array.isArray(data.donationAmounts)) {
+    //     errors.donationAmounts = 'Should be an array';
+    //   } else {
+    //     data.donationAmounts.some(d => {
+    //       if (typeof d.value === 'undefined') {
+    //         errors.donationAmounts =
+    //           'All elements should have a value property';
+    //         return true;
+    //       } else if (typeof d.value !== 'number') {
+    //         errors.donationAmounts = 'All value properties should be numbers';
+    //         return true;
+    //       } else if (d < 5 || d > 10000) {
+    //         errors.donationAmounts =
+    //           'All value properties should be between 5 and 10000';
+    //         return true;
+    //       }
+    //     });
+    //   }
+    // }
 
-    if (
-      typeof data.donationEnabled !== 'undefined' &&
-      typeof data.donationEnabled !== 'boolean'
-    ) {
-      errors.donationEnabled = 'Should be a boolean';
-    }
+    // if (
+    //   typeof data.donationEnabled !== 'undefined' &&
+    //   typeof data.donationEnabled !== 'boolean'
+    // ) {
+    //   errors.donationEnabled = 'Should be a boolean';
+    // }
 
-    if (typeof data.donationGoal !== 'undefined') {
-      if (typeof data.donationGoal !== 'number') {
-        errors.donationGoal = 'Should be a number';
-      } else if (!isInt(data.donationGoal.toString())) {
-        errors.donationGoal = 'Should be a integer';
-      }
-    }
+    // if (typeof data.donationGoal !== 'undefined') {
+    //   if (typeof data.donationGoal !== 'number') {
+    //     errors.donationGoal = 'Should be a number';
+    //   } else if (!isInt(data.donationGoal.toString())) {
+    //     errors.donationGoal = 'Should be a integer';
+    //   }
+    // }
 
-    let endDateIsValid = false;
-    if (typeof data.endDate === 'undefined' || data.endDate === '') {
-      errors.endDate = 'Is required';
-    } else if (typeof data.endDate !== 'string') {
-      errors.endDate = 'Should be a string';
-    } else if (!moment(data.endDate).isValid()) {
-      errors.endDate = 'Should have a ISO-8601 format';
-    } else {
-      const endDate = moment(data.endDate)
-        .endOf('day')
-        .utc();
-      const today = moment()
-        .startOf('day')
-        .utc();
+    // let endDateIsValid = false;
+    // if (typeof data.endDate === 'undefined' || data.endDate === '') {
+    //   errors.endDate = 'Is required';
+    // } else if (typeof data.endDate !== 'string') {
+    //   errors.endDate = 'Should be a string';
+    // } else if (!moment(data.endDate).isValid()) {
+    //   errors.endDate = 'Should have a ISO-8601 format';
+    // } else {
+    //   const endDate = moment(data.endDate)
+    //     .endOf('day')
+    //     .utc();
+    //   const today = moment()
+    //     .startOf('day')
+    //     .utc();
 
-      if (endDate.isBefore(today)) {
-        errors.endDate = 'Should be greater than or equal to today';
-      } else {
-        endDateIsValid = true;
-      }
-    }
+    //   if (endDate.isBefore(today)) {
+    //     errors.endDate = 'Should be greater than or equal to today';
+    //   } else {
+    //     endDateIsValid = true;
+    //   }
+    // }
 
     if (
       typeof data.isOpen !== 'undefined' &&
@@ -127,47 +127,47 @@ module.exports = {
       errors.name = 'Should be a string';
     }
 
-    if (typeof data.participantsGoal === 'undefined') {
-      errors.participantsGoal = 'Is required';
-    } else if (typeof data.participantsGoal !== 'number') {
-      errors.participantsGoal = 'Should be a number';
-    } else if (!isInt(data.participantsGoal.toString())) {
-      errors.participantsGoal = 'Should be a integer';
-    }
+    // if (typeof data.participantsGoal === 'undefined') {
+    //   errors.participantsGoal = 'Is required';
+    // } else if (typeof data.participantsGoal !== 'number') {
+    //   errors.participantsGoal = 'Should be a number';
+    // } else if (!isInt(data.participantsGoal.toString())) {
+    //   errors.participantsGoal = 'Should be a integer';
+    // }
 
     if (typeof data.poster !== 'undefined' && typeof data.poster !== 'string') {
       errors.poster = 'Should be a string';
     }
 
-    if (typeof data.reviewsGoal === 'undefined') {
-      errors.reviewsGoal = 'Is required';
-    } else if (typeof data.reviewsGoal !== 'number') {
-      errors.reviewsGoal = 'Should be a number';
-    } else if (!isInt(data.reviewsGoal.toString())) {
-      errors.reviewsGoal = 'Should be a integer';
-    }
+    // if (typeof data.reviewsGoal === 'undefined') {
+    //   errors.reviewsGoal = 'Is required';
+    // } else if (typeof data.reviewsGoal !== 'number') {
+    //   errors.reviewsGoal = 'Should be a number';
+    // } else if (!isInt(data.reviewsGoal.toString())) {
+    //   errors.reviewsGoal = 'Should be a integer';
+    // }
 
-    let startDateIsValid = false;
-    if (typeof data.startDate === 'undefined' || data.startDate === '') {
-      errors.startDate = 'Is required';
-    } else if (typeof data.startDate !== 'string') {
-      errors.startDate = 'Should be a string';
-    } else if (!moment(data.startDate).isValid()) {
-      errors.startDate = 'Should have a ISO-8601 format';
-    } else {
-      const startDate = moment(data.startDate)
-        .startOf('day')
-        .utc();
-      const today = moment()
-        .startOf('day')
-        .utc();
+    // let startDateIsValid = false;
+    // if (typeof data.startDate === 'undefined' || data.startDate === '') {
+    //   errors.startDate = 'Is required';
+    // } else if (typeof data.startDate !== 'string') {
+    //   errors.startDate = 'Should be a string';
+    // } else if (!moment(data.startDate).isValid()) {
+    //   errors.startDate = 'Should have a ISO-8601 format';
+    // } else {
+    //   const startDate = moment(data.startDate)
+    //     .startOf('day')
+    //     .utc();
+    //   const today = moment()
+    //     .startOf('day')
+    //     .utc();
 
-      if (startDate.isBefore(today)) {
-        errors.startDate = 'Should be greater than or equal to today';
-      } else {
-        startDateIsValid = true;
-      }
-    }
+    //   if (startDate.isBefore(today)) {
+    //     errors.startDate = 'Should be greater than or equal to today';
+    //   } else {
+    //     startDateIsValid = true;
+    //   }
+    // }
 
     if (
       typeof data.teamManager !== 'undefined' &&
@@ -178,21 +178,21 @@ module.exports = {
       errors.teamManager = 'Should be a valid id';
     }
 
-    if (endDateIsValid && startDateIsValid) {
-      const endDate = moment(data.endDate)
-        .endOf('day')
-        .utc();
-      const startDate = moment(data.startDate)
-        .startOf('day')
-        .utc();
+    // if (endDateIsValid && startDateIsValid) {
+    //   const endDate = moment(data.endDate)
+    //     .endOf('day')
+    //     .utc();
+    //   const startDate = moment(data.startDate)
+    //     .startOf('day')
+    //     .utc();
 
-      if (startDate.isAfter(endDate)) {
-        errors.endDate = 'Should be greater than or equal to startDate';
-        errors.startDate = 'Should be less than or equal to endDate';
-      } else if (endDate.diff(startDate, 'days') > 365) {
-        errors.endDate = 'Should last less than 365 days';
-      }
-    }
+    //   if (startDate.isAfter(endDate)) {
+    //     errors.endDate = 'Should be greater than or equal to startDate';
+    //     errors.startDate = 'Should be less than or equal to endDate';
+    //   } else if (endDate.diff(startDate, 'days') > 365) {
+    //     errors.endDate = 'Should last less than 365 days';
+    //   }
+    // }
 
     return { errors, isValid: isEmpty(errors) };
   },
@@ -326,15 +326,15 @@ module.exports = {
       }
     }
 
-    if (typeof data.participantsGoal !== 'undefined') {
-      if (data.participantsGoal === null) {
-        errors.participantsGoal = 'Is required';
-      } else if (typeof data.participantsGoal !== 'number') {
-        errors.participantsGoal = 'Should be a number';
-      } else if (!isInt(data.participantsGoal.toString())) {
-        errors.participantsGoal = 'Should be a integer';
-      }
-    }
+    // if (typeof data.participantsGoal !== 'undefined') {
+    //   if (data.participantsGoal === null) {
+    //     errors.participantsGoal = 'Is required';
+    //   } else if (typeof data.participantsGoal !== 'number') {
+    //     errors.participantsGoal = 'Should be a number';
+    //   } else if (!isInt(data.participantsGoal.toString())) {
+    //     errors.participantsGoal = 'Should be a integer';
+    //   }
+    // }
 
     if (typeof data.poster !== 'undefined' && typeof data.poster !== 'string') {
       errors.poster = 'Should be a string';
