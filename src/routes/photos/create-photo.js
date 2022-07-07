@@ -76,8 +76,9 @@ module.exports = async (req, res, next) => {
     console.log('Photo failed to be uploaded at create-photo');
     return next(err);
   }
-
-  fs.unlink(req.file.path);
+  fs.unlink(req.file.path, err => {
+    if (err) console.log(err);
+  });
 
   const photoData = {
     fileName: photoFileName,
