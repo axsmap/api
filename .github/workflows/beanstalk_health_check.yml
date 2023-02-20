@@ -2,7 +2,7 @@ name: Elastic Beanstalk Health Badge
 
 on:
   schedule:
-    - cron: '*/5 * * * *'
+    - cron: '37 3 * * *'
 
 jobs:
   update-badge:
