@@ -1,0 +1,20 @@
+name: Elastic Beanstalk Health Badge
+
+on:
+  schedule:
+    # Update the badge every 15 minutes
+    - cron: '*/15 * * * *'
+
+jobs:
+  update-badge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Install dependencies
+        run: npm install aws-sdk
+      - name: Update badge
+        run: node .github/actions/elastic-beanstalk-health-badge/index.js
+        env:
+          ELASTIC_BEANSTALK_ENVIRONMENT_NAME: ${{ secrets.BEANSTALK_ENV_NAME }}
+          AWS_REGION: ${{ secrets.BEANSTALK_AWS_REGION }}
