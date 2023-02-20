@@ -29,7 +29,7 @@
 
 4. From managed platfrom choose the Node.js version that you want the environemnt to be running
 
-5. Under Application code, select upload your own code - You will need to zip the repo just like the mentioned in the [Delopying new version](Deploying-new-version) section.
+5. Under Application code, select upload your own code - You will need to zip the repo just like the mentioned in the [Delopying new version](#deploying-new-version) section.
 
 6. (Optional) - Give a custom version label 
 
