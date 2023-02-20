@@ -1,9 +1,9 @@
 name: Elastic Beanstalk Health Badge
 
 on:
-  schedule:
-    # Update the badge every 15 minutes
-    - cron: '*/1 * * * *'
+  push:
+    branches:
+      - master
 
 jobs:
   update-badge:
