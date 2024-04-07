@@ -12,6 +12,7 @@ const getUser = require('./get-user');
 const getProfile = require('./get-profile');
 const listUsers = require('./list-users');
 const unblockUser = require('./unblock-user');
+const deactivateUser = require('./deactivate-user');
 
 const router = new express.Router();
 
@@ -21,6 +22,11 @@ router.get('', isAuthenticated({ isOptional: false }), listUsers);
 router.post('', isAuthenticated({ isOptional: false }), createUser);
 router.get('/:userId', getUser);
 router.put('/:userId', isAuthenticated({ isOptional: false }), editUser);
+router.delete(
+  '/deactivate',
+  isAuthenticated({ isOptional: false }),
+  deactivateUser
+);
 router.delete('/:userId', isAuthenticated({ isOptional: false }), deleteUser);
 router.put(
   '/:userId/archive',
