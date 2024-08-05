@@ -28,7 +28,7 @@ module.exports = async (req, res, next) => {
   }
 
   if (
-    !team.managers.find(m => m.toString() === req.user.id) &&
+    !team.managers.find((m) => m.toString() === req.user.id) &&
     !req.user.isAdmin
   ) {
     return res.status(403).json({ general: 'Forbidden action' });
@@ -74,7 +74,7 @@ module.exports = async (req, res, next) => {
     let managersToAdd = [];
     let managersToRemove = [];
 
-    data.managers.forEach(m => {
+    data.managers.forEach((m) => {
       if (m.startsWith('-')) {
         managersToRemove = [...managersToRemove, m.substring(1)];
       } else {
@@ -82,12 +82,12 @@ module.exports = async (req, res, next) => {
       }
     });
 
-    const teamManagers = team.managers.map(m => m.toString());
+    const teamManagers = team.managers.map((m) => m.toString());
 
     managersToAdd = [...new Set(difference(managersToAdd, teamManagers))];
     if (managersToAdd.length > 0) {
-      const teamMembers = team.members.map(m => m.toString());
-      const notMember = managersToAdd.find(m => !teamMembers.includes(m));
+      const teamMembers = team.members.map((m) => m.toString());
+      const notMember = managersToAdd.find((m) => !teamMembers.includes(m));
 
       if (notMember) {
         return res
@@ -97,7 +97,7 @@ module.exports = async (req, res, next) => {
 
       team.managers = [...teamManagers, ...managersToAdd];
       team.members = team.members.filter(
-        m => !managersToAdd.includes(m.toString())
+        (m) => !managersToAdd.includes(m.toString())
       );
     }
 
@@ -111,18 +111,18 @@ module.exports = async (req, res, next) => {
     }
 
     team.managers = team.managers.filter(
-      m => !managersToRemove.includes(m.toString())
+      (m) => !managersToRemove.includes(m.toString())
     );
-    const teamMembers = team.members.map(m => m.toString());
+    const teamMembers = team.members.map((m) => m.toString());
     team.members = [...teamMembers, ...managersToRemove];
   }
 
   if (data.members) {
-    const teamMembers = team.members.map(m => m.toString());
-    let membersToRemove = data.members.map(m => m.substring(1));
+    const teamMembers = team.members.map((m) => m.toString());
+    let membersToRemove = data.members.map((m) => m.substring(1));
     membersToRemove = [...new Set(intersection(membersToRemove, teamMembers))];
 
-    const getMembers = membersToRemove.map(m =>
+    const getMembers = membersToRemove.map((m) =>
       User.find({ _id: m, isArchived: false })
     );
     let members;
@@ -134,7 +134,7 @@ module.exports = async (req, res, next) => {
     }
 
     const updateMembers = members.map((m, i) => {
-      m[i].teams = m[i].teams.filter(t => t.toString() !== team.id);
+      m[i].teams = m[i].teams.filter((t) => t.toString() !== team.id);
       return m[i].save();
     });
 
@@ -146,7 +146,7 @@ module.exports = async (req, res, next) => {
     }
 
     team.members = team.members.filter(
-      m => !membersToRemove.includes(m.toString())
+      (m) => !membersToRemove.includes(m.toString())
     );
   }
 
@@ -181,7 +181,7 @@ module.exports = async (req, res, next) => {
     if (typeof err.errors === 'object') {
       const validationErrors = {};
 
-      Object.keys(err.errors).forEach(key => {
+      Object.keys(err.errors).forEach((key) => {
         validationErrors[key] = err.errors[key].message;
       });
 

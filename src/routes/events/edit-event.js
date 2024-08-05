@@ -28,7 +28,7 @@ module.exports = async (req, res, next) => {
     return res.status(404).json({ general: 'Event not found' });
   }
 
-  if (!event.managers.find(m => m.toString() === req.user.id)) {
+  if (!event.managers.find((m) => m.toString() === req.user.id)) {
     return res.status(403).json({ general: 'Forbidden action' });
   }
 
@@ -56,12 +56,8 @@ module.exports = async (req, res, next) => {
   event.description = data.description || event.description;
 
   if (data.endDate) {
-    const endDate = moment(data.endDate)
-      .endOf('day')
-      .utc();
-    const startDate = moment(event.startDate)
-      .startOf('day')
-      .utc();
+    const endDate = moment(data.endDate).endOf('day').utc();
+    const startDate = moment(event.startDate).startOf('day').utc();
 
     if (!data.startDate) {
       if (endDate.isBefore(startDate)) {
@@ -92,7 +88,7 @@ module.exports = async (req, res, next) => {
     let managersToAdd = [];
     let managersToRemove = [];
 
-    data.managers.forEach(m => {
+    data.managers.forEach((m) => {
       if (m.startsWith('-')) {
         managersToRemove = [...managersToRemove, m.substring(1)];
       } else {
@@ -100,13 +96,13 @@ module.exports = async (req, res, next) => {
       }
     });
 
-    const eventManagers = event.managers.map(m => m.toString());
+    const eventManagers = event.managers.map((m) => m.toString());
 
     managersToAdd = [...new Set(difference(managersToAdd, eventManagers))];
     if (managersToAdd.length > 0) {
-      const eventParticipants = event.participants.map(p => p.toString());
+      const eventParticipants = event.participants.map((p) => p.toString());
       const notParticipant = managersToAdd.find(
-        m => !eventParticipants.includes(m)
+        (m) => !eventParticipants.includes(m)
       );
 
       if (notParticipant) {
@@ -117,7 +113,7 @@ module.exports = async (req, res, next) => {
 
       event.managers = [...eventManagers, ...managersToAdd];
       event.participants = event.participants.filter(
-        p => !managersToAdd.includes(p.toString())
+        (p) => !managersToAdd.includes(p.toString())
       );
     }
 
@@ -131,9 +127,9 @@ module.exports = async (req, res, next) => {
     }
 
     event.managers = event.managers.filter(
-      m => !managersToRemove.includes(m.toString())
+      (m) => !managersToRemove.includes(m.toString())
     );
-    const eventParticipants = event.participants.map(p => p.toString());
+    const eventParticipants = event.participants.map((p) => p.toString());
     event.participants = [...eventParticipants, ...managersToRemove];
   }
 
@@ -161,13 +157,13 @@ module.exports = async (req, res, next) => {
   }
 
   if (data.participants) {
-    const eventParticipants = event.participants.map(p => p.toString());
-    let participantsToRemove = data.participants.map(p => p.substring(1));
+    const eventParticipants = event.participants.map((p) => p.toString());
+    let participantsToRemove = data.participants.map((p) => p.substring(1));
     participantsToRemove = [
       ...new Set(intersection(participantsToRemove, eventParticipants))
     ];
 
-    const getParticipants = participantsToRemove.map(p =>
+    const getParticipants = participantsToRemove.map((p) =>
       User.find({ _id: p, isArchived: false })
     );
     let participants;
@@ -179,7 +175,7 @@ module.exports = async (req, res, next) => {
     }
 
     const updateParticipants = participants.map((p, i) => {
-      p[i].events = p[i].events.filter(e => e.toString() !== event.id);
+      p[i].events = p[i].events.filter((e) => e.toString() !== event.id);
       return p[i].save();
     });
 
@@ -191,7 +187,7 @@ module.exports = async (req, res, next) => {
     }
 
     event.participants = event.participants.filter(
-      p => !participantsToRemove.includes(p.toString())
+      (p) => !participantsToRemove.includes(p.toString())
     );
   }
 
@@ -224,17 +220,11 @@ module.exports = async (req, res, next) => {
   event.reviewsGoal = data.reviewsGoal || event.reviewsGoal;
 
   if (data.startDate) {
-    const startDate = moment(data.startDate)
-      .startOf('day')
-      .utc();
-    const endDate = moment(event.endDate)
-      .endOf('day')
-      .utc();
+    const startDate = moment(data.startDate).startOf('day').utc();
+    const endDate = moment(event.endDate).endOf('day').utc();
 
     if (!data.endDate) {
-      const today = moment()
-        .startOf('day')
-        .utc();
+      const today = moment().startOf('day').utc();
 
       if (startDate.isBefore(today)) {
         return res.status(400).json({
@@ -267,7 +257,7 @@ module.exports = async (req, res, next) => {
       return res.status(404).json({ teamManager: 'Not found' });
     }
 
-    const teamManagers = team.managers.map(m => m.toString());
+    const teamManagers = team.managers.map((m) => m.toString());
     if (!teamManagers.includes(req.user.id)) {
       return res.status(403).json({ general: 'Forbidden action' });
     }
@@ -294,14 +284,14 @@ module.exports = async (req, res, next) => {
       return res.status(404).json({ teamManager: 'Not found' });
     }
 
-    const teamManagers = team.managers.map(m => m.toString());
+    const teamManagers = team.managers.map((m) => m.toString());
     if (!teamManagers.includes(req.user.id)) {
       return res.status(403).json({ general: 'Forbidden action' });
     }
 
     event.teamManager = null;
 
-    team.events = team.events.filter(e => e.toString() !== event.id);
+    team.events = team.events.filter((e) => e.toString() !== event.id);
     try {
       await team.save();
     } catch (err) {
@@ -311,11 +301,11 @@ module.exports = async (req, res, next) => {
   }
 
   if (data.teams) {
-    const eventTeams = event.teams.map(t => t.toString());
-    let teamsToRemove = data.teams.map(t => t.substring(1));
+    const eventTeams = event.teams.map((t) => t.toString());
+    let teamsToRemove = data.teams.map((t) => t.substring(1));
     teamsToRemove = [...new Set(intersection(teamsToRemove, eventTeams))];
 
-    const getTeams = teamsToRemove.map(t =>
+    const getTeams = teamsToRemove.map((t) =>
       Team.find({ _id: t, isArchived: false })
     );
     let teams;
@@ -327,7 +317,7 @@ module.exports = async (req, res, next) => {
     }
 
     const updateTeams = teams.map((t, i) => {
-      t[i].events = t[i].events.filter(e => e.toString() !== event.id);
+      t[i].events = t[i].events.filter((e) => e.toString() !== event.id);
       return t[i].save();
     });
 
@@ -339,7 +329,7 @@ module.exports = async (req, res, next) => {
     }
 
     event.teams = event.teams.filter(
-      t => !teamsToRemove.includes(t.toString())
+      (t) => !teamsToRemove.includes(t.toString())
     );
   }
 
@@ -351,7 +341,7 @@ module.exports = async (req, res, next) => {
     if (typeof err.errors === 'object') {
       const validationErrors = {};
 
-      Object.keys(err.errors).forEach(key => {
+      Object.keys(err.errors).forEach((key) => {
         validationErrors[key] = err.errors[key].message;
       });
 

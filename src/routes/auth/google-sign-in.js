@@ -36,6 +36,7 @@ module.exports = async (req, res, next) => {
       querystring.stringify(getTokenParams)
     );
   } catch (err) {
+    console.error(err);
     return res.status(400).json({ general: 'Invalid code' });
   }
 

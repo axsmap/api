@@ -27,8 +27,8 @@ module.exports = async (req, res, next) => {
 
   let addVote = true;
 
-  if (review.voters.find(v => v.toString() === req.user.id)) {
-    review.voters = review.voters.filter(v => v.toString() !== req.user.id);
+  if (review.voters.find((v) => v.toString() === req.user.id)) {
+    review.voters = review.voters.filter((v) => v.toString() !== req.user.id);
     addVote = false;
   } else {
     review.voters = [...review.voters, req.user.id];

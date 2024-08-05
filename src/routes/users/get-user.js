@@ -5,7 +5,7 @@ const { User } = require('../../models/user');
 module.exports = async (req, res, next) => {
   const userId = req.params.userId;
 
-  const userIdObj = mongoose.Types.ObjectId(userId);
+  const userIdObj = new mongoose.Types.ObjectId(userId);
   let user;
   try {
     user = await User.aggregate([

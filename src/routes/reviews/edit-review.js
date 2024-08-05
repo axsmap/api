@@ -107,7 +107,7 @@ module.exports = async (req, res, next) => {
       return res.status(404).json({ event: 'Event not found' });
     }
 
-    if (!event.participants.find(p => p.toString() === req.user.id)) {
+    if (!event.participants.find((p) => p.toString() === req.user.id)) {
       return res
         .status(400)
         .json({ event: 'You are not a participant of this event' });
@@ -166,7 +166,7 @@ module.exports = async (req, res, next) => {
       return res.status(404).json({ team: 'Team not found' });
     }
 
-    if (!team.members.find(m => m.toString() === req.user.id)) {
+    if (!team.members.find((m) => m.toString() === req.user.id)) {
       return res
         .status(400)
         .json({ team: 'You are not a member of this team' });
@@ -185,7 +185,7 @@ module.exports = async (req, res, next) => {
     if (typeof err.errors === 'object') {
       const validationErrors = {};
 
-      Object.keys(err.errors).forEach(key => {
+      Object.keys(err.errors).forEach((key) => {
         validationErrors[key] = err.errors[key].message;
       });
 
@@ -202,7 +202,7 @@ module.exports = async (req, res, next) => {
     if (typeof err.errors === 'object') {
       const validationErrors = {};
 
-      Object.keys(err.errors).forEach(key => {
+      Object.keys(err.errors).forEach((key) => {
         validationErrors[key] = err.errors[key].message;
       });
 

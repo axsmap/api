@@ -34,7 +34,7 @@ module.exports = {
       if (!Array.isArray(data.donationAmounts)) {
         errors.donationAmounts = 'Should be an array';
       } else {
-        data.donationAmounts.some(d => {
+        data.donationAmounts.some((d) => {
           if (typeof d.value === 'undefined') {
             errors.donationAmounts =
               'All elements should have a value property';
@@ -74,12 +74,8 @@ module.exports = {
     } else if (!moment(data.endDate).isValid()) {
       errors.endDate = 'Should have a ISO-8601 format';
     } else {
-      const endDate = moment(data.endDate)
-        .endOf('day')
-        .utc();
-      const today = moment()
-        .startOf('day')
-        .utc();
+      const endDate = moment(data.endDate).endOf('day').utc();
+      const today = moment().startOf('day').utc();
 
       if (endDate.isBefore(today)) {
         errors.endDate = 'Should be greater than or equal to today';
@@ -155,12 +151,8 @@ module.exports = {
     } else if (!moment(data.startDate).isValid()) {
       errors.startDate = 'Should have a ISO-8601 format';
     } else {
-      const startDate = moment(data.startDate)
-        .startOf('day')
-        .utc();
-      const today = moment()
-        .startOf('day')
-        .utc();
+      const startDate = moment(data.startDate).startOf('day').utc();
+      const today = moment().startOf('day').utc();
 
       if (startDate.isBefore(today)) {
         errors.startDate = 'Should be greater than or equal to today';
@@ -179,12 +171,8 @@ module.exports = {
     }
 
     if (endDateIsValid && startDateIsValid) {
-      const endDate = moment(data.endDate)
-        .endOf('day')
-        .utc();
-      const startDate = moment(data.startDate)
-        .startOf('day')
-        .utc();
+      const endDate = moment(data.endDate).endOf('day').utc();
+      const startDate = moment(data.startDate).startOf('day').utc();
 
       if (startDate.isAfter(endDate)) {
         errors.endDate = 'Should be greater than or equal to startDate';
@@ -223,12 +211,8 @@ module.exports = {
       } else if (!moment(data.endDate).isValid()) {
         errors.endDate = 'Should have a ISO-8601 format';
       } else {
-        const endDate = moment(data.endDate)
-          .endOf('day')
-          .utc();
-        const today = moment()
-          .startOf('day')
-          .utc();
+        const endDate = moment(data.endDate).endOf('day').utc();
+        const today = moment().startOf('day').utc();
 
         if (endDate.isBefore(today)) {
           errors.endDate = 'Should be greater than or equal to today';
@@ -275,7 +259,7 @@ module.exports = {
       if (!Array.isArray(data.managers)) {
         errors.managers = 'Should be an array';
       } else {
-        data.managers.some(m => {
+        data.managers.some((m) => {
           if (typeof m !== 'string') {
             errors.managers = 'Should only have string values';
             return true;
@@ -308,7 +292,7 @@ module.exports = {
       if (!Array.isArray(data.participants)) {
         errors.participants = 'Should be an array';
       } else {
-        data.participants.some(p => {
+        data.participants.some((p) => {
           if (typeof p !== 'string') {
             errors.participants = 'Should only have string values';
             return true;
@@ -359,12 +343,8 @@ module.exports = {
       } else if (!moment(data.startDate).isValid()) {
         errors.startDate = 'Should have a ISO-8601 format';
       } else {
-        const startDate = moment(data.startDate)
-          .startOf('day')
-          .utc();
-        const today = moment()
-          .startOf('day')
-          .utc();
+        const startDate = moment(data.startDate).startOf('day').utc();
+        const today = moment().startOf('day').utc();
 
         if (startDate.isBefore(today)) {
           errors.startDate = 'Should be greater than or equal to today';
@@ -387,7 +367,7 @@ module.exports = {
       if (!Array.isArray(data.teams)) {
         errors.teams = 'Should be an array';
       } else {
-        data.teams.some(t => {
+        data.teams.some((t) => {
           if (typeof t !== 'string') {
             errors.teams = 'Should only have string values';
             return true;
@@ -406,12 +386,8 @@ module.exports = {
     }
 
     if (endDateIsValid && startDateIsValid) {
-      const endDate = moment(data.endDate)
-        .endOf('day')
-        .utc();
-      const startDate = moment(data.startDate)
-        .startOf('day')
-        .utc();
+      const endDate = moment(data.endDate).endOf('day').utc();
+      const startDate = moment(data.startDate).startOf('day').utc();
 
       if (startDate.isAfter(endDate)) {
         errors.endDate = 'Should be greater than or equal to startDate';

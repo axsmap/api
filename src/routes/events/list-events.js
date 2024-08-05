@@ -1,8 +1,8 @@
-const moment = require('moment');
+const moment = require("moment");
 
-const { Event } = require('../../models/event');
+const { Event } = require("../../models/event");
 
-const { validateListEvents } = require('./validations');
+const { validateListEvents } = require("./validations");
 
 module.exports = async (req, res, next) => {
   const queryParams = req.query;
@@ -21,27 +21,19 @@ module.exports = async (req, res, next) => {
   let afterDate;
   let beforeDate;
   if (queryParams.afterDate && queryParams.beforeDate) {
-    afterDate = moment(queryParams.afterDate)
-      .utc()
-      .toDate();
-    beforeDate = moment(queryParams.beforeDate)
-      .utc()
-      .toDate();
+    afterDate = moment(queryParams.afterDate).utc().toDate();
+    beforeDate = moment(queryParams.beforeDate).utc().toDate();
 
     eventsQuery.startDate = { $gte: afterDate, $lte: beforeDate };
   } else if (queryParams.afterDate) {
-    afterDate = moment(queryParams.afterDate)
-      .utc()
-      .toDate();
+    afterDate = moment(queryParams.afterDate).utc().toDate();
     eventsQuery.startDate = { $gte: afterDate };
   } else if (queryParams.beforeDate) {
-    beforeDate = moment(queryParams.beforeDate)
-      .utc()
-      .toDate();
+    beforeDate = moment(queryParams.beforeDate).utc().toDate();
     eventsQuery.startDate = { $lte: beforeDate };
   }
 
-  let sortBy = queryParams.sortBy || '-startDate';
+  let sortBy = queryParams.sortBy || "-startDate";
   let page = queryParams.page ? queryParams.page - 1 : 0;
   const pageLimit = queryParams.pageLimit || 12;
 
@@ -53,22 +45,23 @@ module.exports = async (req, res, next) => {
         .match(eventsQuery)
         .project({
           _id: 0,
-          id: '$_id',
+          id: "$_id",
           address: 1,
           endDate: 1,
           name: 1,
           poster: 1,
           reviewsAmount: 1,
           reviewsGoal: 1,
-          startDate: 1
+          startDate: 1,
+          description: 1,
         })
         .sort(sortBy)
         .skip(page * pageLimit)
         .limit(pageLimit),
-      Event.find(eventsQuery).count()
+      Event.countDocuments(eventsQuery),
     ]);
   } catch (err) {
-    console.log('Events failed to be found or count at list-events');
+    console.log("Events failed to be found or count at list-events");
     return next(err);
   }
 
@@ -90,6 +83,6 @@ module.exports = async (req, res, next) => {
     pageLimit,
     total,
     sortBy,
-    results: events
+    results: events,
   });
 };

@@ -101,7 +101,7 @@ module.exports = async (req, res, next) => {
     if (typeof err.errors === 'object') {
       const validationErrors = {};
 
-      Object.keys(err.errors).forEach(key => {
+      Object.keys(err.errors).forEach((key) => {
         validationErrors[key] = err.errors[key].message;
       });
 
@@ -115,10 +115,7 @@ module.exports = async (req, res, next) => {
   }
 
   const refreshTokenData = {
-    expiresAt: moment
-      .utc()
-      .add(14, 'days')
-      .toDate(),
+    expiresAt: moment.utc().add(14, 'days').toDate(),
     key: `${user.id}${crypto.randomBytes(40).toString('hex')}`,
     userId: user.id
   };

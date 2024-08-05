@@ -7,7 +7,7 @@ const { Event } = require('../../models/event');
 
 module.exports = async (req, res, next) => {
   const queryParams = req.query;
-  const userId = mongoose.Types.ObjectId(req.user.id);
+  const userId = new mongoose.Types.ObjectId(req.user.id);
 
   const petitionsQuery = {
     state: { $in: ['accepted', 'pending', 'rejected'] }
@@ -17,9 +17,9 @@ module.exports = async (req, res, next) => {
     petitionsQuery.sender = userId;
   } else {
     // get the user's events
-    const getUserEvents = req.user.events.map(e => Event.findOne({ _id: e }));
+    const getUserEvents = req.user.events.map((e) => Event.findOne({ _id: e }));
     // get the user's teams
-    const getUserTeams = req.user.teams.map(t => Team.findOne({ _id: t }));
+    const getUserTeams = req.user.teams.map((t) => Team.findOne({ _id: t }));
 
     let userEvents = [];
     let userTeams = [];
@@ -36,18 +36,18 @@ module.exports = async (req, res, next) => {
     }
 
     const managedEvents = [];
-    userEvents.map(e => {
-      const eventManagers = e.managers.map(m => m.toString());
+    userEvents.map((e) => {
+      const eventManagers = e.managers.map((m) => m.toString());
       if (eventManagers.includes(req.user.id)) {
-        managedEvents.push(mongoose.Types.ObjectId(e.id));
+        managedEvents.push(new mongoose.Types.ObjectId(e.id));
       }
     });
 
     const managedTeams = [];
-    userTeams.map(t => {
-      const teamManagers = t.managers.map(m => m.toString());
+    userTeams.map((t) => {
+      const teamManagers = t.managers.map((m) => m.toString());
       if (teamManagers.includes(req.user.id)) {
-        managedTeams.push(mongoose.Types.ObjectId(t.id));
+        managedTeams.push(new mongoose.Types.ObjectId(t.id));
       }
     });
 
@@ -246,7 +246,7 @@ module.exports = async (req, res, next) => {
   try {
     [petitions, total] = await Promise.all([
       Petition.aggregate(aggregateQuery),
-      Petition.find(petitionsQuery).count()
+      Petition.countDocuments(petitionsQuery)
     ]);
   } catch (err) {
     console.log('Petitions failed to be found or count at list-petitions');

@@ -30,6 +30,7 @@ module.exports = async (req, res, next) => {
   try {
     getTokenResponse = await axios.get(getTokenUrl, { params: getTokenParams });
   } catch (err) {
+    console.err(err);
     return res.status(400).json({ general: 'Invalid code' });
   }
 

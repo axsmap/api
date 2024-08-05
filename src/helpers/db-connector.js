@@ -8,12 +8,6 @@ let disconnecting;
 let initialized = false;
 const mongodbURI = process.env.MONGODB_URI;
 const dbName = mongoUri.parse(mongodbURI).database;
-const options = {
-  connectTimeoutMS: 30000,
-  keepAlive: 120,
-  useCreateIndex: true,
-  useNewUrlParser: true
-};
 
 function logging(db) {
   db.on('connected', () =>
@@ -25,7 +19,7 @@ function logging(db) {
       console.log(`Database connection to ${dbName} lost`);
     }
   });
-  db.on('error', err => {
+  db.on('error', (err) => {
     console.log(`Database connection to ${dbName} error`);
     throw err;
   });
@@ -33,10 +27,7 @@ function logging(db) {
 
 function open() {
   console.log(`Opening database connection to ${dbName}...`);
-  mongoose.connect(
-    mongodbURI,
-    options
-  );
+  mongoose.connect(mongodbURI);
 }
 
 function reconnection(db) {

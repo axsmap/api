@@ -2,7 +2,7 @@ const { Event } = require('../../models/event');
 const { Team } = require('../../models/team');
 
 module.exports = async (req, res, next) => {
-  const getUserTeams = req.user.teams.map(t => Team.findOne({ _id: t }));
+  const getUserTeams = req.user.teams.map((t) => Team.findOne({ _id: t }));
   let userTeams;
   try {
     userTeams = await Promise.all(getUserTeams);
@@ -13,9 +13,9 @@ module.exports = async (req, res, next) => {
 
   const teams = [];
   const managedTeams = [];
-  userTeams.map(t => {
+  userTeams.map((t) => {
     if (t) {
-      const teamManagers = t.managers.map(m => m.toString());
+      const teamManagers = t.managers.map((m) => m.toString());
       if (teamManagers.includes(req.user.id)) {
         managedTeams.push({
           id: t.id.toString(),
@@ -32,7 +32,7 @@ module.exports = async (req, res, next) => {
     }
   });
 
-  const getUserEvents = req.user.events.map(e => Event.findOne({ _id: e }));
+  const getUserEvents = req.user.events.map((e) => Event.findOne({ _id: e }));
   let userEvents;
   try {
     userEvents = await Promise.all(getUserEvents);
@@ -43,9 +43,9 @@ module.exports = async (req, res, next) => {
 
   const events = [];
   const managedEvents = [];
-  userEvents.map(e => {
+  userEvents.map((e) => {
     if (e) {
-      const eventManagers = e.managers.map(m => m.toString());
+      const eventManagers = e.managers.map((m) => m.toString());
       if (eventManagers.includes(req.user.id)) {
         managedEvents.push({
           id: e.id.toString(),

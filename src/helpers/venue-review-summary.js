@@ -8,8 +8,8 @@ function assignFromYesNo(venueField) {
   //  Mongoose hasOwnProperty test issues
   if (
     venueField &&
-    venueField.hasOwnProperty('yes') &&
-    venueField.hasOwnProperty('no') &&
+    'yes' in venueField &&
+    'no' in venueField &&
     !(venueField.yes === 0 && venueField.no === 0)
   ) {
     if (venueField.yes >= venueField.no) {
@@ -23,12 +23,10 @@ function assignFromYesNo(venueField) {
 }
 
 function assignFromSteps(stepField) {
-  let moreThanTwo = stepField.hasOwnProperty('moreThanTwo')
-    ? stepField.moreThanTwo
-    : 0;
-  let two = stepField.hasOwnProperty('two') ? stepField.two : 0;
-  let one = stepField.hasOwnProperty('one') ? stepField.one : 0;
-  let zero = stepField.hasOwnProperty('zero') ? stepField.zero : 0;
+  let moreThanTwo = 'moreThanTwo' in stepField ? stepField.moreThanTwo : 0;
+  let two = 'two' in stepField ? stepField.two : 0;
+  let one = 'one' in stepField ? stepField.one : 0;
+  let zero = 'zero' in stepField ? stepField.zero : 0;
 
   if (moreThanTwo === 0 && two === 0 && one === 0 && zero === 0) {
     return null;
@@ -95,7 +93,7 @@ module.exports = {
     //console.log('in calculateRatingLevel, select venue data: ', venueData);
 
     let sectionLogic, ratingDefinition;
-    if (reviewSummaryLogic.hasOwnProperty(sectionName)) {
+    if (sectionName in reviewSummaryLogic) {
       //valid values: entrance, restroom, interior
       sectionLogic = reviewSummaryLogic[sectionName];
     } else {
@@ -108,37 +106,37 @@ module.exports = {
     let ratingLevel, ratingGlyphs;
     const ratingLevels = ['alert', 'caution', 'accessible'];
 
-    for (rl = 0; rl < ratingLevels.length; rl++) {
+    for (let rl = 0; rl < ratingLevels.length; rl++) {
       if (
-        sectionLogic.hasOwnProperty(ratingLevels[rl]) &&
+        ratingLevels[rl] in sectionLogic &&
         sectionLogic[ratingLevels[rl]].length > 0
       ) {
         //level loop
-        for (idx = 0; idx < sectionLogic[ratingLevels[rl]].length; idx++) {
+        for (let idx = 0; idx < sectionLogic[ratingLevels[rl]].length; idx++) {
           ratingDefinition = sectionLogic[ratingLevels[rl]][idx];
           let ratingDefinitionMatch = false;
 
           if (
-            ratingDefinition.hasOwnProperty('field') &&
-            venueData.hasOwnProperty(ratingDefinition.field)
+            'field' in ratingDefinition &&
+            ratingDefinition.field in venueData
           ) {
             if (
-              (ratingDefinition.hasOwnProperty('matchValue') &&
+              ('matchValue' in ratingDefinition &&
                 venueData[ratingDefinition.field] ===
                   ratingDefinition.matchValue) ||
-              (ratingDefinition.hasOwnProperty('notMatchValue') &&
+              ('notMatchValue' in ratingDefinition &&
                 venueData[ratingDefinition.field] !==
                   ratingDefinition.notMatchValue)
             ) {
               ratingDefinitionMatch = true;
             }
-          } else if (ratingDefinition.hasOwnProperty('fields')) {
+          } else if ('fields' in ratingDefinition) {
             let fieldMatchCount = 0;
-            for (field of ratingDefinition.fields) {
+            for (let field of ratingDefinition.fields) {
               if (
-                (ratingDefinition.hasOwnProperty('matchValue') &&
+                ('matchValue' in ratingDefinition &&
                   venueData[field] === ratingDefinition.matchValue) ||
-                (ratingDefinition.hasOwnProperty('notMatchValue') &&
+                ('notMatchValue' in ratingDefinition &&
                   venueData[field] !== ratingDefinition.notMatchValue)
               ) {
                 fieldMatchCount++;
@@ -150,21 +148,18 @@ module.exports = {
             }
           }
 
-          if (
-            ratingDefinitionMatch === true &&
-            ratingDefinition.hasOwnProperty('and')
-          ) {
+          if (ratingDefinitionMatch === true && 'and' in ratingDefinition) {
             //console.log('Evaluate AND condition in ' + sectionName);
             if (
-              ratingDefinition.and.hasOwnProperty('field') &&
-              venueData.hasOwnProperty(ratingDefinition.and.field)
+              'field' in ratingDefinition.and &&
+              ratingDefinition.and.field in venueData
             ) {
               //evaluate 'and' condition depending on match or noMatch value
-              if (ratingDefinition.and.hasOwnProperty('matchValue')) {
+              if ('matchValue' in ratingDefinition.and) {
                 ratingDefinitionMatch =
                   venueData[ratingDefinition.and.field] ==
                   ratingDefinition.and.matchValue;
-              } else if (ratingDefinition.and.hasOwnProperty('notMatchValue')) {
+              } else if ('notMatchValue' in ratingDefinition.and) {
                 ratingDefinitionMatch =
                   venueData[ratingDefinition.and.field] !==
                   ratingDefinition.and.notMatchValue;
@@ -202,9 +197,9 @@ module.exports = {
       //console.log('ratingLevel not set: ', sectionLogic);
       ratingLevel = 0;
       ratingGlyphs =
-        sectionLogic.hasOwnProperty('default') &&
+        'default' in sectionLogic &&
         sectionLogic.default.length > 0 &&
-        sectionLogic.default[0].hasOwnProperty('showGlyph')
+        'showGlyph' in sectionLogic.default[0]
           ? sectionLogic.default[0].showGlyph
           : '';
     }

@@ -28,7 +28,7 @@ module.exports = async (req, res, next) => {
   }
 
   if (
-    !team.managers.find(m => m.toString() === req.user.id) &&
+    !team.managers.find((m) => m.toString() === req.user.id) &&
     !req.user.isAdmin
   ) {
     return res.status(403).json({ general: 'Forbidden action' });
@@ -37,7 +37,7 @@ module.exports = async (req, res, next) => {
   let archiveTeam = false;
 
   if (team.events && team.events.length > 0) {
-    const teamEventsPromises = team.events.map(e =>
+    const teamEventsPromises = team.events.map((e) =>
       Event.findOne({ _id: e.toString() })
     );
 
@@ -53,7 +53,7 @@ module.exports = async (req, res, next) => {
       const endDate = moment(event.endDate).utc();
       const endOfToday = moment.utc().endOf('day');
       if (endDate.isBefore(endOfToday)) {
-        event.teams = event.teams.filter(t => t.toString() !== team.id);
+        event.teams = event.teams.filter((t) => t.toString() !== team.id);
         event.updatedAt = moment.utc().toDate();
 
         try {
@@ -68,7 +68,7 @@ module.exports = async (req, res, next) => {
     }
   }
 
-  const teamMembersPromises = team.members.map(m =>
+  const teamMembersPromises = team.members.map((m) =>
     User.findOne({ _id: m.toString() })
   );
 
@@ -81,7 +81,7 @@ module.exports = async (req, res, next) => {
   }
 
   for (const member of teamMembers) {
-    member.teams = member.teams.filter(t => t.toString() !== team.id);
+    member.teams = member.teams.filter((t) => t.toString() !== team.id);
     member.updatedAt = moment.utc().toDate();
 
     try {

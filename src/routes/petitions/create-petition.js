@@ -73,11 +73,11 @@ module.exports = async (req, res, next) => {
 
     if (!event) return res.status(404).json({ event: 'Not found' });
 
-    if (!event.managers.find(m => m.toString() === data.sender)) {
+    if (!event.managers.find((m) => m.toString() === data.sender)) {
       return res.status(403).json({ general: 'Forbidden action' });
     }
 
-    if (event.teams.find(t => t.toString() === data.team)) {
+    if (event.teams.find((t) => t.toString() === data.team)) {
       return res.status(400).json({
         general: 'Team is already participant of event'
       });
@@ -150,11 +150,11 @@ module.exports = async (req, res, next) => {
 
     if (!event) return res.status(404).json({ general: 'Event not found' });
 
-    if (!event.managers.find(m => m.toString() === data.sender)) {
+    if (!event.managers.find((m) => m.toString() === data.sender)) {
       return res.status(403).json({ general: 'Forbidden action' });
     }
 
-    if (event.participants.find(p => p.toString() === data.user)) {
+    if (event.participants.find((p) => p.toString() === data.user)) {
       return res.status(400).json({
         general: 'User is already participant of event'
       });
@@ -227,11 +227,11 @@ module.exports = async (req, res, next) => {
 
     if (!team) return res.status(404).json({ general: 'Team not found' });
 
-    if (!team.managers.find(m => m.toString() === data.sender)) {
+    if (!team.managers.find((m) => m.toString() === data.sender)) {
       return res.status(403).json({ general: 'Forbidden action' });
     }
 
-    if (team.members.find(m => m.toString() === data.user)) {
+    if (team.members.find((m) => m.toString() === data.user)) {
       return res.status(400).json({
         general: 'User is already member of team'
       });
@@ -295,7 +295,7 @@ module.exports = async (req, res, next) => {
 
     if (!event) return res.status(404).json({ general: 'Event not found' });
 
-    if (event.teams.find(t => t.toString() === data.sender)) {
+    if (event.teams.find((t) => t.toString() === data.sender)) {
       return res.status(400).json({
         general: 'Team is already participant of event '
       });
@@ -316,7 +316,7 @@ module.exports = async (req, res, next) => {
 
     if (!team) return res.status(404).json({ general: 'Team not found' });
 
-    if (!team.managers.find(m => m.toString() === data.sender)) {
+    if (!team.managers.find((m) => m.toString() === data.sender)) {
       return res.status(403).json({ general: 'Forbidden action' });
     }
   } else if (data.type === 'request-user-event') {
@@ -368,7 +368,7 @@ module.exports = async (req, res, next) => {
 
     if (!event) return res.status(404).json({ general: 'Event not found' });
 
-    if (event.participants.find(p => p.toString() === data.sender)) {
+    if (event.participants.find((p) => p.toString() === data.sender)) {
       return res.status(400).json({
         general: 'User already is participant of event'
       });
@@ -428,7 +428,7 @@ module.exports = async (req, res, next) => {
 
     if (!team) return res.status(404).json({ general: 'Team not found' });
 
-    if (team.members.find(m => m.toString() === data.sender)) {
+    if (team.members.find((m) => m.toString() === data.sender)) {
       return res.status(400).json({
         general: 'User already is member of team'
       });
@@ -442,7 +442,7 @@ module.exports = async (req, res, next) => {
     if (typeof err.errors === 'object') {
       const validationErrors = {};
 
-      Object.keys(err.errors).forEach(key => {
+      Object.keys(err.errors).forEach((key) => {
         validationErrors[key] = err.errors[key].message;
       });
 

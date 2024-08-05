@@ -5,7 +5,7 @@ const { Team } = require('../../models/team');
 module.exports = async (req, res, next) => {
   const teamId = req.params.teamId;
 
-  const teamIdObj = mongoose.Types.ObjectId(teamId);
+  const teamIdObj = new mongoose.Types.ObjectId(teamId);
   let team;
   try {
     team = await Team.aggregate([

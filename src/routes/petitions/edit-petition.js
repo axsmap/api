@@ -104,7 +104,7 @@ module.exports = async (req, res, next) => {
         });
       }
 
-      if (event.teams.find(t => t.toString() === team.id)) {
+      if (event.teams.find((t) => t.toString() === team.id)) {
         try {
           await petition.remove();
         } catch (err) {
@@ -121,11 +121,11 @@ module.exports = async (req, res, next) => {
       }
 
       if (isSender) {
-        if (!event.managers.find(m => m.toString() === req.user.id)) {
+        if (!event.managers.find((m) => m.toString() === req.user.id)) {
           return res.status(403).json({ general: 'Forbidden action' });
         }
       } else {
-        if (!team.managers.find(m => m.toString() === req.user.id)) {
+        if (!team.managers.find((m) => m.toString() === req.user.id)) {
           return res.status(403).json({ general: 'Forbidden action' });
         }
 
@@ -161,7 +161,9 @@ module.exports = async (req, res, next) => {
       }
     } else if (petition.type === 'invite-user-event') {
       if (
-        event.participants.find(p => p.toString() === petition.user.toString())
+        event.participants.find(
+          (p) => p.toString() === petition.user.toString()
+        )
       ) {
         try {
           await petition.remove();
@@ -179,7 +181,7 @@ module.exports = async (req, res, next) => {
       }
 
       if (isSender) {
-        if (!event.managers.find(m => m.toString() === req.user.id)) {
+        if (!event.managers.find((m) => m.toString() === req.user.id)) {
           return res.status(403).json({ general: 'Forbidden action' });
         }
       } else {
@@ -243,7 +245,7 @@ module.exports = async (req, res, next) => {
         });
       }
 
-      if (event.teams.find(t => t.toString() === team.id)) {
+      if (event.teams.find((t) => t.toString() === team.id)) {
         try {
           await petition.remove();
         } catch (err) {
@@ -260,11 +262,11 @@ module.exports = async (req, res, next) => {
       }
 
       if (isSender) {
-        if (!team.managers.find(m => m.toString() === req.user.id)) {
+        if (!team.managers.find((m) => m.toString() === req.user.id)) {
           return res.status(403).json({ general: 'Forbidden action' });
         }
       } else {
-        if (!event.managers.find(m => m.toString() === req.user.id)) {
+        if (!event.managers.find((m) => m.toString() === req.user.id)) {
           return res.status(403).json({ general: 'Forbidden action' });
         }
 
@@ -325,7 +327,7 @@ module.exports = async (req, res, next) => {
         });
       }
 
-      if (event.participants.find(p => p.toString() === user.id)) {
+      if (event.participants.find((p) => p.toString() === user.id)) {
         try {
           await petition.remove();
         } catch (err) {
@@ -342,7 +344,7 @@ module.exports = async (req, res, next) => {
       }
 
       if (!isSender) {
-        if (!event.managers.find(m => m.toString() === req.user.id)) {
+        if (!event.managers.find((m) => m.toString() === req.user.id)) {
           return res.status(403).json({ general: 'Forbidden action' });
         }
 
@@ -405,7 +407,7 @@ module.exports = async (req, res, next) => {
     }
 
     if (petition.type === 'invite-user-team') {
-      if (team.members.find(m => m.toString() === petition.user.toString())) {
+      if (team.members.find((m) => m.toString() === petition.user.toString())) {
         try {
           await petition.remove();
         } catch (err) {
@@ -421,7 +423,7 @@ module.exports = async (req, res, next) => {
       }
 
       if (isSender) {
-        if (!team.managers.find(m => m.toString() === req.user.id)) {
+        if (!team.managers.find((m) => m.toString() === req.user.id)) {
           return res.status(403).json({ general: 'Forbidden action' });
         }
       } else {
@@ -487,7 +489,7 @@ module.exports = async (req, res, next) => {
         });
       }
 
-      if (team.members.find(m => m.toString() === user.id)) {
+      if (team.members.find((m) => m.toString() === user.id)) {
         try {
           await petition.remove();
         } catch (err) {
@@ -503,7 +505,7 @@ module.exports = async (req, res, next) => {
       }
 
       if (!isSender) {
-        if (!team.managers.find(m => m.toString() === req.user.id)) {
+        if (!team.managers.find((m) => m.toString() === req.user.id)) {
           return res.status(403).json({ general: 'Forbidden action' });
         }
 

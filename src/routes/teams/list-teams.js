@@ -26,9 +26,9 @@ module.exports = async (req, res, next) => {
 
     const managed = toBoolean(queryParams.managed);
     if (managed) {
-      teamsQuery.managers = { $in: [mongoose.Types.ObjectId(req.user.id)] };
+      teamsQuery.managers = { $in: [new mongoose.Types.ObjectId(req.user.id)] };
     } else {
-      teamsQuery.managers = { $nin: [mongoose.Types.ObjectId(req.user.id)] };
+      teamsQuery.managers = { $nin: [new mongoose.Types.ObjectId(req.user.id)] };
     }
   }
 
@@ -60,7 +60,7 @@ module.exports = async (req, res, next) => {
     return next(err);
   }
 
-  const getTeamsRankings = teams.map(t =>
+  const getTeamsRankings = teams.map((t) =>
     Team.find({ reviewsAmount: { $gt: t.reviewsAmount } }).count()
   );
 

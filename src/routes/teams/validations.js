@@ -50,7 +50,7 @@ module.exports = {
       if (!Array.isArray(data.managers)) {
         errors.managers = 'Should be an array';
       } else {
-        data.managers.some(m => {
+        data.managers.some((m) => {
           if (typeof m !== 'string') {
             errors.managers = 'Should only have string values';
             return true;
@@ -75,7 +75,7 @@ module.exports = {
       if (!Array.isArray(data.members)) {
         errors.members = 'Should be an array';
       } else {
-        data.members.some(m => {
+        data.members.some((m) => {
           if (typeof m !== 'string') {
             errors.members = 'Should only have string values';
             return true;

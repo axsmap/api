@@ -94,7 +94,7 @@ db.on('connected', async () => {
   await closeConnections(db);
 });
 
-db.on('error', err => {
+db.on('error', (err) => {
   console.log('Connection to DB failed ' + err);
   process.exit(0);
 });

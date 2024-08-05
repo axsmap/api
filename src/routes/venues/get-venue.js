@@ -39,6 +39,7 @@ module.exports = async (req, res, next) => {
       )}&key=${process.env.PLACES_API_KEY}`
     );
   } catch (err) {
+    console.error(err);
     console.log(`Streetview for ${placeId} failed to be found at get-venue.`);
     streetViewError = true;
   }

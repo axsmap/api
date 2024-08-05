@@ -22,14 +22,14 @@ module.exports = async (req, res, next) => {
     return res.status(404).json({ general: 'Event not found' });
   }
 
-  const eventParticipants = event.participants.map(p => p.toString());
+  const eventParticipants = event.participants.map((p) => p.toString());
   if (eventParticipants.includes(req.user.id)) {
     return res
       .status(400)
       .json({ general: 'You already are a participant in this event' });
   }
 
-  const eventManagers = event.managers.map(m => m.toString());
+  const eventManagers = event.managers.map((m) => m.toString());
   if (eventManagers.includes(req.user.id)) {
     return res
       .status(400)
@@ -114,7 +114,7 @@ module.exports = async (req, res, next) => {
       if (typeof err.errors === 'object') {
         const validationErrors = {};
 
-        Object.keys(err.errors).forEach(key => {
+        Object.keys(err.errors).forEach((key) => {
           validationErrors[key] = err.errors[key].message;
         });
 

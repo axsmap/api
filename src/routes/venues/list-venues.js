@@ -62,7 +62,7 @@ module.exports = async (req, res, next) => {
 
   /*
    * Legacy filter string building function,
-   *  has a critical defect condition where if 
+   *  has a critical defect condition where if
    *  no > yes but yes is at least 1, then there
    *  would be a false match.
    */
@@ -203,9 +203,9 @@ module.exports = async (req, res, next) => {
     }
 
     const pageLimit =
-      venuesFilters.hasOwnProperty('entranceScore') ||
-      venuesFilters.hasOwnProperty('interiorScore') ||
-      venuesFilters.hasOwnProperty('restroomScore')
+      'entranceScore' in venuesFilters ||
+      'interiorScore' in venuesFilters ||
+      'restroomScore' in venuesFilters
         ? 80
         : 20;
 
@@ -242,7 +242,7 @@ module.exports = async (req, res, next) => {
       return next(err);
     }
 
-    venues = venues.map(venue =>
+    venues = venues.map((venue) =>
       Object.assign({}, venue.toObject(), {
         id: venue._id,
         _id: undefined,
@@ -253,7 +253,7 @@ module.exports = async (req, res, next) => {
     //+ADDED
     //Perform ratings logic on all returned venues
     console.log('Raw venues count: ' + venues.length);
-    venues = venues.filter(venue => {
+    venues = venues.filter((venue) => {
       //console.log('In scoring assignment');
       let scoring;
       //calculate entranceScore, glyphs
@@ -278,7 +278,7 @@ module.exports = async (req, res, next) => {
       );
 
       let passesValidation = true;
-      if (venuesFilters.hasOwnProperty('entranceScore')) {
+      if ('entranceScore' in venuesFilters) {
         if (
           !venue.entranceScore ||
           venue.entranceScore < venuesFilters.entranceScore
@@ -287,7 +287,7 @@ module.exports = async (req, res, next) => {
         }
       }
 
-      if (passesValidation && venuesFilters.hasOwnProperty('interiorScore')) {
+      if (passesValidation && 'interiorScore' in venuesFilters) {
         if (
           !venue.interiorScore ||
           venue.interiorScore < venuesFilters.interiorScore
@@ -296,7 +296,7 @@ module.exports = async (req, res, next) => {
         }
       }
 
-      if (passesValidation && venuesFilters.hasOwnProperty('restroomScore')) {
+      if (passesValidation && 'restroomScore' in venuesFilters) {
         if (
           !venue.restroomScore ||
           venue.restroomScore < venuesFilters.restroomScore
@@ -326,8 +326,8 @@ module.exports = async (req, res, next) => {
       results: venues
     };
     /*
-    * End legacy filter
-    */
+     * End legacy filter
+     */
   } else {
     console.log('>> Performing Google search');
 
@@ -416,7 +416,7 @@ module.exports = async (req, res, next) => {
     //Format Google Places results and get array of IDs
     let places = [];
     const placesIds = [];
-    placesResponse.data.results.forEach(place => {
+    placesResponse.data.results.forEach((place) => {
       let photo = '';
       if (place.photos) {
         photo = `https://maps.googleapis.com/maps/api/place/photo?key=${
@@ -451,7 +451,7 @@ module.exports = async (req, res, next) => {
     }
 
     //Perform ratings logic on all returned venues
-    venues.forEach(venue => {
+    venues.forEach((venue) => {
       //console.log('In scoring assignment');
       let scoring;
       //calculate entranceScore, glyphs
@@ -480,15 +480,12 @@ module.exports = async (req, res, next) => {
     //  Can't use hasOwnProperty() on mongoose model objects  //
     if (!isEmpty(venuesFilters)) {
       console.log('>> Performing secondary DB filtering');
-      places = places.filter(place => {
-        const venue = find(venues, venue => venue.placeId === place.placeId);
+      places = places.filter((place) => {
+        const venue = find(venues, (venue) => venue.placeId === place.placeId);
         if (venue) {
           //console.log('In verification of filters');
           let passesValidation = true;
-          if (
-            passesValidation &&
-            venuesFilters.hasOwnProperty('allowsGuideDog')
-          ) {
+          if (passesValidation && 'allowsGuideDog' in venuesFilters) {
             if (
               !venue.allowsGuideDog ||
               venue.allowsGuideDog.yes < venue.allowsGuideDog.no ||
@@ -498,7 +495,7 @@ module.exports = async (req, res, next) => {
             }
           }
 
-          if (passesValidation && venuesFilters.hasOwnProperty('hasParking')) {
+          if (passesValidation && 'hasParking' in venuesFilters) {
             if (
               !venue.hasParking ||
               venue.hasParking.yes < venue.hasParking.no ||
@@ -508,10 +505,7 @@ module.exports = async (req, res, next) => {
             }
           }
 
-          if (
-            passesValidation &&
-            venuesFilters.hasOwnProperty('entranceScore')
-          ) {
+          if (passesValidation && 'entranceScore' in venuesFilters) {
             if (
               !venue.entranceScore ||
               venue.entranceScore < venuesFilters.entranceScore
@@ -520,10 +514,7 @@ module.exports = async (req, res, next) => {
             }
           }
 
-          if (
-            passesValidation &&
-            venuesFilters.hasOwnProperty('interiorScore')
-          ) {
+          if (passesValidation && 'interiorScore' in venuesFilters) {
             if (
               !venue.interiorScore ||
               venue.interiorScore < venuesFilters.interiorScore
@@ -532,10 +523,7 @@ module.exports = async (req, res, next) => {
             }
           }
 
-          if (
-            passesValidation &&
-            venuesFilters.hasOwnProperty('restroomScore')
-          ) {
+          if (passesValidation && 'restroomScore' in venuesFilters) {
             if (
               !venue.restroomScore ||
               venue.restroomScore < venuesFilters.restroomScore
@@ -552,8 +540,8 @@ module.exports = async (req, res, next) => {
     } //end filtering Google results
 
     //
-    places = places.map(place => {
-      const venue = find(venues, venue => venue.placeId === place.placeId);
+    places = places.map((place) => {
+      const venue = find(venues, (venue) => venue.placeId === place.placeId);
       if (venue) {
         return Object.assign({}, place, {
           //new expanded fields

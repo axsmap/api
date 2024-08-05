@@ -298,14 +298,14 @@ const venueSchema = new mongoose.Schema(
 
 venueSchema.index({ location: '2dsphere', placeId: 1 });
 
-venueSchema.virtual('coordinates').get(function() {
+venueSchema.virtual('coordinates').get(function () {
   return {
     lat: this.location.coordinates[1],
     lng: this.location.coordinates[0]
   };
 });
 
-venueSchema.virtual('photo').get(function() {
+venueSchema.virtual('photo').get(function () {
   return undefined;
 });
 

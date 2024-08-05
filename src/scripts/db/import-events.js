@@ -78,9 +78,9 @@ db.on('connected', async () => {
 
       const createEvents = [];
       for (let oldEventItem of oldEvents) {
-        let participants = oldEventItem.members.map(member => member.user);
+        let participants = oldEventItem.members.map((member) => member.user);
         participants = participants.filter(
-          p => p.toString() !== oldEventItem.creator.toString()
+          (p) => p.toString() !== oldEventItem.creator.toString()
         );
 
         const eventData = {
@@ -134,7 +134,7 @@ db.on('connected', async () => {
     await closeConnections(db, oldDb);
   });
 
-  oldDb.on('error', err => {
+  oldDb.on('error', (err) => {
     console.log('Connection to old DB failed ' + err);
     process.exit(0);
   });
@@ -144,7 +144,7 @@ db.on('connected', async () => {
   });
 });
 
-db.on('error', err => {
+db.on('error', (err) => {
   console.log('Connection to DB failed ' + err);
   process.exit(0);
 });

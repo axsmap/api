@@ -9,7 +9,7 @@ module.exports = async (req, res, next) => {
   if (!isMongoId(eventId)) {
     return res.status(400).json({ general: 'Event not found' });
   }
-  eventId = mongoose.Types.ObjectId(eventId);
+  eventId = new mongoose.Types.ObjectId(eventId);
 
   let event;
   try {

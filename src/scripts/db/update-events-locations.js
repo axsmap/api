@@ -61,7 +61,7 @@ db.on('connected', async () => {
 
     console.log(`${events.length} events found`);
 
-    const getVenues = events.map(e => Venue.findOne({ _id: e.venue }));
+    const getVenues = events.map((e) => Venue.findOne({ _id: e.venue }));
     let venues;
     try {
       venues = await Promise.all(getVenues);
@@ -73,7 +73,7 @@ db.on('connected', async () => {
 
     console.log(`${venues.length} venues found`);
 
-    const getPlaces = venues.map(v => {
+    const getPlaces = venues.map((v) => {
       if (v) {
         return axios.get(
           `https://maps.googleapis.com/maps/api/place/details/json?placeid=${
@@ -140,7 +140,7 @@ db.on('connected', async () => {
   await closeConnections(db);
 });
 
-db.on('error', err => {
+db.on('error', (err) => {
   console.log('Connection to DB failed ' + err);
   process.exit(0);
 });

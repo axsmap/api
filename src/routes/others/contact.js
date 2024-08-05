@@ -2,7 +2,7 @@ const { sendEmail } = require('../../helpers');
 
 const { validateContact } = require('./validations');
 
-module.exports = async (req, res, next) => {
+module.exports = async (req, res) => {
   const data = {
     email: req.body.email,
     message: req.body.message,

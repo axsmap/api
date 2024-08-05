@@ -154,7 +154,7 @@ module.exports = {
           'spinal-cord',
           'vision'
         ];
-        data.disabilities.some(d => {
+        data.disabilities.some((d) => {
           if (typeof d !== 'string') {
             errors.disabilities = 'All values should be strings';
             return true;

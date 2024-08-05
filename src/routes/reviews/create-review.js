@@ -60,8 +60,8 @@ module.exports = async (req, res, next) => {
     }
 
     if (
-      !event.participants.find(p => p.toString() === data.user) &&
-      !event.managers.find(m => m.toString() === data.user)
+      !event.participants.find((p) => p.toString() === data.user) &&
+      !event.managers.find((m) => m.toString() === data.user)
     ) {
       return res
         .status(400)
@@ -70,9 +70,7 @@ module.exports = async (req, res, next) => {
 
     const startDate = moment(event.startDate).utc();
     const endDate = moment(event.endDate).utc();
-    const today = moment()
-      .startOf('day')
-      .utc();
+    const today = moment().startOf('day').utc();
     if (startDate.isAfter(today)) {
       return res.status(400).json({ event: 'Event has not started yet' });
     } else if (endDate.isBefore(today)) {
@@ -94,8 +92,8 @@ module.exports = async (req, res, next) => {
     }
 
     if (
-      !team.members.find(m => m.toString() === data.user) &&
-      !team.managers.find(m => m.toString() === data.user)
+      !team.members.find((m) => m.toString() === data.user) &&
+      !team.managers.find((m) => m.toString() === data.user)
     ) {
       return res
         .status(400)
@@ -168,7 +166,7 @@ module.exports = async (req, res, next) => {
     if (typeof err.errors === 'object') {
       const validationErrors = {};
 
-      Object.keys(err.errors).forEach(key => {
+      Object.keys(err.errors).forEach((key) => {
         validationErrors[key] = err.errors[key].message;
       });
 

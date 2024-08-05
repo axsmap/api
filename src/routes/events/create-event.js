@@ -32,10 +32,7 @@ module.exports = async (req, res, next) => {
 
   data.address = cleanSpaces(data.address);
 
-  data.endDate = moment(data.endDate)
-    .endOf('day')
-    .utc()
-    .toDate();
+  data.endDate = moment(data.endDate).endOf('day').utc().toDate();
 
   data.location = {
     coordinates: [data.locationCoordinates[1], data.locationCoordinates[0]]
@@ -71,10 +68,7 @@ module.exports = async (req, res, next) => {
     }
   }
 
-  data.startDate = moment(data.startDate)
-    .startOf('day')
-    .utc()
-    .toDate();
+  data.startDate = moment(data.startDate).startOf('day').utc().toDate();
 
   if (data.teamManager) {
     let team;
@@ -91,7 +85,7 @@ module.exports = async (req, res, next) => {
       return res.status(404).json({ teamManager: 'Not found' });
     }
 
-    const teamManagers = team.managers.map(m => m.toString());
+    const teamManagers = team.managers.map((m) => m.toString());
     if (!teamManagers.includes(req.user.id)) {
       return res.status(403).json({ general: 'Forbidden action' });
     }
@@ -139,7 +133,7 @@ module.exports = async (req, res, next) => {
     if (typeof err.errors === 'object') {
       const validationErrors = {};
 
-      Object.keys(err.errors).forEach(key => {
+      Object.keys(err.errors).forEach((key) => {
         validationErrors[key] = err.errors[key].message;
       });
 

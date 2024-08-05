@@ -13,7 +13,7 @@ const raven = require('raven');
 require('dotenv').config();
 //console.log(process.env)
 
-const port = process.env.PORT  || 8000;
+const port = process.env.PORT || 8000;
 
 const connectToDB = require('./helpers/db-connector');
 const routes = require('./routes');
@@ -40,8 +40,8 @@ function connectedToDB() {
 
   // Error handling
   app.use(raven.errorHandler());
-  app.use((req, res, _next) => res.status(404).json({ general: 'Not found' }));
-  app.use((err, req, res, _next) => {
+  app.use((req, res) => res.status(404).json({ general: 'Not found' }));
+  app.use((err, req, res) => {
     if (err instanceof SyntaxError) {
       return res.status(400).json({ general: 'Invalid JSON format' });
     }
@@ -50,11 +50,11 @@ function connectedToDB() {
     return res.status(500).json({ general: 'Something went wrong' });
   });
 
-  process.on('uncaughtException', err => {
+  process.on('uncaughtException', (err) => {
     console.error(err);
     raven.captureException(err);
   });
-  process.on('unhandledRejection', err => {
+  process.on('unhandledRejection', (err) => {
     console.error(err);
     raven.captureException(err);
   });

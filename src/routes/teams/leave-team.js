@@ -21,16 +21,16 @@ module.exports = async (req, res, next) => {
     return res.status(404).json({ general: 'Team not found' });
   }
 
-  if (team.managers.find(m => m.toString() === req.user.id)) {
-    team.managers = team.managers.filter(m => m.toString() !== req.user.id);
+  if (team.managers.find((m) => m.toString() === req.user.id)) {
+    team.managers = team.managers.filter((m) => m.toString() !== req.user.id);
 
     if (team.managers.length === 0) {
       return res.status(400).json({
         general: 'You cannot leave because you are the only manager'
       });
     }
-  } else if (team.members.find(m => m.toString() === req.user.id)) {
-    team.members = team.members.filter(m => m.toString() !== req.user.id);
+  } else if (team.members.find((m) => m.toString() === req.user.id)) {
+    team.members = team.members.filter((m) => m.toString() !== req.user.id);
   } else {
     return res.status(400).json({ general: 'You are not a member' });
   }
@@ -45,7 +45,7 @@ module.exports = async (req, res, next) => {
     return next(err);
   }
 
-  req.user.teams = req.user.teams.filter(t => t.toString() !== team.id);
+  req.user.teams = req.user.teams.filter((t) => t.toString() !== team.id);
   req.user.updatedAt = today.toDate();
 
   try {

@@ -20,14 +20,14 @@ module.exports = async (req, res, next) => {
     return res.status(404).json({ general: 'Team not found' });
   }
 
-  const eventMembers = team.members.map(m => m.toString());
+  const eventMembers = team.members.map((m) => m.toString());
   if (eventMembers.includes(req.user.id)) {
     return res
       .status(400)
       .json({ general: 'You already are a member in this team' });
   }
 
-  const eventManagers = team.managers.map(m => m.toString());
+  const eventManagers = team.managers.map((m) => m.toString());
   if (eventManagers.includes(req.user.id)) {
     return res
       .status(400)
@@ -79,7 +79,7 @@ module.exports = async (req, res, next) => {
     if (typeof err.errors === 'object') {
       const validationErrors = {};
 
-      Object.keys(err.errors).forEach(key => {
+      Object.keys(err.errors).forEach((key) => {
         validationErrors[key] = err.errors[key].message;
       });
 

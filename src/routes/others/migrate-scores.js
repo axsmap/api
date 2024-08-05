@@ -2,7 +2,7 @@ const { Venue } = require('../../models/venue');
 const { Review } = require('../../models/review');
 const { User } = require('../../models/user');
 
-module.exports = async (req, res, next) => {
+module.exports = async (req, res) => {
   const saveChanges = req.query.save && req.query.save === 'true';
   console.log('IN MIGRATE SCORES, SAVING CHANGES: ' + saveChanges);
 
@@ -28,7 +28,7 @@ module.exports = async (req, res, next) => {
   let venuesProcessed = 0;
   let pages = 0;
   while (venuesProcessed < venuesTotalCount) {
-    timeBlockStart = new Date();
+    let timeBlockStart = new Date();
     let venueChunk;
     try {
       venueChunk = await Venue.find({
@@ -52,8 +52,8 @@ module.exports = async (req, res, next) => {
       console.log('UNEXPECTED AMOUNT OF VENUES UNCONVERTED FOUND');
     }
 
-    for (venue of venueChunk) {
-      for (review of venue.reviews) {
+    for (const venue of venueChunk) {
+      for (const review of venue.reviews) {
         //console.log("reviewID: ", review);
 
         let dbReview;
@@ -88,6 +88,7 @@ module.exports = async (req, res, next) => {
               case 4:
                 dbReview.hasWideEntrance = true;
                 venue.hasWideEntrance.yes += 1;
+                break;
               case 3:
                 dbReview.hasPortableRamp = true;
                 venue.hasPortableRamp.yes += 1;
@@ -111,6 +112,7 @@ module.exports = async (req, res, next) => {
                 venue.hasLoweredSinks.yes += 1;
                 dbReview.hasSupportAroundToilet = true;
                 venue.hasSupportAroundToilet.yes += 1;
+                break;
               case 3:
                 dbReview.hasSwingOutDoor = true;
                 venue.hasSwingOutDoor.yes += 1;
@@ -201,40 +203,47 @@ module.exports = async (req, res, next) => {
   } //end venues while-loop
 
   try {
-    reviewsTotalCount = await Review.countDocuments({
+    // Count the total number of unconverted reviews
+    const reviewsTotalCount = await Review.countDocuments({
       _isScoreConverted: { $ne: true }
     });
-  } catch (err) {
-    console.log('Reviews unconverted failed to be counted, error: ', err);
-    return res.status(404).json(err);
-  }
-  console.log('THERE ARE ' + reviewsTotalCount + ' UNCONVERTED REVIEWS');
+    console.log('THERE ARE ' + reviewsTotalCount + ' UNCONVERTED REVIEWS');
 
-  if (reviewsTotalCount > 0) {
-    let unconvertedReviews;
+    if (reviewsTotalCount > 0) {
+      let unconvertedReviews;
 
-    try {
-      unconvertedReviews = await Review.find({
-        _isScoreConverted: { $ne: true }
-      });
-    } catch (err) {
-      console.log('Reviews unconverted failed to be found, error: ', err);
-      return res.status(404).json(err);
-    }
-
-    for (unconvertedReview of unconvertedReviews) {
       try {
-        matchingVenue = await Venue.find({
-          reviews: unconvertedReview.id
+        // Find all unconverted reviews
+        unconvertedReviews = await Review.find({
+          _isScoreConverted: { $ne: true }
         });
       } catch (err) {
         console.log('Reviews unconverted failed to be found, error: ', err);
         return res.status(404).json(err);
       }
 
-      console.log('Review ID: ' + unconvertedReview.id);
-      console.log("Review's venue: " + matchingVenue.id);
+      for (const unconvertedReview of unconvertedReviews) {
+        let matchingVenue;
+
+        try {
+          // Find the venue for each unconverted review
+          matchingVenue = await Venue.findOne({
+            reviews: unconvertedReview.id
+          });
+        } catch (err) {
+          console.log('Venue search failed, error: ', err);
+          return res.status(404).json(err);
+        }
+
+        console.log('Review ID: ' + unconvertedReview.id);
+        console.log(
+          "Review's venue: " + (matchingVenue ? matchingVenue.id : 'Not found')
+        );
+      }
     }
+  } catch (err) {
+    console.log('Reviews unconverted count failed, error: ', err);
+    return res.status(404).json(err);
   }
 
   console.log('FINISHED PROCESSING ALL RECORDS');
