@@ -53,6 +53,7 @@ module.exports = async (req, res, next) => {
           reviewsAmount: 1,
           reviewsGoal: 1,
           startDate: 1,
+          location: 1,
           description: 1,
         })
         .sort(sortBy)
@@ -76,7 +77,7 @@ module.exports = async (req, res, next) => {
     page = null;
     lastPage = null;
   }
-
+  console.log(events);
   return res.status(200).json({
     page: page + 1,
     lastPage,

@@ -1,6 +1,6 @@
-const aws = require('aws-sdk');
+const aws = require("aws-sdk");
 
-const { Photo } = require('../../models/photo');
+const { Photo } = require("../../models/photo");
 
 module.exports = async (req, res, next) => {
   const photoFileName = req.params.photoFileName;
@@ -9,8 +9,8 @@ module.exports = async (req, res, next) => {
   try {
     photo = await Photo.findOne({ fileName: photoFileName });
   } catch (err) {
-    if (err.name === 'CastError') {
-      return res.status(404).json({ general: 'Photo not found' });
+    if (err.name === "CastError") {
+      return res.status(404).json({ general: "Photo not found" });
     }
 
     console.log(`Photo ${photoFileName} failed to be found at delete-photo`);
@@ -19,7 +19,7 @@ module.exports = async (req, res, next) => {
 
   if (photo) {
     try {
-      await photo.remove();
+      await photo.deleteOne({ fileName: photoFileName });
     } catch (err) {
       console.log(
         `Photo ${photoFileName} failed to be deleted at delete-photo`
@@ -28,20 +28,20 @@ module.exports = async (req, res, next) => {
     }
   }
 
-  if (!photoFileName.includes('default')) {
+  if (!photoFileName.includes("default")) {
     const s3 = new aws.S3();
     try {
       await s3
         .deleteObject({
           Bucket: process.env.AWS_S3_BUCKET,
-          Key: `photos/${photoFileName}`
+          Key: `photos/${photoFileName}`,
         })
         .promise();
     } catch (err) {
-      console.log('Photo failed to be deleted at delete-photo');
+      console.log("Photo failed to be deleted at delete-photo");
       return next(err);
     }
   }
 
-  return res.status(204).json({ general: 'Success' });
+  return res.status(204).json({ general: "Success" });
 };

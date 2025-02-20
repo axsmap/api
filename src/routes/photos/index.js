@@ -1,15 +1,15 @@
-const express = require('express');
+const express = require("express");
 
-const { isAuthenticated } = require('../../helpers');
+const { isAuthenticated } = require("../../helpers");
 
-const createPhoto = require('./create-photo');
-const deletePhoto = require('./delete-photo');
+const createPhoto = require("./create-photo");
+const deletePhoto = require("./delete-photo");
 
 const router = new express.Router();
 
-router.post('', isAuthenticated({ isOptional: false }), createPhoto);
+router.post("", isAuthenticated({ isOptional: false }), createPhoto);
 router.delete(
-  '/:photoFileName',
+  "/:photoFileName",
   isAuthenticated({ isOptional: false }),
   deletePhoto
 );
