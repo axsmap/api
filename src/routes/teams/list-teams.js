@@ -1,9 +1,9 @@
-const mongoose = require('mongoose');
-const { toBoolean } = require('validator');
+const mongoose = require("mongoose");
+const { toBoolean } = require("validator");
 
-const { Team } = require('../../models/team');
+const { Team } = require("../../models/team");
 
-const { validateListTeams } = require('./validations');
+const { validateListTeams } = require("./validations");
 
 module.exports = async (req, res, next) => {
   const queryParams = req.query;
@@ -21,18 +21,20 @@ module.exports = async (req, res, next) => {
     if (!req.user) {
       return res
         .status(400)
-        .json({ general: 'You cannot use managed filter as anonymous' });
+        .json({ general: "You cannot use managed filter as anonymous" });
     }
 
     const managed = toBoolean(queryParams.managed);
     if (managed) {
       teamsQuery.managers = { $in: [new mongoose.Types.ObjectId(req.user.id)] };
     } else {
-      teamsQuery.managers = { $nin: [new mongoose.Types.ObjectId(req.user.id)] };
+      teamsQuery.managers = {
+        $nin: [new mongoose.Types.ObjectId(req.user.id)],
+      };
     }
   }
 
-  let sortBy = queryParams.sortBy || '-reviewsAmount';
+  let sortBy = queryParams.sortBy || "-reviewsAmount";
   let page = queryParams.page ? Number(queryParams.page) - 1 : 0;
   const pageLimit = Number(queryParams.pageLimit) || 12;
 
@@ -44,31 +46,31 @@ module.exports = async (req, res, next) => {
         .match(teamsQuery)
         .project({
           _id: 0,
-          id: '$_id',
+          id: "$_id",
           avatar: 1,
           description: 1,
           name: 1,
-          reviewsAmount: 1
+          reviewsAmount: 1,
         })
         .sort(sortBy)
         .skip(page * pageLimit)
         .limit(pageLimit),
-      Team.find(teamsQuery).count()
+      Team.countDocuments(teamsQuery),
     ]);
   } catch (err) {
-    console.log('Teams failed to be found or count at list-teams');
+    console.log("Teams failed to be found or count at list-teams");
     return next(err);
   }
 
   const getTeamsRankings = teams.map((t) =>
-    Team.find({ reviewsAmount: { $gt: t.reviewsAmount } }).count()
+    Team.countDocuments({ reviewsAmount: { $gt: t.reviewsAmount } })
   );
 
   let teamsRankings;
   try {
     teamsRankings = await Promise.all(getTeamsRankings);
   } catch (err) {
-    console.log('Teams rankings failed to be count at list-teams');
+    console.log("Teams rankings failed to be count at list-teams");
     return next(err);
   }
 
@@ -78,7 +80,7 @@ module.exports = async (req, res, next) => {
     description: t.description,
     name: t.name,
     ranking: teamsRankings[i] + 1,
-    reviewsAmount: t.reviewsAmount
+    reviewsAmount: t.reviewsAmount,
   }));
 
   let lastPage = Math.ceil(total / pageLimit);
@@ -99,6 +101,6 @@ module.exports = async (req, res, next) => {
     pageLimit,
     total,
     sortBy,
-    results: teams
+    results: teams,
   });
 };

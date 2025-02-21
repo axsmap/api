@@ -1,24 +1,46 @@
-const axios = require('axios');
-const { find, isEmpty } = require('lodash');
-const slugify = require('speakingurl');
+const axios = require("axios");
+const { find, isEmpty } = require("lodash");
+const slugify = require("speakingurl");
 
-const { isNumber } = require('../../helpers');
-const { Venue } = require('../../models/venue');
+const { isNumber } = require("../../helpers");
+const { Venue } = require("../../models/venue");
 
-const { validateListVenues } = require('./validations');
-const venueReviewSummary = require('../../helpers/venue-review-summary.js');
+const { validateListVenues } = require("./validations");
+const venueReviewSummary = require("../../helpers/venue-review-summary.js");
+
+function getDistanceFromLatLng(lat1, lng1, lat2, lng2) {
+  const R = 6371; // Earth’s radius in km
+
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLng = (lng2 - lng1) * (Math.PI / 180);
+
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) *
+      Math.cos(lat2 * (Math.PI / 180)) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const distanceInMeter = R * c * 1000;
+  return `${distanceInMeter.toFixed(0)} ${
+    distanceInMeter > 1000 ? "KiloMeter" : "Meter"
+  }`; // Distance in kilometers
+}
 
 module.exports = async (req, res, next) => {
   const queryParams = req.query;
 
+  console.log(queryParams);
+
   const { errors, isValid } = validateListVenues(queryParams);
   if (!isValid) return res.status(400).json(errors);
 
-  let coordinates = queryParams.location.split(',');
+  let coordinates = queryParams.location.split(",");
 
   //Legacy function from two-bar search, geocodes from string address
   if (queryParams.address && !queryParams.page) {
-    console.log('in address conditional, ', queryParams);
+    console.log("in address conditional, ", queryParams);
     queryParams.name = queryParams.address;
     const geocodeParams = `?key=${process.env.PLACES_API_KEY}&address=${slugify(
       queryParams.address
@@ -39,21 +61,21 @@ module.exports = async (req, res, next) => {
     }
 
     const statusCode = geocodeResponse.data.status;
-    if (statusCode === 'ZERO_RESULTS') {
-      return res.status(404).json({ keywords: 'Address not found' });
-    } else if (statusCode === 'OVER_QUERY_LIMIT') {
-      return next(new Error('Over query limit with Google Places API'));
-    } else if (statusCode === 'REQUEST_DENIED') {
-      return next(new Error('Request denied with Google Places API'));
-    } else if (statusCode === 'INVALID_REQUEST') {
-      return next(new Error('Invalid request with Google Places API'));
-    } else if (statusCode === 'UNKNOWN_ERROR') {
-      return next(new Error('Unknown error with Google Places API'));
+    if (statusCode === "ZERO_RESULTS") {
+      return res.status(404).json({ keywords: "Address not found" });
+    } else if (statusCode === "OVER_QUERY_LIMIT") {
+      return next(new Error("Over query limit with Google Places API"));
+    } else if (statusCode === "REQUEST_DENIED") {
+      return next(new Error("Request denied with Google Places API"));
+    } else if (statusCode === "INVALID_REQUEST") {
+      return next(new Error("Invalid request with Google Places API"));
+    } else if (statusCode === "UNKNOWN_ERROR") {
+      return next(new Error("Unknown error with Google Places API"));
     }
 
     coordinates = [
       geocodeResponse.data.results[0].geometry.location.lat,
-      geocodeResponse.data.results[0].geometry.location.lng
+      geocodeResponse.data.results[0].geometry.location.lng,
     ];
   } //end address geocode
 
@@ -86,9 +108,9 @@ module.exports = async (req, res, next) => {
 
     const allowsGuideDog = parseFloat(queryParams.allowsGuideDog) === 1;
     if (allowsGuideDog) {
-      dbVenuesFilters['allowsGuideDog.yes'] = { $gte: 1 };
+      dbVenuesFilters["allowsGuideDog.yes"] = { $gte: 1 };
     } else {
-      dbVenuesFilters['allowsGuideDog.no'] = { $gte: 1 };
+      dbVenuesFilters["allowsGuideDog.no"] = { $gte: 1 };
     }
   }
 
@@ -97,9 +119,9 @@ module.exports = async (req, res, next) => {
 
     const hasParking = parseFloat(queryParams.hasParking) === 1;
     if (hasParking) {
-      dbVenuesFilters['hasParking.yes'] = { $gte: 1 };
+      dbVenuesFilters["hasParking.yes"] = { $gte: 1 };
     } else {
-      dbVenuesFilters['hasParking.no'] = { $gte: 1 };
+      dbVenuesFilters["hasParking.no"] = { $gte: 1 };
     }
   }
 
@@ -173,7 +195,7 @@ module.exports = async (req, res, next) => {
    *  UPDATED 05/2020 TO SUPPORT FILTER ONLY SELF SEARCH
    */
   if (!isEmpty(venuesFilters) && isEmpty(queryParams.name)) {
-    console.log('>> Performing DB search');
+    console.log(">> Performing DB search");
     /*
     if (queryParams.name) {
       //performs literal name match against AXS Venue name
@@ -184,11 +206,11 @@ module.exports = async (req, res, next) => {
     dbVenuesFilters.location = {
       $near: {
         $geometry: {
-          type: 'Point',
-          coordinates: [coordinates[1], coordinates[0]]
+          type: "Point",
+          coordinates: [coordinates[1], coordinates[0]],
         },
-        $maxDistance: 50000
-      }
+        $maxDistance: 50000,
+      },
     };
 
     if (queryParams.type) {
@@ -203,9 +225,9 @@ module.exports = async (req, res, next) => {
     }
 
     const pageLimit =
-      'entranceScore' in venuesFilters ||
-      'interiorScore' in venuesFilters ||
-      'restroomScore' in venuesFilters
+      "entranceScore" in venuesFilters ||
+      "interiorScore" in venuesFilters ||
+      "restroomScore" in venuesFilters
         ? 80
         : 20;
 
@@ -214,7 +236,7 @@ module.exports = async (req, res, next) => {
     } else {
       return res
         .status(400)
-        .json({ page: 'Should be equal to or greater than 1' });
+        .json({ page: "Should be equal to or greater than 1" });
     }
 
     let total;
@@ -227,7 +249,7 @@ module.exports = async (req, res, next) => {
         )
           .skip(page * pageLimit)
           .limit(pageLimit),
-        Venue.find(dbVenuesFilters).count()
+        (await Venue.find(dbVenuesFilters)).length,
         /*TODO: count is deprecated in favor of countDocuments, but that does not support $near
           would need to move to GeoWithin but that does not return sorted results
           */
@@ -246,28 +268,28 @@ module.exports = async (req, res, next) => {
       Object.assign({}, venue.toObject(), {
         id: venue._id,
         _id: undefined,
-        location: venue.coordinates
+        location: venue.coordinates,
       })
     );
 
     //+ADDED
     //Perform ratings logic on all returned venues
-    console.log('Raw venues count: ' + venues.length);
+    console.log("Raw venues count: " + venues.length);
     venues = venues.filter((venue) => {
       //console.log('In scoring assignment');
       let scoring;
       //calculate entranceScore, glyphs
-      scoring = venueReviewSummary.calculateRatingLevel('entrance', venue);
+      scoring = venueReviewSummary.calculateRatingLevel("entrance", venue);
       venue.entranceScore = scoring.ratingLevel;
       venue.entranceGlyphs = scoring.ratingGlyphs;
 
       //calculate interiorScore, glyphs
-      scoring = venueReviewSummary.calculateRatingLevel('interior', venue);
+      scoring = venueReviewSummary.calculateRatingLevel("interior", venue);
       venue.interiorScore = scoring.ratingLevel;
       venue.interiorGlyphs = scoring.ratingGlyphs;
 
       //calculate restroomScore, glyphs
-      scoring = venueReviewSummary.calculateRatingLevel('restroom', venue);
+      scoring = venueReviewSummary.calculateRatingLevel("restroom", venue);
       venue.restroomScore = scoring.ratingLevel;
       venue.restroomGlyphs = scoring.ratingGlyphs;
 
@@ -278,7 +300,7 @@ module.exports = async (req, res, next) => {
       );
 
       let passesValidation = true;
-      if ('entranceScore' in venuesFilters) {
+      if ("entranceScore" in venuesFilters) {
         if (
           !venue.entranceScore ||
           venue.entranceScore < venuesFilters.entranceScore
@@ -287,7 +309,7 @@ module.exports = async (req, res, next) => {
         }
       }
 
-      if (passesValidation && 'interiorScore' in venuesFilters) {
+      if (passesValidation && "interiorScore" in venuesFilters) {
         if (
           !venue.interiorScore ||
           venue.interiorScore < venuesFilters.interiorScore
@@ -296,7 +318,7 @@ module.exports = async (req, res, next) => {
         }
       }
 
-      if (passesValidation && 'restroomScore' in venuesFilters) {
+      if (passesValidation && "restroomScore" in venuesFilters) {
         if (
           !venue.restroomScore ||
           venue.restroomScore < venuesFilters.restroomScore
@@ -316,38 +338,35 @@ module.exports = async (req, res, next) => {
       page += 1;
       if (page > lastPage || page > 3) {
         return res.status(400).json({
-          page: `Should be equal to or less than ${lastPage > 3 ? 3 : lastPage}`
+          page: `Should be equal to or less than ${lastPage > 3 ? 3 : lastPage}`,
         });
       }
     }
 
     dataResponse = {
       nextPage,
-      results: venues
+      results: venues,
     };
     /*
      * End legacy filter
      */
   } else {
-    console.log('>> Performing Google search');
+    console.log(">> Performing Google search");
 
     /*
      *  Perform Google search when there text entered or no filters selected
      */
     let nearbyParams = `?key=${process.env.PLACES_API_KEY}`;
-    let searchType = queryParams.name ? 'textsearch' : 'nearbysearch';
+    let searchType = queryParams.name ? "textsearch" : "nearbysearch";
 
     if (!queryParams.page) {
       nearbyParams = `${nearbyParams}&location=${coordinates[0]},${
         coordinates[1]
-        //}&rankby=distance`;
       }`;
 
       if (queryParams.name) {
-        //nearbyParams = `${nearbyParams}&keyword=${queryParams.name}`;
         nearbyParams = `${nearbyParams}&query=${queryParams.name}&radius=5000`;
       } else {
-        //empty search, such as on load
         nearbyParams = `${nearbyParams}&rankby=distance`;
       }
 
@@ -359,7 +378,6 @@ module.exports = async (req, res, next) => {
     } else {
       nearbyParams = `${nearbyParams}&pagetoken=${queryParams.page}`;
     }
-
     if (queryParams.rankby) {
       nearbyParams = `${nearbyParams}&rankby=${queryParams.rankby}`;
     }
@@ -376,7 +394,7 @@ module.exports = async (req, res, next) => {
     let placesResponse;
     try {
       console.log(
-        'performing google search: ' +
+        "performing google search: " +
           `https://maps.googleapis.com/maps/api/place/${searchType}/json${nearbyParams}`
       );
       placesResponse = await axios.get(
@@ -392,21 +410,21 @@ module.exports = async (req, res, next) => {
     }
 
     const statusCode = placesResponse.data.status;
-    if (statusCode === 'OVER_QUERY_LIMIT') {
-      return next(new Error('Over query limit with Google Places API'));
-    } else if (statusCode === 'REQUEST_DENIED') {
-      return next(new Error('Request denied with Google Places API'));
-    } else if (statusCode === 'INVALID_REQUEST') {
-      return next(new Error('Invalid request with Google Places API'));
-    } else if (statusCode === 'UNKNOWN_ERROR') {
-      return next(new Error('Unknown error with Google Places API'));
+    if (statusCode === "OVER_QUERY_LIMIT") {
+      return next(new Error("Over query limit with Google Places API"));
+    } else if (statusCode === "REQUEST_DENIED") {
+      return next(new Error("Request denied with Google Places API"));
+    } else if (statusCode === "INVALID_REQUEST") {
+      return next(new Error("Invalid request with Google Places API"));
+    } else if (statusCode === "UNKNOWN_ERROR") {
+      return next(new Error("Unknown error with Google Places API"));
     }
     //do we need to check for 0?
 
     if (placesResponse.data.results.length == 1) {
-      if (placesResponse.data.results[0].types[0] == 'locality') {
+      if (placesResponse.data.results[0].types[0] == "locality") {
         console.log(
-          'Found a city only: ',
+          "Found a city only: ",
           placesResponse.data.results[0].geometry.location
         );
         //TODO: redo search with new coordinates and no query/name or change/add "places in " to the first part of the string
@@ -417,24 +435,36 @@ module.exports = async (req, res, next) => {
     let places = [];
     const placesIds = [];
     placesResponse.data.results.forEach((place) => {
-      let photo = '';
+      let photo = "";
       if (place.photos) {
         photo = `https://maps.googleapis.com/maps/api/place/photo?key=${
           process.env.PLACES_API_KEY
         }&maxwidth=300&photoreference=${place.photos[0].photo_reference}`;
       }
+      console.log(
+        place.geometry.location.lat,
+        place.geometry.location.lng,
+        coordinates[0],
+        coordinates[1]
+      );
 
       places.push({
         //address: place.vicinity,
         address: place.formatted_address,
         location: {
           lat: place.geometry.location.lat,
-          lng: place.geometry.location.lng
+          lng: place.geometry.location.lng,
         },
+        distance: getDistanceFromLatLng(
+          place.geometry.location.lat,
+          place.geometry.location.lng,
+          coordinates[0],
+          coordinates[1]
+        ),
         name: place.name,
         photo,
         placeId: place.place_id,
-        types: place.types
+        types: place.types,
       });
       placesIds.push(place.place_id);
     });
@@ -455,17 +485,17 @@ module.exports = async (req, res, next) => {
       //console.log('In scoring assignment');
       let scoring;
       //calculate entranceScore, glyphs
-      scoring = venueReviewSummary.calculateRatingLevel('entrance', venue);
+      scoring = venueReviewSummary.calculateRatingLevel("entrance", venue);
       venue.entranceScore = scoring.ratingLevel;
       venue.entranceGlyphs = scoring.ratingGlyphs;
 
       //calculate interiorScore, glyphs
-      scoring = venueReviewSummary.calculateRatingLevel('interior', venue);
+      scoring = venueReviewSummary.calculateRatingLevel("interior", venue);
       venue.interiorScore = scoring.ratingLevel;
       venue.interiorGlyphs = scoring.ratingGlyphs;
 
       //calculate restroomScore, glyphs
-      scoring = venueReviewSummary.calculateRatingLevel('restroom', venue);
+      scoring = venueReviewSummary.calculateRatingLevel("restroom", venue);
       venue.restroomScore = scoring.ratingLevel;
       venue.restroomGlyphs = scoring.ratingGlyphs;
 
@@ -479,13 +509,13 @@ module.exports = async (req, res, next) => {
     //Filter out, remove, Google Places that are not AXS Venues
     //  Can't use hasOwnProperty() on mongoose model objects  //
     if (!isEmpty(venuesFilters)) {
-      console.log('>> Performing secondary DB filtering');
+      console.log(">> Performing secondary DB filtering");
       places = places.filter((place) => {
         const venue = find(venues, (venue) => venue.placeId === place.placeId);
         if (venue) {
           //console.log('In verification of filters');
           let passesValidation = true;
-          if (passesValidation && 'allowsGuideDog' in venuesFilters) {
+          if (passesValidation && "allowsGuideDog" in venuesFilters) {
             if (
               !venue.allowsGuideDog ||
               venue.allowsGuideDog.yes < venue.allowsGuideDog.no ||
@@ -495,7 +525,7 @@ module.exports = async (req, res, next) => {
             }
           }
 
-          if (passesValidation && 'hasParking' in venuesFilters) {
+          if (passesValidation && "hasParking" in venuesFilters) {
             if (
               !venue.hasParking ||
               venue.hasParking.yes < venue.hasParking.no ||
@@ -505,7 +535,7 @@ module.exports = async (req, res, next) => {
             }
           }
 
-          if (passesValidation && 'entranceScore' in venuesFilters) {
+          if (passesValidation && "entranceScore" in venuesFilters) {
             if (
               !venue.entranceScore ||
               venue.entranceScore < venuesFilters.entranceScore
@@ -514,7 +544,7 @@ module.exports = async (req, res, next) => {
             }
           }
 
-          if (passesValidation && 'interiorScore' in venuesFilters) {
+          if (passesValidation && "interiorScore" in venuesFilters) {
             if (
               !venue.interiorScore ||
               venue.interiorScore < venuesFilters.interiorScore
@@ -523,7 +553,7 @@ module.exports = async (req, res, next) => {
             }
           }
 
-          if (passesValidation && 'restroomScore' in venuesFilters) {
+          if (passesValidation && "restroomScore" in venuesFilters) {
             if (
               !venue.restroomScore ||
               venue.restroomScore < venuesFilters.restroomScore
@@ -574,7 +604,7 @@ module.exports = async (req, res, next) => {
           hasWellLit: venue.hasWellLit,
           isQuiet: venue.isQuiet,
           isSpacious: venue.isSpacious,
-          steps: venue.steps
+          steps: venue.steps,
         });
       }
 
@@ -593,11 +623,11 @@ module.exports = async (req, res, next) => {
         hasSupportAroundToilet: { yes: 0, no: 0 },
         hasLoweredSinks: { yes: 0, no: 0 },
         interiorScore: 0,
-        interiorGlyphs: 'interior',
+        interiorGlyphs: "interior",
         restroomScore: 0,
-        restroomGlyphs: 'restroom',
+        restroomGlyphs: "restroom",
         entranceScore: 0,
-        entranceGlyphs: 'entrylg',
+        entranceGlyphs: "entrylg",
         mapMarkerScore: 0,
 
         //original fields
@@ -615,14 +645,14 @@ module.exports = async (req, res, next) => {
           zero: 0,
           one: 0,
           two: 0,
-          moreThanTwo: 0
-        }
+          moreThanTwo: 0,
+        },
       });
     });
 
     dataResponse = {
       nextPage: placesResponse.data.next_page_token,
-      results: places
+      results: places,
     };
   } //ends legacy filter logic, false conditional
 

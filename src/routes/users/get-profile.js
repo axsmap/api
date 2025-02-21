@@ -1,13 +1,14 @@
-const { Event } = require('../../models/event');
-const { Team } = require('../../models/team');
+const { Event } = require("../../models/event");
+const { Team } = require("../../models/team");
 
 module.exports = async (req, res, next) => {
+  console.log(req.user.teams);
   const getUserTeams = req.user.teams.map((t) => Team.findOne({ _id: t }));
   let userTeams;
   try {
     userTeams = await Promise.all(getUserTeams);
   } catch (err) {
-    console.log('Teams failed to be found at get-profile');
+    console.log("Teams failed to be found at get-profile");
     return next(err);
   }
 
@@ -20,13 +21,13 @@ module.exports = async (req, res, next) => {
         managedTeams.push({
           id: t.id.toString(),
           avatar: t.avatar,
-          name: t.name
+          name: t.name,
         });
       } else {
         teams.push({
           id: t.id.toString(),
           avatar: t.avatar,
-          name: t.name
+          name: t.name,
         });
       }
     }
@@ -37,7 +38,7 @@ module.exports = async (req, res, next) => {
   try {
     userEvents = await Promise.all(getUserEvents);
   } catch (err) {
-    console.log('Events failed to be found at get-profile');
+    console.log("Events failed to be found at get-profile");
     return next(err);
   }
 
@@ -52,7 +53,7 @@ module.exports = async (req, res, next) => {
           endDate: e.endDate,
           name: e.name,
           poster: e.poster,
-          startDate: e.startDate
+          startDate: e.startDate,
         });
       } else {
         events.push({
@@ -60,7 +61,7 @@ module.exports = async (req, res, next) => {
           endDate: e.endDate,
           name: e.name,
           poster: e.poster,
-          startDate: e.startDate
+          startDate: e.startDate,
         });
       }
     }
@@ -87,7 +88,8 @@ module.exports = async (req, res, next) => {
     showPhone: req.user.showPhone,
     teams,
     username: req.user.username,
-    zip: req.user.zip
+    zip: req.user.zip,
   };
+  console.log(userData);
   return res.status(200).json(userData);
 };

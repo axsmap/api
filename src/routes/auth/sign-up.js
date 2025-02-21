@@ -1,15 +1,15 @@
-const crypto = require('crypto');
+const crypto = require("crypto");
 
-const moment = require('moment');
-const { pick } = require('lodash');
-const randomstring = require('randomstring');
-const slugify = require('speakingurl');
+const moment = require("moment");
+const { pick } = require("lodash");
+const randomstring = require("randomstring");
+const slugify = require("speakingurl");
 
-const { ActivationTicket } = require('../../models/activation-ticket');
-const { cleanSpaces, sendEmail } = require('../../helpers');
-const { User } = require('../../models/user');
+const { ActivationTicket } = require("../../models/activation-ticket");
+const { cleanSpaces, sendEmail } = require("../../helpers");
+const { User } = require("../../models/user");
 
-const { validateSignUp } = require('./validations');
+const { validateSignUp } = require("./validations");
 
 module.exports = async (req, res, next) => {
   const { errors, isValid } = validateSignUp(req.body);
@@ -18,11 +18,11 @@ module.exports = async (req, res, next) => {
   }
 
   const data = pick(req.body, [
-    'email',
-    'firstName',
-    'isSubscribed',
-    'lastName',
-    'password'
+    "email",
+    "firstName",
+    "isSubscribed",
+    "lastName",
+    "password",
   ]);
   data.firstName = cleanSpaces(data.firstName);
   data.lastName = cleanSpaces(data.lastName);
@@ -45,7 +45,7 @@ module.exports = async (req, res, next) => {
     const today = moment.utc();
     if (expiresAt.isBefore(today)) {
       try {
-        await activationTicket.remove();
+        await ActivationTicket.deleteOne({ _id: activationTicket._id });
       } catch (err) {
         console.log(
           `Activation ticket with email ${
@@ -61,17 +61,17 @@ module.exports = async (req, res, next) => {
   try {
     repeatedUsers = await User.find({
       $or: [{ email: data.email }, { username: data.username }],
-      isArchived: false
+      isArchived: false,
     });
   } catch (err) {
-    console.log('Users failed to be found at sign-up.');
+    console.log("Users failed to be found at sign-up.");
     return next(err);
   }
 
   if (repeatedUsers && repeatedUsers.length > 0) {
     for (const user of repeatedUsers) {
       if (user.email === data.email) {
-        return res.status(400).json({ email: 'Is already taken' });
+        return res.status(400).json({ email: "Is already taken" });
       }
 
       let repeatedUser;
@@ -80,13 +80,13 @@ module.exports = async (req, res, next) => {
           data.lastName
         )}-${randomstring.generate({
           length: 5,
-          capitalization: 'lowercase'
+          capitalization: "lowercase",
         })}`;
 
         try {
           repeatedUser = await User.findOne({
             username: data.username,
-            isArchived: false
+            isArchived: false,
           });
         } catch (err) {
           console.log(
@@ -99,10 +99,10 @@ module.exports = async (req, res, next) => {
   }
 
   const today = moment.utc();
-  const expiresAt = today.add(1, 'days').toDate();
+  const expiresAt = today.add(1, "days").toDate();
   const key = `${crypto
     .randomBytes(31)
-    .toString('hex')}${new Date().getTime().toString()}`;
+    .toString("hex")}${new Date().getTime().toString()}`;
 
   const activationTicketData = {
     email: data.email,
@@ -113,8 +113,8 @@ module.exports = async (req, res, next) => {
       isSubscribed: data.isSubscribed,
       lastName: data.lastName,
       password: data.password,
-      username: data.username
-    }
+      username: data.username,
+    },
   };
   try {
     activationTicket = await ActivationTicket.create(activationTicketData);
@@ -127,7 +127,7 @@ module.exports = async (req, res, next) => {
     return next(err);
   }
 
-  const subject = 'Activate Account';
+  const subject = "Activate Account";
   const htmlContent = `
     <h3>Welcome to AXS Map!</h3>
     <p>To <strong>activate</strong> your account use the <strong>link</strong> below:</p>
@@ -151,8 +151,8 @@ module.exports = async (req, res, next) => {
     subject,
     htmlContent,
     textContent,
-    receiversEmails
+    receiversEmails,
   });
 
-  return res.status(201).json({ general: 'Success' });
+  return res.status(201).json({ general: "Success" });
 };
