@@ -62,28 +62,24 @@ function connectedToDB() {
     raven.captureException(err);
   });
 
-  app.listen(port, () => {
-    console.log(`Listening on http://${ip.address()}:${port}`);
-  });
-
   // App Initialization
-  // if (process.env.NODE_ENV === "production") {
-  //   app.listen(port, () => {
-  //     console.log(`Listening on http://${ip.address()}:${port}`);
-  //   });
-  // } else {
-  //   https
-  //     .createServer(
-  //       {
-  //         key: fs.readFileSync("./certificates/server.key"),
-  //         cert: fs.readFileSync("./certificates/server.crt"),
-  //       },
-  //       app
-  //     )
-  //     .listen(port, () =>
-  //       console.log(`Listening on https://${ip.address()}:${port}`)
-  //     );
-  // }
+  if (process.env.NODE_ENV === "production") {
+    app.listen(port, () => {
+      console.log(`Listening on http://${ip.address()}:${port}`);
+    });
+  } else {
+    https
+      .createServer(
+        {
+          key: fs.readFileSync("./certificates/server.key"),
+          cert: fs.readFileSync("./certificates/server.crt"),
+        },
+        app
+      )
+      .listen(port, () =>
+        console.log(`Listening on https://${ip.address()}:${port}`)
+      );
+  }
 }
 
 connectToDB(connectedToDB);
