@@ -1,12 +1,12 @@
-const crypto = require('crypto');
+const crypto = require("crypto");
 
-const moment = require('moment');
+const moment = require("moment");
 
-const { PasswordTicket } = require('../../models/password-ticket');
-const { sendEmail } = require('../../helpers');
-const { User } = require('../../models/user');
+const { PasswordTicket } = require("../../models/password-ticket");
+const { sendEmail } = require("../../helpers");
+const { User } = require("../../models/user");
 
-const { validateForgottenPassword } = require('./validations');
+const { validateForgottenPassword } = require("./validations");
 
 module.exports = async (req, res, next) => {
   const { errors, isValid } = validateForgottenPassword(req.body);
@@ -27,11 +27,11 @@ module.exports = async (req, res, next) => {
   }
 
   if (!user) {
-    return res.status(200).json({ general: 'Success' });
+    return res.status(200).json({ general: "Success" });
   }
 
   try {
-    await PasswordTicket.remove({ email });
+    await PasswordTicket.deleteOne({ email });
   } catch (err) {
     console.log(
       `Password ticket with email ${email} failed to be removed at forgotten-password.`
@@ -40,10 +40,10 @@ module.exports = async (req, res, next) => {
   }
 
   const today = moment.utc();
-  const expiresAt = today.add(1, 'days').toDate();
+  const expiresAt = today.add(1, "days").toDate();
   const key = `${crypto
     .randomBytes(31)
-    .toString('hex')}${new Date().getTime().toString()}`;
+    .toString("hex")}${new Date().getTime().toString()}`;
 
   let passwordTicket;
   try {
@@ -69,7 +69,7 @@ module.exports = async (req, res, next) => {
     <p>Stay awesome.</p>
   `;
   const receiversEmails = [passwordTicket.email];
-  const subject = 'Reset Password';
+  const subject = "Reset Password";
   const textContent = `
     Hi from AXS Map!
     To reset your password use the link below:
@@ -81,8 +81,8 @@ module.exports = async (req, res, next) => {
     receiversEmails,
     subject,
     htmlContent,
-    textContent
+    textContent,
   });
 
-  return res.status(200).json({ general: 'Success' });
+  return res.status(200).json({ general: "Success" });
 };

@@ -8,7 +8,22 @@ const { Venue } = require("../../models/venue");
 const { validateListVenues } = require("./validations");
 const venueReviewSummary = require("../../helpers/venue-review-summary.js");
 
+const milesTranslations = {
+  en: "Miles", // English
+  fr: "Milles", // French
+  es: "Millas", // Spanish
+  ja: "マイル", // Japanese
+};
+
+const feetTranslations = {
+  en: "Feet", // English
+  fr: "Pieds", // French
+  es: "Pies", // Spanish
+  ja: "フィート", // Japanese
+};
+
 function getDistanceFromLatLng(lat1, lng1, lat2, lng2) {
+  console.log(lat1, lng1, lat2, lng2);
   const R = 6371; // Earth’s radius in km
 
   const dLat = (lat2 - lat1) * (Math.PI / 180);
@@ -22,10 +37,17 @@ function getDistanceFromLatLng(lat1, lng1, lat2, lng2) {
       Math.sin(dLng / 2);
 
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const distanceInMeter = R * c * 1000;
-  return `${distanceInMeter.toFixed(0)} ${
-    distanceInMeter > 1000 ? "KiloMeter" : "Meter"
-  }`; // Distance in kilometers
+  return R * c * 1000;
+}
+
+function covertDistanceToFeet(distanceInMeter, language = "en") {
+  const distanceInFeet = distanceInMeter * 3.28084;
+  const distance = `${(distanceInFeet > 5280 ? distanceInFeet / 5280 : distanceInFeet).toFixed(distanceInFeet > 5280 ? 2 : 0)} ${
+    distanceInFeet > 5280
+      ? (milesTranslations[language] ?? "Miles")
+      : (feetTranslations[language] ?? "Feet")
+  }`;
+  return distance;
 }
 
 module.exports = async (req, res, next) => {
@@ -365,7 +387,7 @@ module.exports = async (req, res, next) => {
       }`;
 
       if (queryParams.name) {
-        nearbyParams = `${nearbyParams}&query=${queryParams.name}&radius=5000`;
+        nearbyParams = `${nearbyParams}&query=${queryParams.name}&rankby=distance`;
       } else {
         nearbyParams = `${nearbyParams}&rankby=distance`;
       }
@@ -383,6 +405,9 @@ module.exports = async (req, res, next) => {
     }
     if (queryParams.opennow) {
       nearbyParams = `${nearbyParams}&opennow=${queryParams.opennow}`;
+    }
+    if (queryParams.language) {
+      nearbyParams = `${nearbyParams}&language=${queryParams.language}`;
     }
     if (queryParams.minprice) {
       nearbyParams = `${nearbyParams}&minprice=${queryParams.minprice}`;
@@ -441,12 +466,6 @@ module.exports = async (req, res, next) => {
           process.env.PLACES_API_KEY
         }&maxwidth=300&photoreference=${place.photos[0].photo_reference}`;
       }
-      console.log(
-        place.geometry.location.lat,
-        place.geometry.location.lng,
-        coordinates[0],
-        coordinates[1]
-      );
 
       places.push({
         //address: place.vicinity,
@@ -455,11 +474,14 @@ module.exports = async (req, res, next) => {
           lat: place.geometry.location.lat,
           lng: place.geometry.location.lng,
         },
-        distance: getDistanceFromLatLng(
-          place.geometry.location.lat,
-          place.geometry.location.lng,
-          coordinates[0],
-          coordinates[1]
+        distance: covertDistanceToFeet(
+          getDistanceFromLatLng(
+            place.geometry.location.lat,
+            place.geometry.location.lng,
+            coordinates[0],
+            coordinates[1]
+          ),
+          queryParams.language
         ),
         name: place.name,
         photo,
@@ -509,7 +531,6 @@ module.exports = async (req, res, next) => {
     //Filter out, remove, Google Places that are not AXS Venues
     //  Can't use hasOwnProperty() on mongoose model objects  //
     if (!isEmpty(venuesFilters)) {
-      console.log(">> Performing secondary DB filtering");
       places = places.filter((place) => {
         const venue = find(venues, (venue) => venue.placeId === place.placeId);
         if (venue) {

@@ -1,10 +1,10 @@
-const moment = require('moment');
+const moment = require("moment");
 
-const { cleanSpaces } = require('../../helpers');
-const { Photo } = require('../../models/photo');
-const { User } = require('../../models/user');
+const { cleanSpaces } = require("../../helpers");
+const { Photo } = require("../../models/photo");
+const { User } = require("../../models/user");
 
-const { validateEditUser } = require('./validations');
+const { validateEditUser } = require("./validations");
 
 module.exports = async (req, res, next) => {
   const userId = req.params.userId;
@@ -13,8 +13,8 @@ module.exports = async (req, res, next) => {
   try {
     user = await User.findOne({ _id: userId, isArchived: false });
   } catch (err) {
-    if (err.name === 'CastError') {
-      return res.status(404).json({ general: 'User not found' });
+    if (err.name === "CastError") {
+      return res.status(404).json({ general: "User not found" });
     }
 
     console.log(`User with Id ${userId} failed to be found at edit-user.`);
@@ -22,11 +22,11 @@ module.exports = async (req, res, next) => {
   }
 
   if (!user) {
-    return res.status(404).json({ general: 'User not found' });
+    return res.status(404).json({ general: "User not found" });
   }
 
   if (user.id !== req.user.id && !req.user.isAdmin) {
-    return res.status(403).json({ general: 'Forbidden action' });
+    return res.status(403).json({ general: "Forbidden action" });
   }
 
   const data = req.body;
@@ -36,7 +36,7 @@ module.exports = async (req, res, next) => {
 
   if (
     data.avatar &&
-    !data.avatar.includes('default') &&
+    !data.avatar.includes("default") &&
     data.avatar !== user.avatar
   ) {
     let avatar;
@@ -48,11 +48,11 @@ module.exports = async (req, res, next) => {
     }
 
     if (!avatar) {
-      return res.status(404).json({ avatar: 'Not found' });
+      return res.status(404).json({ avatar: "Not found" });
     }
 
     user.avatar = data.avatar;
-  } else if (data.avatar === '') {
+  } else if (data.avatar === "") {
     user.avatar = `https://s3.amazonaws.com/${
       process.env.AWS_S3_BUCKET
     }/users/avatars/default.png`;
@@ -69,7 +69,7 @@ module.exports = async (req, res, next) => {
   user.gender = data.gender || user.gender;
 
   user.isSubscribed =
-    typeof data.isSubscribed !== 'undefined'
+    typeof data.isSubscribed !== "undefined"
       ? data.isSubscribed
       : user.isSubscribed;
 
@@ -80,22 +80,22 @@ module.exports = async (req, res, next) => {
   user.phone = data.phone || user.phone;
 
   user.showDisabilities =
-    typeof data.showDisabilities !== 'undefined'
+    typeof data.showDisabilities !== "undefined"
       ? data.showDisabilities
       : user.showDisabilities;
 
   user.showEmail =
-    typeof data.showEmail !== 'undefined' ? data.showEmail : user.showEmail;
+    typeof data.showEmail !== "undefined" ? data.showEmail : user.showEmail;
 
   user.showPhone =
-    typeof data.showPhone !== 'undefined' ? data.showPhone : user.showPhone;
+    typeof data.showPhone !== "undefined" ? data.showPhone : user.showPhone;
 
   if (data.username && data.username !== user.username) {
     let repeatedUser;
     try {
       repeatedUser = await User.findOne({
         username: data.username,
-        isArchived: false
+        isArchived: false,
       });
     } catch (err) {
       console.log(
@@ -105,7 +105,7 @@ module.exports = async (req, res, next) => {
     }
 
     if (repeatedUser) {
-      return res.status(400).json({ username: 'Is already taken' });
+      return res.status(400).json({ username: "Is already taken" });
     }
 
     user.username = data.username;
@@ -118,7 +118,7 @@ module.exports = async (req, res, next) => {
   try {
     await user.save();
   } catch (err) {
-    if (typeof err.errors === 'object') {
+    if (typeof err.errors === "object") {
       const validationErrors = {};
 
       Object.keys(err.errors).forEach((key) => {
@@ -146,6 +146,7 @@ module.exports = async (req, res, next) => {
     description: user.description,
     disabilities: user.disabilities,
     firstName: user.firstName,
+    email: user?.email,
     gender: user.gender,
     isSubscribed: user.isSubscribed,
     lastName: user.lastName,
@@ -154,7 +155,7 @@ module.exports = async (req, res, next) => {
     showEmail: user.showEmail,
     showPhone: user.showPhone,
     username: user.username,
-    zip: user.zip
+    zip: user.zip,
   };
   return res.status(200).json(dataResponse);
 };
