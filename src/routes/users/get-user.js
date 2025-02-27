@@ -1,6 +1,6 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const { User } = require('../../models/user');
+const { User } = require("../../models/user");
 
 module.exports = async (req, res, next) => {
   const userId = req.params.userId;
@@ -10,81 +10,81 @@ module.exports = async (req, res, next) => {
   try {
     user = await User.aggregate([
       {
-        $match: { _id: userIdObj }
+        $match: { _id: userIdObj },
       },
       {
         $lookup: {
-          from: 'events',
-          let: { events: '$events' },
+          from: "events",
+          let: { events: "$events" },
           pipeline: [
             {
               $match: {
                 $expr: {
-                  $in: ['$_id', '$$events']
-                }
-              }
+                  $in: ["$_id", "$$events"],
+                },
+              },
             },
             {
               $project: {
                 _id: 0,
-                id: '$_id',
+                id: "$_id",
                 endDate: 1,
                 name: 1,
                 poster: 1,
-                startDate: 1
-              }
-            }
+                startDate: 1,
+              },
+            },
           ],
-          as: 'events'
-        }
+          as: "events",
+        },
       },
       {
         $lookup: {
-          from: 'teams',
-          let: { teams: '$teams' },
+          from: "teams",
+          let: { teams: "$teams" },
           pipeline: [
             {
               $match: {
                 $expr: {
-                  $in: ['$_id', '$$teams']
-                }
-              }
+                  $in: ["$_id", "$$teams"],
+                },
+              },
             },
             {
               $project: {
                 _id: 0,
-                id: '$_id',
+                id: "$_id",
                 avatar: 1,
-                name: 1
-              }
-            }
+                name: 1,
+              },
+            },
           ],
-          as: 'teams'
-        }
+          as: "teams",
+        },
       },
       {
         $lookup: {
-          from: 'users',
-          let: { reviewsAmount: '$reviewsAmount' },
+          from: "users",
+          let: { reviewsAmount: "$reviewsAmount" },
           pipeline: [
             {
               $match: {
                 $expr: {
-                  $gt: ['$reviewsAmount', '$$reviewsAmount']
-                }
-              }
+                  $gt: ["$reviewsAmount", "$$reviewsAmount"],
+                },
+              },
             },
             {
-              $count: 'ranking'
-            }
+              $count: "ranking",
+            },
           ],
-          as: 'ranking'
-        }
+          as: "ranking",
+        },
       },
       {
         $project: {
           _id: 0,
-          id: '$_id',
+          id: "$_id",
           avatar: 1,
           description: 1,
           disabilities: 1,
@@ -96,6 +96,9 @@ module.exports = async (req, res, next) => {
           language: 1,
           lastName: 1,
           phone: 1,
+          race: 1,
+          birthday: 1,
+          disability: 1,
           ranking: 1,
           reviewsAmount: 1,
           showDisabilities: 1,
@@ -103,13 +106,13 @@ module.exports = async (req, res, next) => {
           showPhone: 1,
           teams: 1,
           username: 1,
-          zip: 1
-        }
-      }
+          zip: 1,
+        },
+      },
     ]);
   } catch (err) {
-    if (err.name === 'CastError') {
-      return res.status(404).json({ general: 'User not found' });
+    if (err.name === "CastError") {
+      return res.status(404).json({ general: "User not found" });
     }
 
     console.log(`User ${userId} failed to be found at get-user`);
@@ -117,11 +120,11 @@ module.exports = async (req, res, next) => {
   }
 
   if (!user) {
-    return res.status(404).json({ general: 'User not found' });
+    return res.status(404).json({ general: "User not found" });
   }
 
   const dataResponse = Object.assign({}, user[0], {
-    ranking: user[0].ranking.length ? user[0].ranking[0].ranking + 1 : 1
+    ranking: user[0].ranking.length ? user[0].ranking[0].ranking + 1 : 1,
   });
   return res.status(200).json(dataResponse);
 };

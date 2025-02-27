@@ -1,19 +1,19 @@
-const crypto = require('crypto');
+const crypto = require("crypto");
 
-const moment = require('moment');
-const { pick } = require('lodash');
-const randomstring = require('randomstring');
-const slugify = require('speakingurl');
+const moment = require("moment");
+const { pick } = require("lodash");
+const randomstring = require("randomstring");
+const slugify = require("speakingurl");
 
-const { cleanSpaces } = require('../../helpers');
-const { RefreshToken } = require('../../models/refresh-token');
-const { User } = require('../../models/user');
+const { cleanSpaces } = require("../../helpers");
+const { RefreshToken } = require("../../models/refresh-token");
+const { User } = require("../../models/user");
 
-const { validateCreateUser } = require('./validations');
+const { validateCreateUser } = require("./validations");
 
 module.exports = async (req, res, next) => {
   if (!req.user.isAdmin) {
-    return res.status(403).json({ general: 'Forbidden action' });
+    return res.status(403).json({ general: "Forbidden action" });
   }
 
   const { errors, isValid } = validateCreateUser(req.body);
@@ -22,20 +22,20 @@ module.exports = async (req, res, next) => {
   }
 
   const userData = pick(req.body, [
-    'description',
-    'disabilities',
-    'email',
-    'firstName',
-    'gender',
-    'isSubscribed',
-    'lastName',
-    'password',
-    'phone',
-    'showDisabilities',
-    'showEmail',
-    'showPhone',
-    'username',
-    'zip'
+    "description",
+    "disabilities",
+    "email",
+    "firstName",
+    "gender",
+    "isSubscribed",
+    "lastName",
+    "password",
+    "phone",
+    "showDisabilities",
+    "showEmail",
+    "showPhone",
+    "username",
+    "zip",
   ]);
   userData.firstName = cleanSpaces(userData.firstName);
   userData.lastName = cleanSpaces(userData.lastName);
@@ -53,19 +53,19 @@ module.exports = async (req, res, next) => {
   try {
     repeatedUsers = await User.find({
       $or: [{ email: userData.email }, { username: userData.username }],
-      isArchived: false
+      isArchived: false,
     });
   } catch (err) {
-    console.log('Users failed to be found at create-user.');
+    console.log("Users failed to be found at create-user.");
     return next(err);
   }
 
   if (repeatedUsers && repeatedUsers.length > 0) {
     for (const user of repeatedUsers) {
       if (user.email === userData.email) {
-        return res.status(400).json({ email: 'Is already taken' });
+        return res.status(400).json({ email: "Is already taken" });
       } else if (usernameSent && user.username === userData.username) {
-        return res.status(400).json({ username: 'Is already taken' });
+        return res.status(400).json({ username: "Is already taken" });
       }
 
       let repeatedUser;
@@ -74,13 +74,13 @@ module.exports = async (req, res, next) => {
           userData.lastName
         )}-${randomstring.generate({
           length: 5,
-          capitalization: 'lowercase'
+          capitalization: "lowercase",
         })}`;
 
         try {
           repeatedUser = await User.findOne({
             username: userData.username,
-            isArchived: false
+            isArchived: false,
           });
         } catch (err) {
           console.log(
@@ -98,7 +98,7 @@ module.exports = async (req, res, next) => {
   try {
     user = await User.create(userData);
   } catch (err) {
-    if (typeof err.errors === 'object') {
+    if (typeof err.errors === "object") {
       const validationErrors = {};
 
       Object.keys(err.errors).forEach((key) => {
@@ -115,9 +115,9 @@ module.exports = async (req, res, next) => {
   }
 
   const refreshTokenData = {
-    expiresAt: moment.utc().add(14, 'days').toDate(),
-    key: `${user.id}${crypto.randomBytes(40).toString('hex')}`,
-    userId: user.id
+    expiresAt: moment.utc().add(14, "days").toDate(),
+    key: `${user.id}${crypto.randomBytes(40).toString("hex")}`,
+    userId: user.id,
   };
   try {
     await RefreshToken.create(refreshTokenData);
@@ -131,20 +131,23 @@ module.exports = async (req, res, next) => {
   }
 
   const dataResponse = pick(user, [
-    '_id',
-    'description',
-    'disabilities',
-    'email',
-    'firstName',
-    'gender',
-    'isSubscribed',
-    'lastName',
-    'phone',
-    'showDisabilities',
-    'showEmail',
-    'showPhone',
-    'username',
-    'zip'
+    "_id",
+    "description",
+    "disabilities",
+    "email",
+    "firstName",
+    "gender",
+    "isSubscribed",
+    "lastName",
+    "race",
+    "birthday",
+    "disability",
+    "phone",
+    "showDisabilities",
+    "showEmail",
+    "showPhone",
+    "username",
+    "zip",
   ]);
   return res.status(201).json(dataResponse);
 };

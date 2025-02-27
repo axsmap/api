@@ -46,7 +46,7 @@ module.exports = async (req, res, next) => {
 
   const userId = user.id;
   const today = moment.utc();
-  const expiresAt = today.add(14, "days").toDate();
+  const expiresAt = today.add(30, "days").toDate();
   const key = `${userId}${crypto.randomBytes(28).toString("hex")}`;
 
   let refreshToken;

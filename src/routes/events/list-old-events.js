@@ -7,8 +7,6 @@ const { validateListEvents } = require("./validations");
 module.exports = async (req, res, next) => {
   const queryParams = req.query;
 
-  console.log(queryParams);
-
   const { errors, isValid } = validateListEvents(queryParams);
   if (!isValid) return res.status(400).json(errors);
 
@@ -18,30 +16,16 @@ module.exports = async (req, res, next) => {
     eventsQuery.$text = { $search: queryParams.keywords };
   }
 
-  eventsQuery.isArchived = false;
-
-  let afterDate;
-  let beforeDate;
-  if (queryParams.afterDate && queryParams.beforeDate) {
-    afterDate = moment(queryParams.afterDate).utc().toDate();
-    beforeDate = moment(queryParams.beforeDate).utc().toDate();
-
-    eventsQuery.startDate = { $gte: afterDate, $lte: beforeDate };
-  } else if (queryParams.afterDate) {
-    afterDate = moment(queryParams.afterDate).utc().toDate();
-    eventsQuery.startDate = { $gte: afterDate };
-  } else if (queryParams.beforeDate) {
-    beforeDate = moment(queryParams.beforeDate).utc().toDate();
-    eventsQuery.startDate = { $lte: beforeDate };
-  }
-
   let sortBy = "-startDate";
   let page = queryParams.page ? queryParams.page - 1 : 0;
   const pageLimit = queryParams.pageLimit || 12;
-  const currentDate = moment().utc().toDate();
 
-  eventsQuery.startDate = { $gte: currentDate };
-  eventsQuery.endDate = { $lte: currentDate };
+  const currentDate = moment().utc().toDate();
+  eventsQuery.endDate = { $gt: currentDate };
+  eventsQuery.$or = [
+    { managers: req?.user?.id },
+    { participants: req?.user?.id },
+  ];
 
   let events;
   let total;

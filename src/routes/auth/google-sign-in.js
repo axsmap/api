@@ -1,17 +1,17 @@
-const crypto = require('crypto');
-const querystring = require('querystring');
+const crypto = require("crypto");
+const querystring = require("querystring");
 
-const axios = require('axios');
-const GoogleAuth = require('google-auth-library');
-const jwt = require('jsonwebtoken');
-const moment = require('moment');
-const randomstring = require('randomstring');
-const slugify = require('speakingurl');
+const axios = require("axios");
+const GoogleAuth = require("google-auth-library");
+const jwt = require("jsonwebtoken");
+const moment = require("moment");
+const randomstring = require("randomstring");
+const slugify = require("speakingurl");
 
-const { RefreshToken } = require('../../models/refresh-token');
-const { User } = require('../../models/user');
+const { RefreshToken } = require("../../models/refresh-token");
+const { User } = require("../../models/user");
 
-const { validateGoogleSignIn } = require('./validations');
+const { validateGoogleSignIn } = require("./validations");
 
 module.exports = async (req, res, next) => {
   const { errors, isValid } = validateGoogleSignIn(req.body);
@@ -21,13 +21,13 @@ module.exports = async (req, res, next) => {
 
   const code = req.body.code;
 
-  const getTokenUrl = 'https://www.googleapis.com/oauth2/v4/token';
+  const getTokenUrl = "https://www.googleapis.com/oauth2/v4/token";
   const getTokenParams = {
     code,
     client_id: process.env.GOOGLE_CLIENT_ID,
     client_secret: process.env.GOOGLE_CLIENT_SECRET,
     redirect_uri: `${process.env.APP_URL}/auth/google`,
-    grant_type: 'authorization_code'
+    grant_type: "authorization_code",
   };
   let getTokenResponse;
   try {
@@ -37,18 +37,18 @@ module.exports = async (req, res, next) => {
     );
   } catch (err) {
     console.error(err);
-    return res.status(400).json({ general: 'Invalid code' });
+    return res.status(400).json({ general: "Invalid code" });
   }
 
   const auth = new GoogleAuth();
-  const client = new auth.OAuth2(process.env.GOOGLE_CLIENT_ID, '', '');
+  const client = new auth.OAuth2(process.env.GOOGLE_CLIENT_ID, "", "");
   const idToken = getTokenResponse.data.id_token;
   client.verifyIdToken(
     idToken,
     process.env.GOOGLE_CLIENT_ID,
     async (err, login) => {
       if (err) {
-        return res.status(400).json({ general: 'Invalid token id' });
+        return res.status(400).json({ general: "Invalid token id" });
       }
 
       const payload = login.getPayload();
@@ -59,7 +59,7 @@ module.exports = async (req, res, next) => {
       try {
         user = await User.findOne({
           $or: [{ email }, { googleId }],
-          isArchived: false
+          isArchived: false,
         });
       } catch (err) {
         console.log(
@@ -75,13 +75,13 @@ module.exports = async (req, res, next) => {
           email: payload.email,
           googleId: payload.sub,
           firstName: payload.given_name,
-          lastName: payload.family_name
+          lastName: payload.family_name,
         };
 
-        if (payload.locale === 'en') {
-          userData.language = 'en';
-        } else if (payload.locale === 'es') {
-          userData.language = 'es';
+        if (payload.locale === "en") {
+          userData.language = "en";
+        } else if (payload.locale === "es") {
+          userData.language = "es";
         }
 
         if (payload.picture) {
@@ -96,10 +96,10 @@ module.exports = async (req, res, next) => {
         try {
           repeatedUsers = await User.find({
             username: userData.username,
-            isArchived: false
+            isArchived: false,
           });
         } catch (err) {
-          console.log('Users failed to be found at google-sign-in.');
+          console.log("Users failed to be found at google-sign-in.");
           return next(err);
         }
 
@@ -110,13 +110,13 @@ module.exports = async (req, res, next) => {
               userData.lastName
             )}-${randomstring.generate({
               length: 5,
-              capitalization: 'lowercase'
+              capitalization: "lowercase",
             })}`;
 
             try {
               repeatedUser = await User.findOne({
                 username: userData.username,
-                isArchived: false
+                isArchived: false,
               });
             } catch (err) {
               console.log(
@@ -141,11 +141,11 @@ module.exports = async (req, res, next) => {
         }
 
         const today = moment.utc();
-        const expiresAt = today.add(14, 'days').toDate();
+        const expiresAt = today.add(30, "days").toDate();
         const refreshTokenData = {
           expiresAt,
-          key: `${user.id}${crypto.randomBytes(28).toString('hex')}`,
-          userId: user.id
+          key: `${user.id}${crypto.randomBytes(28).toString("hex")}`,
+          userId: user.id,
         };
 
         try {
@@ -161,8 +161,8 @@ module.exports = async (req, res, next) => {
       } else {
         const userId = user.id;
         const today = moment.utc();
-        const expiresAt = today.add(14, 'days').toDate();
-        const key = `${userId}${crypto.randomBytes(28).toString('hex')}`;
+        const expiresAt = today.add(30, "days").toDate();
+        const key = `${userId}${crypto.randomBytes(28).toString("hex")}`;
 
         try {
           refreshToken = await RefreshToken.findOneAndUpdate(
@@ -179,7 +179,7 @@ module.exports = async (req, res, next) => {
       }
 
       const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
-        expiresIn: 3600
+        expiresIn: 3600,
       });
       refreshToken = refreshToken.key;
 

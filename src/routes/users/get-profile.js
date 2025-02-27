@@ -1,5 +1,6 @@
 const { Event } = require("../../models/event");
 const { Team } = require("../../models/team");
+const { User } = require("../../models/user");
 
 module.exports = async (req, res, next) => {
   console.log(req.user.teams);
@@ -66,6 +67,12 @@ module.exports = async (req, res, next) => {
       }
     }
   });
+  console.log(req.user.reviewsAmount, typeof req.user.reviewsAmount);
+
+  const ranking =
+    (await User.countDocuments({
+      reviewsAmount: { $gt: req.user.reviewsAmount ?? 0 },
+    })) + 1;
 
   const userData = {
     id: req.user.id,
@@ -89,7 +96,11 @@ module.exports = async (req, res, next) => {
     teams,
     username: req.user.username,
     zip: req.user.zip,
+    avatar: req.user.avatar,
+    race: req.user?.race,
+    birthday: req.user?.birthday,
+    disability: req.user.disability,
+    ranking,
   };
-  console.log(userData);
   return res.status(200).json(userData);
 };

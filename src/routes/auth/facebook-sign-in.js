@@ -1,15 +1,15 @@
-const crypto = require('crypto');
+const crypto = require("crypto");
 
-const axios = require('axios');
-const jwt = require('jsonwebtoken');
-const moment = require('moment');
-const randomstring = require('randomstring');
-const slugify = require('speakingurl');
+const axios = require("axios");
+const jwt = require("jsonwebtoken");
+const moment = require("moment");
+const randomstring = require("randomstring");
+const slugify = require("speakingurl");
 
-const { RefreshToken } = require('../../models/refresh-token');
-const { User } = require('../../models/user');
+const { RefreshToken } = require("../../models/refresh-token");
+const { User } = require("../../models/user");
 
-const { validateFacebookSignIn } = require('./validations');
+const { validateFacebookSignIn } = require("./validations");
 
 module.exports = async (req, res, next) => {
   const { errors, isValid } = validateFacebookSignIn(req.body);
@@ -19,47 +19,47 @@ module.exports = async (req, res, next) => {
 
   const code = req.body.code;
 
-  const getTokenUrl = 'https://graph.facebook.com/v2.10/oauth/access_token';
+  const getTokenUrl = "https://graph.facebook.com/v2.10/oauth/access_token";
   const getTokenParams = {
     code,
     client_id: process.env.FACEBOOK_CLIENT_ID,
     client_secret: process.env.FACEBOOK_CLIENT_SECRET,
-    redirect_uri: `${process.env.APP_URL}/auth/facebook`
+    redirect_uri: `${process.env.APP_URL}/auth/facebook`,
   };
   let getTokenResponse;
   try {
     getTokenResponse = await axios.get(getTokenUrl, { params: getTokenParams });
   } catch (err) {
     console.err(err);
-    return res.status(400).json({ general: 'Invalid code' });
+    return res.status(400).json({ general: "Invalid code" });
   }
 
   const facebookToken = getTokenResponse.data.access_token;
 
   const getProfileUrl =
-    'https://graph.facebook.com/v2.10/me?fields=id,email,first_name,last_name,locale';
+    "https://graph.facebook.com/v2.10/me?fields=id,email,first_name,last_name,locale";
   const getProfileOptions = {
     params: {
-      access_token: facebookToken
-    }
+      access_token: facebookToken,
+    },
   };
   let getProfileResponse;
   try {
     getProfileResponse = await axios.get(getProfileUrl, getProfileOptions);
   } catch (err) {
-    console.log('Profile data failed to be found at facebook-sign-in.');
+    console.log("Profile data failed to be found at facebook-sign-in.");
     return next(err);
   }
 
   const email = getProfileResponse.data.email
     ? getProfileResponse.data.email
-    : '';
+    : "";
   const facebookId = getProfileResponse.data.id;
   let user;
   try {
     user = await User.findOne({
       $or: [{ email }, { facebookId }],
-      isArchived: false
+      isArchived: false,
     });
   } catch (err) {
     console.log(
@@ -74,10 +74,10 @@ module.exports = async (req, res, next) => {
   if (!user) {
     console.log(getProfileResponse.data);
     const userData = {
-      email: getProfileResponse.data.email ? getProfileResponse.data.email : '',
+      email: getProfileResponse.data.email ? getProfileResponse.data.email : "",
       facebookId: getProfileResponse.data.id,
       firstName: getProfileResponse.data.first_name,
-      lastName: getProfileResponse.data.last_name
+      lastName: getProfileResponse.data.last_name,
     };
     userData.username = `${slugify(userData.firstName)}-${slugify(
       userData.lastName
@@ -87,10 +87,10 @@ module.exports = async (req, res, next) => {
     try {
       repeatedUsers = await User.find({
         username: userData.username,
-        isArchived: false
+        isArchived: false,
       });
     } catch (err) {
-      console.log('Users failed to be found at facebook-sign-in.');
+      console.log("Users failed to be found at facebook-sign-in.");
       return next(err);
     }
 
@@ -101,13 +101,13 @@ module.exports = async (req, res, next) => {
           userData.lastName
         )}-${randomstring.generate({
           length: 5,
-          capitalization: 'lowercase'
+          capitalization: "lowercase",
         })}`;
 
         try {
           repeatedUser = await User.findOne({
             username: userData.username,
-            isArchived: false
+            isArchived: false,
           });
         } catch (err) {
           console.log(
@@ -127,14 +127,14 @@ module.exports = async (req, res, next) => {
       params: {
         access_token: accessToken,
         redirect: false,
-        type: 'large'
-      }
+        type: "large",
+      },
     };
     let getPictureResponse;
     try {
       getPictureResponse = await axios.get(getPictureUrl, getPictureOptions);
     } catch (err) {
-      console.log('User picture failed to be found at facebook-sign-in.');
+      console.log("User picture failed to be found at facebook-sign-in.");
       return next(err);
     }
 
@@ -155,11 +155,11 @@ module.exports = async (req, res, next) => {
     }
 
     const today = moment.utc();
-    const expiresAt = today.add(14, 'days').toDate();
+    const expiresAt = today.add(30, "days").toDate();
     const refreshTokenData = {
       expiresAt,
-      key: `${user.id}${crypto.randomBytes(28).toString('hex')}`,
-      userId: user.id
+      key: `${user.id}${crypto.randomBytes(28).toString("hex")}`,
+      userId: user.id,
     };
 
     try {
@@ -175,8 +175,8 @@ module.exports = async (req, res, next) => {
   } else {
     const userId = user.id;
     const today = moment.utc();
-    const expiresAt = today.add(14, 'days').toDate();
-    const key = `${userId}${crypto.randomBytes(28).toString('hex')}`;
+    const expiresAt = today.add(30, "days").toDate();
+    const key = `${userId}${crypto.randomBytes(28).toString("hex")}`;
 
     try {
       refreshToken = await RefreshToken.findOneAndUpdate(
@@ -193,7 +193,7 @@ module.exports = async (req, res, next) => {
   }
 
   const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
-    expiresIn: 3600
+    expiresIn: 3600,
   });
   refreshToken = refreshToken.key;
 
