@@ -1,5 +1,5 @@
-const bcrypt = require('bcrypt-nodejs');
-const mongoose = require('mongoose');
+const bcrypt = require("bcrypt-nodejs");
+const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
   {
@@ -8,152 +8,195 @@ const userSchema = new mongoose.Schema(
       default: `https://s3.amazonaws.com/${
         process.env.AWS_S3_BUCKET
       }/users/avatars/default.png`,
-      maxlength: [2000, 'Should be less than 2001 characters'],
-      required: [true, 'Is required']
+      maxlength: [2000, "Should be less than 2001 characters"],
+      required: [true, "Is required"],
     },
     description: {
       type: String,
-      maxlength: [2000, 'Should be less than 2001 characters']
+      maxlength: [2000, "Should be less than 2001 characters"],
     },
     disabilities: {
       type: [String],
-      default: ['none'],
+      default: ["none"],
       enum: {
         values: [
-          'brain',
-          'cognitive',
-          'hearing',
-          'invisible',
-          'none',
-          'other',
-          'physical',
-          'private',
-          'psychological',
-          'spinal-cord',
-          'vision'
+          "brain",
+          "cognitive",
+          "hearing",
+          "invisible",
+          "none",
+          "other",
+          "physical",
+          "private",
+          "psychological",
+          "spinal-cord",
+          "vision",
         ],
-        general: 'Invalid type of disability'
+        general: "Invalid type of disability",
       },
-      required: [true, 'Is required']
+      required: [true, "Is required"],
     },
     email: {
       type: String,
-      maxlength: [254, 'Should be less than 255 characters']
+      maxlength: [254, "Should be less than 255 characters"],
     },
     events: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Event'
-      }
+        ref: "Event",
+      },
     ],
     facebookId: String,
     firstName: {
       type: String,
-      maxlength: [24, 'Should be less than 25 characters'],
-      required: [true, 'Is required']
+      maxlength: [24, "Should be less than 25 characters"],
+      required: [true, "Is required"],
     },
     gender: {
       type: String,
-      default: 'private',
+      default: "not-to-say",
       enum: {
-        values: ['female', 'male', 'other', 'private', 'transgender'],
-        general: 'Invalid type of gender'
+        values: [
+          "female",
+          "male",
+          "other",
+          "private",
+          "transgender",
+          "non-binary",
+          "gender-fluid",
+          "agender",
+          "not-to-say",
+        ],
+        general: "Invalid type of gender",
       },
-      required: [true, 'Is required']
+      required: [true, "Is required"],
     },
     googleId: String,
     hashedPassword: {
       type: String,
-      maxlength: [256, 'Should be less than 255 characters']
+      maxlength: [256, "Should be less than 255 characters"],
     },
     isAdmin: {
       type: Boolean,
       default: false,
-      required: [true, 'Is required']
+      required: [true, "Is required"],
     },
     isArchived: {
       type: Boolean,
       default: false,
-      required: [true, 'Is required']
+      required: [true, "Is required"],
     },
     isBlocked: {
       type: Boolean,
       default: false,
-      required: [true, 'Is required']
+      required: [true, "Is required"],
     },
     isSubscribed: {
       type: Boolean,
       default: false,
-      required: [true, 'Is required']
+      required: [true, "Is required"],
     },
     lastName: {
       type: String,
-      maxlength: [36, 'Should be less than 37 characters'],
-      required: [true, 'Is required']
+      maxlength: [36, "Should be less than 37 characters"],
+      required: [true, "Is required"],
     },
     language: {
       type: String,
-      default: 'en',
+      default: "en",
       enum: {
-        values: ['en', 'es'],
-        general: 'Invalid type of language'
+        values: ["en", "es"],
+        general: "Invalid type of language",
       },
-      required: [true, 'Is required']
+      required: [true, "Is required"],
     },
     phone: {
       type: String,
-      maxlength: [50, 'Should be less than 51 characters']
+      maxlength: [50, "Should be less than 51 characters"],
     },
     reviewFieldsAmount: {
       type: Number,
       default: 0,
-      required: [true, 'Is required']
+      required: [true, "Is required"],
     },
     reviewsAmount: {
       type: Number,
       default: 0,
-      required: [true, 'Is required']
+      required: [true, "Is required"],
     },
     showDisabilities: {
       type: Boolean,
       default: false,
-      required: [true, 'Is required']
+      required: [true, "Is required"],
     },
     showEmail: {
       type: Boolean,
       default: false,
-      required: [true, 'Is required']
+      required: [true, "Is required"],
     },
     showPhone: {
       type: Boolean,
       default: false,
-      required: [true, 'Is required']
+      required: [true, "Is required"],
     },
     teams: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Team'
-      }
+        ref: "Team",
+      },
     ],
     username: {
       type: String,
-      maxlength: [67, 'Should be less than 68 characters']
+      maxlength: [67, "Should be less than 68 characters"],
     },
     zip: {
       type: String,
-      maxlength: [32, 'Should be less than 33 characters']
-    }
+      maxlength: [32, "Should be less than 33 characters"],
+    },
+    birthday: {
+      type: Date,
+      default: null,
+      required: false,
+    },
+    race: {
+      type: String,
+      default: "not-to-disclose",
+      enum: {
+        values: [
+          "black/african american",
+          "caucasian",
+          "indigenous/first nation/native american",
+          "latino/hispanic",
+          "middle eastern/north african",
+          "native hawaiian/pacific islander",
+          "biracial/multiracial",
+          "non-naucasian",
+          "not-to-disclose",
+        ],
+        general: "Invalid type of Race",
+      },
+      required: false,
+    },
+    disability: {
+      type: String,
+      default: "not-to-say",
+      enum: {
+        values: ["yes", "No", "not-to-say"],
+        general: "Invalid type of Disability",
+      },
+      required: false,
+    },
   },
   { timestamps: true }
 );
 
 userSchema.index(
   {
-    email: 'text',
-    firstName: 'text',
-    lastName: 'text',
-    username: 'text',
-    reviewsAmount: 1
+    email: "text",
+    firstName: "text",
+    lastName: "text",
+    username: "text",
+    reviewsAmount: 1,
   },
   { weights: { email: 5, username: 5 } }
 );
@@ -184,10 +227,10 @@ function comparePassword(password) {
   return bcrypt.compareSync(password, this.hashedPassword);
 }
 
-userSchema.virtual('password').set(hashPassword);
+userSchema.virtual("password").set(hashPassword);
 userSchema.methods.comparePassword = comparePassword;
 
 module.exports = {
-  User: mongoose.model('User', userSchema),
-  userSchema
+  User: mongoose.model("User", userSchema),
+  userSchema,
 };
