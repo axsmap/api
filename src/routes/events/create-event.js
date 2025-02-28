@@ -1,13 +1,14 @@
-const axios = require('axios');
-const FormData = require('form-data');
-const moment = require('moment');
+const axios = require("axios");
+const FormData = require("form-data");
+const moment = require("moment");
 
-const { Event } = require('../../models/event');
-const { cleanSpaces } = require('../../helpers');
-const { Photo } = require('../../models/photo');
-const { Team } = require('../../models/team');
+const { Event } = require("../../models/event");
+const { cleanSpaces } = require("../../helpers");
+const { Photo } = require("../../models/photo");
+const { Team } = require("../../models/team");
 
-const { validateCreateEvent } = require('./validations');
+const { validateCreateEvent } = require("./validations");
+const { sendError } = require("../../helpers/Error");
 
 module.exports = async (req, res, next) => {
   const data = {
@@ -24,18 +25,18 @@ module.exports = async (req, res, next) => {
     poster: req.body.poster,
     reviewsGoal: req.body.reviewsGoal,
     startDate: req.body.startDate,
-    teamManager: req.body.teamManager
+    teamManager: req.body.teamManager,
   };
 
   const { errors, isValid } = validateCreateEvent(data);
-  if (!isValid) return res.status(400).json(errors);
+  if (!isValid) return res.status(400).json(sendError(errors));
 
   data.address = cleanSpaces(data.address);
 
-  data.endDate = moment(data.endDate).endOf('day').utc().toDate();
+  data.endDate = moment(data.endDate).endOf("day").utc().toDate();
 
   data.location = {
-    coordinates: [data.locationCoordinates[1], data.locationCoordinates[0]]
+    coordinates: [data.locationCoordinates[1], data.locationCoordinates[0]],
   };
   delete data.locationCoordinates;
 
@@ -49,9 +50,9 @@ module.exports = async (req, res, next) => {
     console.log(`Event ${data.name} failed to be found at create-event`);
     return next(err);
   }
-
+  console.log("repeatedEvent", repeatedEvent);
   if (repeatedEvent) {
-    return res.status(400).json({ name: 'Is already taken' });
+    return res.status(400).json(sendError({ name: "Is already taken" }));
   }
 
   if (data.poster) {
@@ -64,11 +65,11 @@ module.exports = async (req, res, next) => {
     }
 
     if (!poster) {
-      return res.status(404).json({ poster: 'Not found' });
+      return res.status(404).json(sendError({ poster: "Not found" }));
     }
   }
 
-  data.startDate = moment(data.startDate).startOf('day').utc().toDate();
+  data.startDate = moment(data.startDate).startOf("day").utc().toDate();
 
   if (data.teamManager) {
     let team;
@@ -82,12 +83,12 @@ module.exports = async (req, res, next) => {
     }
 
     if (!team) {
-      return res.status(404).json({ teamManager: 'Not found' });
+      return res.status(404).json(sendError({ teamManager: "Not found" }));
     }
 
     const teamManagers = team.managers.map((m) => m.toString());
     if (!teamManagers.includes(req.user.id)) {
-      return res.status(403).json({ general: 'Forbidden action' });
+      return res.status(403).json(sendError({ general: "Forbidden action" }));
     }
   } else {
     data.teamManager = undefined;
@@ -95,31 +96,31 @@ module.exports = async (req, res, next) => {
 
   if (data.donationEnabled) {
     const campaignData = new FormData();
-    campaignData.append('title', data.name);
-    campaignData.append('goal_in_cents', data.donationGoal * 100);
+    campaignData.append("title", data.name);
+    campaignData.append("goal_in_cents", data.donationGoal * 100);
 
     let options = {
-      method: 'POST',
+      method: "POST",
       url: `https://${
         process.env.DONATELY_SUBDOMAIN
       }.dntly.com/api/v1/admin/campaigns`,
       headers: {
-        'Content-Type': `multipart/form-data; boundary=${
+        "Content-Type": `multipart/form-data; boundary=${
           campaignData._boundary
-        }`
+        }`,
       },
       auth: {
         username: process.env.DONATELY_TOKEN,
-        password: ''
+        password: "",
       },
-      data: campaignData
+      data: campaignData,
     };
 
     let response;
     try {
       response = await axios(options);
     } catch (err) {
-      console.log('Donation campaign failed to be created at create-event.');
+      console.log("Donation campaign failed to be created at create-event.");
       return next(err);
     }
 
@@ -130,7 +131,7 @@ module.exports = async (req, res, next) => {
   try {
     event = await Event.create(data);
   } catch (err) {
-    if (typeof err.errors === 'object') {
+    if (typeof err.errors === "object") {
       const validationErrors = {};
 
       Object.keys(err.errors).forEach((key) => {
@@ -162,7 +163,7 @@ module.exports = async (req, res, next) => {
   if (event.location.coordinates) {
     eventLocation = {
       lat: event.location.coordinates[1],
-      lng: event.location.coordinates[0]
+      lng: event.location.coordinates[0],
     };
   }
   const dataResponse = {
@@ -177,7 +178,7 @@ module.exports = async (req, res, next) => {
     participantsGoal: event.participantsGoal,
     poster: event.poster,
     reviewsGoal: event.reviewsGoal,
-    teamManager: event.teamManager
+    teamManager: event.teamManager,
   };
 
   return res.status(201).json(dataResponse);

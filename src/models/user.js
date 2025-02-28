@@ -160,7 +160,7 @@ const userSchema = new mongoose.Schema(
     },
     race: {
       type: String,
-      default: "not-to-disclose",
+      default: "",
       enum: {
         values: [
           "black/african american",
@@ -179,7 +179,7 @@ const userSchema = new mongoose.Schema(
     },
     disability: {
       type: String,
-      default: "not-to-say",
+      default: "",
       enum: {
         values: ["yes", "No", "not-to-say"],
         general: "Invalid type of Disability",

@@ -53,8 +53,6 @@ function covertDistanceToFeet(distanceInMeter, language = "en") {
 module.exports = async (req, res, next) => {
   const queryParams = req.query;
 
-  console.log(queryParams);
-
   const { errors, isValid } = validateListVenues(queryParams);
   if (!isValid) return res.status(400).json(errors);
 
@@ -271,11 +269,9 @@ module.exports = async (req, res, next) => {
         )
           .skip(page * pageLimit)
           .limit(pageLimit),
-        (await Venue.find(dbVenuesFilters)).length,
-        /*TODO: count is deprecated in favor of countDocuments, but that does not support $near
-          would need to move to GeoWithin but that does not return sorted results
-          */
+        (await Venue.find(dbVenuesFilters))?.length,
       ]);
+      console.log({ total });
     } catch (err) {
       console.log(
         `Venues failed to be found or count at list-venues.\nvenuesQuery: ${JSON.stringify(
@@ -446,7 +442,7 @@ module.exports = async (req, res, next) => {
     }
     //do we need to check for 0?
 
-    if (placesResponse.data.results.length == 1) {
+    if (placesResponse.data.results?.length == 1) {
       if (placesResponse.data.results[0].types[0] == "locality") {
         console.log(
           "Found a city only: ",
@@ -491,6 +487,7 @@ module.exports = async (req, res, next) => {
       placesIds.push(place.place_id);
     });
 
+    console.log("calling venues");
     //Use array of Google Place IDs to find AXS Venues
     let venues;
     try {
@@ -501,7 +498,7 @@ module.exports = async (req, res, next) => {
       );
       return next(err);
     }
-
+    console.log("venues length", venues.length);
     //Perform ratings logic on all returned venues
     venues.forEach((venue) => {
       //console.log('In scoring assignment');
@@ -593,6 +590,7 @@ module.exports = async (req, res, next) => {
     //
     places = places.map((place) => {
       const venue = find(venues, (venue) => venue.placeId === place.placeId);
+      console.log(venue);
       if (venue) {
         return Object.assign({}, place, {
           //new expanded fields

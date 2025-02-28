@@ -20,28 +20,13 @@ module.exports = async (req, res, next) => {
 
   eventsQuery.isArchived = false;
 
-  let afterDate;
-  let beforeDate;
-  if (queryParams.afterDate && queryParams.beforeDate) {
-    afterDate = moment(queryParams.afterDate).utc().toDate();
-    beforeDate = moment(queryParams.beforeDate).utc().toDate();
-
-    eventsQuery.startDate = { $gte: afterDate, $lte: beforeDate };
-  } else if (queryParams.afterDate) {
-    afterDate = moment(queryParams.afterDate).utc().toDate();
-    eventsQuery.startDate = { $gte: afterDate };
-  } else if (queryParams.beforeDate) {
-    beforeDate = moment(queryParams.beforeDate).utc().toDate();
-    eventsQuery.startDate = { $lte: beforeDate };
-  }
-
   let sortBy = "-startDate";
   let page = queryParams.page ? queryParams.page - 1 : 0;
   const pageLimit = queryParams.pageLimit || 12;
-  const currentDate = moment().utc().toDate();
+  const currentDate = moment().startOf("day").utc().toDate();
 
-  eventsQuery.startDate = { $gte: currentDate };
-  eventsQuery.endDate = { $lte: currentDate };
+  eventsQuery.startDate = { $lte: currentDate };
+  eventsQuery.endDate = { $gte: currentDate };
 
   let events;
   let total;
