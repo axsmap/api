@@ -21,7 +21,7 @@ module.exports = async (req, res, next) => {
   const pageLimit = queryParams.pageLimit || 12;
 
   const currentDate = moment().utc().toDate();
-  eventsQuery.endDate = { $gt: currentDate };
+  eventsQuery.endDate = { $lt: currentDate };
   eventsQuery.$or = [
     { managers: req?.user?.id },
     { participants: req?.user?.id },
