@@ -74,14 +74,7 @@ module.exports = {
     } else if (!moment(data.endDate).isValid()) {
       errors.endDate = "Should have a ISO-8601 format";
     } else {
-      const endDate = moment(data.endDate).endOf("day").utc();
-      const today = moment().startOf("day").utc();
-
-      if (endDate.isBefore(today)) {
-        errors.endDate = "Should be greater than or equal to today";
-      } else {
-        endDateIsValid = true;
-      }
+      endDateIsValid = true;
     }
 
     if (
@@ -150,14 +143,7 @@ module.exports = {
     } else if (!moment(data.startDate).isValid()) {
       errors.startDate = "Should have a ISO-8601 format";
     } else {
-      const startDate = moment(data.startDate).startOf("day").utc();
-      const today = moment().startOf("day").utc();
-
-      if (startDate.isBefore(today)) {
-        errors.startDate = "Should be greater than or equal to today";
-      } else {
-        startDateIsValid = true;
-      }
+      startDateIsValid = true;
     }
 
     if (
