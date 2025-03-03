@@ -61,9 +61,9 @@ module.exports = async (req, res, next) => {
   user.description = data.description || user.description;
 
   user.disabilities = data.disabilities || user.disabilities;
-  user.disability = data.disability || user.disabilities;
+  user.disability = data.disability || "";
   user.birthday = data.birthday || user.birthday;
-  user.race = data.race || user.race;
+  user.race = data.race || "";
 
   user.firstName = data.firstName
     ? cleanSpaces(data.firstName)
