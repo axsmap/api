@@ -169,6 +169,7 @@ const userSchema = new mongoose.Schema(
         "middle eastern/north african",
         "native hawaiian/pacific islander",
         "biracial/multiracial",
+        "asian",
         "non-naucasian",
         "not-to-disclose",
         "",
