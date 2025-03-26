@@ -62,8 +62,8 @@ module.exports = async (req, res, next) => {
     <p>To <strong>reset</strong> your password use the <strong>link</strong> below:</p>
     <br/>
     <a href="
-    ${process.env.APP_URL}/reset-password?key=${passwordTicket.key}">
-    ${process.env.APP_URL}/reset-password?key=${passwordTicket.key}
+    https://axsmap.com/reset-password?key=${passwordTicket.key}">
+    https://axsmap.com/reset-password?key=${passwordTicket.key}
     </a>
     <br/><br/>
     <p>Stay awesome.</p>
