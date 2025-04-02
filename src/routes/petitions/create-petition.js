@@ -1,11 +1,11 @@
-const moment = require('moment');
+const moment = require("moment");
 
-const { Event } = require('../../models/event');
-const { Petition } = require('../../models/petition');
-const { Team } = require('../../models/team');
-const { User } = require('../../models/user');
+const { Event } = require("../../models/event");
+const { Petition } = require("../../models/petition");
+const { Team } = require("../../models/team");
+const { User } = require("../../models/user");
 
-const { validateCreatePetition } = require('./validations');
+const { validateCreatePetition } = require("./validations");
 
 module.exports = async (req, res, next) => {
   const { errors, isValid } = validateCreatePetition(req.body);
@@ -18,13 +18,13 @@ module.exports = async (req, res, next) => {
       message: req.body.message,
       team: req.body.team,
       type: req.body.type,
-      user: req.body.user
+      user: req.body.user,
     }
   );
   data.sender = req.user.id.toString();
   const today = moment.utc();
 
-  if (data.type === 'invite-team-event') {
+  if (data.type === "invite-team-event") {
     delete data.user;
 
     let petition;
@@ -32,7 +32,7 @@ module.exports = async (req, res, next) => {
       petition = await Petition.findOne({
         event: data.event,
         team: data.team,
-        type: data.type
+        type: data.type,
       });
     } catch (err) {
       console.log(
@@ -43,18 +43,22 @@ module.exports = async (req, res, next) => {
       return next(err);
     }
 
-    if (petition && petition.state === 'pending') {
+    if (petition && petition.state === "pending") {
       return res.status(400).json({
-        general: 'Team already has a pending invitation to event'
+        general: "Team already has a pending invitation to event",
       });
     }
 
     if (
       petition &&
-      (petition.state === 'rejected' || petition.state === 'canceled')
+      (petition.state === "rejected" || petition.state === "canceled")
     ) {
       try {
-        await petition.remove();
+        await Petition.deleteOne({
+          event: data.event,
+          team: data.team,
+          type: data.type,
+        });
       } catch (err) {
         console.log(
           `Petition ${petition.id} failed to be removed at create-petition`
@@ -71,21 +75,21 @@ module.exports = async (req, res, next) => {
       return next(err);
     }
 
-    if (!event) return res.status(404).json({ event: 'Not found' });
+    if (!event) return res.status(404).json({ event: "Not found" });
 
     if (!event.managers.find((m) => m.toString() === data.sender)) {
-      return res.status(403).json({ general: 'Forbidden action' });
+      return res.status(403).json({ general: "Forbidden action" });
     }
 
     if (event.teams.find((t) => t.toString() === data.team)) {
       return res.status(400).json({
-        general: 'Team is already participant of event'
+        general: "Team is already participant of event",
       });
     }
 
     const endDate = moment(event.endDate).utc();
     if (endDate.isBefore(today)) {
-      return res.status(400).json({ general: 'Event has already finished' });
+      return res.status(400).json({ general: "Event has already finished" });
     }
 
     let team;
@@ -96,8 +100,8 @@ module.exports = async (req, res, next) => {
       return next(err);
     }
 
-    if (!team) return res.status(404).json({ general: 'Team not found' });
-  } else if (data.type === 'invite-user-event') {
+    if (!team) return res.status(404).json({ general: "Team not found" });
+  } else if (data.type === "invite-user-event") {
     delete data.team;
 
     let petition;
@@ -105,7 +109,7 @@ module.exports = async (req, res, next) => {
       petition = await Petition.findOne({
         event: data.event,
         type: data.type,
-        user: data.user
+        user: data.user,
       });
     } catch (err) {
       console.log(
@@ -116,18 +120,22 @@ module.exports = async (req, res, next) => {
       return next(err);
     }
 
-    if (petition && petition.state === 'pending') {
+    if (petition && petition.state === "pending") {
       return res.status(400).json({
-        general: 'User already has a pending invitation to event'
+        general: "User already has a pending invitation to event",
       });
     }
 
     if (
       petition &&
-      (petition.state === 'rejected' || petition.state === 'canceled')
+      (petition.state === "rejected" || petition.state === "canceled")
     ) {
       try {
-        await petition.remove();
+        await Petition.findOne({
+          event: data.event,
+          type: data.type,
+          user: data.user,
+        });
       } catch (err) {
         console.log(
           `Petition ${petition.id} failed to be removed at create-petition`
@@ -137,7 +145,7 @@ module.exports = async (req, res, next) => {
     }
 
     if (data.sender === data.user) {
-      return res.status(400).json({ general: 'User should not be you' });
+      return res.status(400).json({ general: "User should not be you" });
     }
 
     let event;
@@ -148,21 +156,21 @@ module.exports = async (req, res, next) => {
       return next(err);
     }
 
-    if (!event) return res.status(404).json({ general: 'Event not found' });
+    if (!event) return res.status(404).json({ general: "Event not found" });
 
     if (!event.managers.find((m) => m.toString() === data.sender)) {
-      return res.status(403).json({ general: 'Forbidden action' });
+      return res.status(403).json({ general: "Forbidden action" });
     }
 
     if (event.participants.find((p) => p.toString() === data.user)) {
       return res.status(400).json({
-        general: 'User is already participant of event'
+        general: "User is already participant of event",
       });
     }
 
     const endDate = moment(event.endDate).utc();
     if (endDate.isBefore(today)) {
-      return res.status(400).json({ general: 'Event has already finished' });
+      return res.status(400).json({ general: "Event has already finished" });
     }
 
     let user;
@@ -173,8 +181,8 @@ module.exports = async (req, res, next) => {
       return next(err);
     }
 
-    if (!user) return res.status(404).json({ general: 'User not found' });
-  } else if (data.type === 'invite-user-team') {
+    if (!user) return res.status(404).json({ general: "User not found" });
+  } else if (data.type === "invite-user-team") {
     delete data.event;
 
     let petition;
@@ -182,7 +190,7 @@ module.exports = async (req, res, next) => {
       petition = await Petition.findOne({
         team: data.team,
         type: data.type,
-        user: data.user
+        user: data.user,
       });
     } catch (err) {
       console.log(
@@ -193,18 +201,22 @@ module.exports = async (req, res, next) => {
       return next(err);
     }
 
-    if (petition && petition.state === 'pending') {
+    if (petition && petition.state === "pending") {
       return res.status(400).json({
-        general: 'User already has a pending invitation to team'
+        general: "User already has a pending invitation to team",
       });
     }
 
     if (
       petition &&
-      (petition.state === 'rejected' || petition.state === 'canceled')
+      (petition.state === "rejected" || petition.state === "canceled")
     ) {
       try {
-        await petition.remove();
+        await Petition.deleteOne({
+          team: data.team,
+          type: data.type,
+          user: data.user,
+        });
       } catch (err) {
         console.log(
           `Petition ${petition.id} failed to be removed at create-petition`
@@ -214,7 +226,7 @@ module.exports = async (req, res, next) => {
     }
 
     if (req.sender === data.user) {
-      return res.status(400).json({ general: 'User should not be you' });
+      return res.status(400).json({ general: "User should not be you" });
     }
 
     let team;
@@ -225,15 +237,15 @@ module.exports = async (req, res, next) => {
       return next(err);
     }
 
-    if (!team) return res.status(404).json({ general: 'Team not found' });
+    if (!team) return res.status(404).json({ general: "Team not found" });
 
     if (!team.managers.find((m) => m.toString() === data.sender)) {
-      return res.status(403).json({ general: 'Forbidden action' });
+      return res.status(403).json({ general: "Forbidden action" });
     }
 
     if (team.members.find((m) => m.toString() === data.user)) {
       return res.status(400).json({
-        general: 'User is already member of team'
+        general: "User is already member of team",
       });
     }
 
@@ -245,8 +257,8 @@ module.exports = async (req, res, next) => {
       return next(err);
     }
 
-    if (!user) return res.status(404).json({ general: 'User not found' });
-  } else if (data.type === 'request-team-event') {
+    if (!user) return res.status(404).json({ general: "User not found" });
+  } else if (data.type === "request-team-event") {
     delete data.user;
 
     let petition;
@@ -254,7 +266,7 @@ module.exports = async (req, res, next) => {
       petition = await Petition.findOne({
         event: data.event,
         team: data.team,
-        type: data.type
+        type: data.type,
       });
     } catch (err) {
       console.log(
@@ -265,18 +277,22 @@ module.exports = async (req, res, next) => {
       return next(err);
     }
 
-    if (petition && petition.state === 'pending') {
+    if (petition && petition.state === "pending") {
       return res.status(400).json({
-        general: 'Team already has a pending request with event'
+        general: "Team already has a pending request with event",
       });
     }
 
     if (
       petition &&
-      (petition.state === 'rejected' || petition.state === 'canceled')
+      (petition.state === "rejected" || petition.state === "canceled")
     ) {
       try {
-        await petition.remove();
+        await Petition.deleteOne({
+          event: data.event,
+          team: data.team,
+          type: data.type,
+        });
       } catch (err) {
         console.log(
           `Petition ${petition.id} failed to be removed at create-petition`
@@ -293,17 +309,17 @@ module.exports = async (req, res, next) => {
       return next(err);
     }
 
-    if (!event) return res.status(404).json({ general: 'Event not found' });
+    if (!event) return res.status(404).json({ general: "Event not found" });
 
     if (event.teams.find((t) => t.toString() === data.sender)) {
       return res.status(400).json({
-        general: 'Team is already participant of event '
+        general: "Team is already participant of event ",
       });
     }
 
     const endDate = moment(event.endDate).utc();
     if (endDate.isBefore(today)) {
-      return res.status(400).json({ general: 'Event has already finished' });
+      return res.status(400).json({ general: "Event has already finished" });
     }
 
     let team;
@@ -314,12 +330,12 @@ module.exports = async (req, res, next) => {
       return next(err);
     }
 
-    if (!team) return res.status(404).json({ general: 'Team not found' });
+    if (!team) return res.status(404).json({ general: "Team not found" });
 
     if (!team.managers.find((m) => m.toString() === data.sender)) {
-      return res.status(403).json({ general: 'Forbidden action' });
+      return res.status(403).json({ general: "Forbidden action" });
     }
-  } else if (data.type === 'request-user-event') {
+  } else if (data.type === "request-user-event") {
     delete data.team;
 
     let petition;
@@ -327,7 +343,7 @@ module.exports = async (req, res, next) => {
       petition = await Petition.findOne({
         event: data.event,
         sender: data.sender,
-        type: data.type
+        type: data.type,
       });
     } catch (err) {
       console.log(
@@ -338,18 +354,22 @@ module.exports = async (req, res, next) => {
       return next(err);
     }
 
-    if (petition && petition.state === 'pending') {
+    if (petition && petition.state === "pending") {
       return res.status(400).json({
-        general: 'User already have a pending request with event'
+        general: "User already have a pending request with event",
       });
     }
 
     if (
       petition &&
-      (petition.state === 'rejected' || petition.state === 'canceled')
+      (petition.state === "rejected" || petition.state === "canceled")
     ) {
       try {
-        await petition.remove();
+        await Petition.deleteOne({
+          event: data.event,
+          sender: data.sender,
+          type: data.type,
+        });
       } catch (err) {
         console.log(
           `Petition ${petition.id} failed to be removed at create-petition`
@@ -366,17 +386,17 @@ module.exports = async (req, res, next) => {
       return next(err);
     }
 
-    if (!event) return res.status(404).json({ general: 'Event not found' });
+    if (!event) return res.status(404).json({ general: "Event not found" });
 
     if (event.participants.find((p) => p.toString() === data.sender)) {
       return res.status(400).json({
-        general: 'User already is participant of event'
+        general: "User already is participant of event",
       });
     }
 
     const endDate = moment(event.endDate).utc();
     if (endDate.isBefore(today)) {
-      return res.status(400).json({ general: 'Event has already finished' });
+      return res.status(400).json({ general: "Event has already finished" });
     }
   } else {
     // data.type === request-user-team
@@ -387,7 +407,7 @@ module.exports = async (req, res, next) => {
       petition = await Petition.findOne({
         team: data.team,
         sender: data.sender,
-        type: data.type
+        type: data.type,
       });
     } catch (err) {
       console.log(
@@ -398,18 +418,22 @@ module.exports = async (req, res, next) => {
       return next(err);
     }
 
-    if (petition && petition.state === 'pending') {
+    if (petition && petition.state === "pending") {
       return res.status(400).json({
-        general: 'User already have a pending request with team'
+        general: "User already have a pending request with team",
       });
     }
 
     if (
       petition &&
-      (petition.state === 'rejected' || petition.state === 'canceled')
+      (petition.state === "rejected" || petition.state === "canceled")
     ) {
       try {
-        await petition.remove();
+        await Petition.deleteOne({
+          team: data.team,
+          sender: data.sender,
+          type: data.type,
+        });
       } catch (err) {
         console.log(
           `Petition ${petition.id} failed to be removed at create-petition`
@@ -426,11 +450,11 @@ module.exports = async (req, res, next) => {
       return next(err);
     }
 
-    if (!team) return res.status(404).json({ general: 'Team not found' });
+    if (!team) return res.status(404).json({ general: "Team not found" });
 
     if (team.members.find((m) => m.toString() === data.sender)) {
       return res.status(400).json({
-        general: 'User already is member of team'
+        general: "User already is member of team",
       });
     }
   }
@@ -439,7 +463,7 @@ module.exports = async (req, res, next) => {
   try {
     petition = await Petition.create(data);
   } catch (err) {
-    if (typeof err.errors === 'object') {
+    if (typeof err.errors === "object") {
       const validationErrors = {};
 
       Object.keys(err.errors).forEach((key) => {
@@ -467,7 +491,7 @@ module.exports = async (req, res, next) => {
       state: petition.state,
       team: petition.team,
       type: petition.type,
-      user: petition.user
+      user: petition.user,
     }
   );
   return res.status(201).json(dataResponse);

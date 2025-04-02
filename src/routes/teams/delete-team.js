@@ -1,12 +1,12 @@
-const moment = require('moment');
+const moment = require("moment");
 
-const { Event } = require('../../models/event');
-const { Team } = require('../../models/team');
-const { User } = require('../../models/user');
+const { Event } = require("../../models/event");
+const { Team } = require("../../models/team");
+const { User } = require("../../models/user");
 
 module.exports = async (req, res, next) => {
   if (req.user.isBlocked) {
-    return res.status(423).json({ general: 'You are blocked' });
+    return res.status(423).json({ general: "You are blocked" });
   }
 
   const teamId = req.params.teamId;
@@ -15,8 +15,8 @@ module.exports = async (req, res, next) => {
   try {
     team = await Team.findOne({ _id: teamId, isArchived: false });
   } catch (err) {
-    if (err.name === 'CastError') {
-      return res.status(404).json({ general: 'Team not found' });
+    if (err.name === "CastError") {
+      return res.status(404).json({ general: "Team not found" });
     }
 
     console.log(`Team ${teamId} failed to be found at delete-team`);
@@ -24,14 +24,14 @@ module.exports = async (req, res, next) => {
   }
 
   if (!team) {
-    return res.status(404).json({ general: 'Team not found' });
+    return res.status(404).json({ general: "Team not found" });
   }
 
   if (
     !team.managers.find((m) => m.toString() === req.user.id) &&
     !req.user.isAdmin
   ) {
-    return res.status(403).json({ general: 'Forbidden action' });
+    return res.status(403).json({ general: "Forbidden action" });
   }
 
   let archiveTeam = false;
@@ -45,13 +45,13 @@ module.exports = async (req, res, next) => {
     try {
       teamEvents = await Promise.all(teamEventsPromises);
     } catch (err) {
-      console.log('A team event failed to be found at delete-team');
+      console.log("A team event failed to be found at delete-team");
       return next(err);
     }
 
     for (const event of teamEvents) {
       const endDate = moment(event.endDate).utc();
-      const endOfToday = moment.utc().endOf('day');
+      const endOfToday = moment.utc().endOf("day");
       if (endDate.isBefore(endOfToday)) {
         event.teams = event.teams.filter((t) => t.toString() !== team.id);
         event.updatedAt = moment.utc().toDate();
@@ -76,7 +76,7 @@ module.exports = async (req, res, next) => {
   try {
     teamMembers = await Promise.all(teamMembersPromises);
   } catch (err) {
-    console.log('A team member failed to be found at delete-team');
+    console.log("A team member failed to be found at delete-team");
     return next(err);
   }
 
@@ -104,12 +104,12 @@ module.exports = async (req, res, next) => {
     }
   } else {
     try {
-      await team.remove();
+      await Team.deleteOne({ _id: teamId, isArchived: false });
     } catch (err) {
       console.log(`Team ${team.id} failed to be removed at delete-team`);
       return next(err);
     }
   }
 
-  return res.status(204).json({ general: 'Success' });
+  return res.status(204).json({ general: "Success" });
 };

@@ -1,12 +1,12 @@
-const moment = require('moment');
+const moment = require("moment");
 
-const { RefreshToken } = require('../../models/refresh-token');
+const { RefreshToken } = require("../../models/refresh-token");
 
-const { validateChangePassword } = require('./validations');
+const { validateChangePassword } = require("./validations");
 
 module.exports = async (req, res, next) => {
   if (req.user.isBlocked) {
-    return res.status(423).json({ general: 'You are blocked' });
+    return res.status(423).json({ general: "You are blocked" });
   }
 
   const { errors, isValid } = validateChangePassword(req.body);
@@ -20,7 +20,7 @@ module.exports = async (req, res, next) => {
   const passwordMatches = req.user.comparePassword(oldPassword);
 
   if (!passwordMatches) {
-    return res.status(400).json({ oldPassword: 'Wrong password' });
+    return res.status(400).json({ oldPassword: "Wrong password" });
   }
 
   let refreshToken;
@@ -37,7 +37,7 @@ module.exports = async (req, res, next) => {
 
   if (refreshToken) {
     try {
-      await refreshToken.remove();
+      await RefreshToken.deleteOne({ userId: req.user.id });
     } catch (err) {
       console.log(
         `Refresh Token with key ${
@@ -60,5 +60,5 @@ module.exports = async (req, res, next) => {
     return next(err);
   }
 
-  return res.status(200).json({ general: 'Success' });
+  return res.status(200).json({ general: "Success" });
 };
