@@ -1,9 +1,9 @@
-const moment = require('moment');
+const moment = require("moment");
 
-const { ActivationTicket } = require('../../models/activation-ticket');
-const { PasswordTicket } = require('../../models/password-ticket');
-const { RefreshToken } = require('../../models/refresh-token');
-const { User } = require('../../models/user');
+const { ActivationTicket } = require("../../models/activation-ticket");
+const { PasswordTicket } = require("../../models/password-ticket");
+const { RefreshToken } = require("../../models/refresh-token");
+const { User } = require("../../models/user");
 
 module.exports = async (req, res, next) => {
   const userId = req.user._id;
@@ -12,8 +12,8 @@ module.exports = async (req, res, next) => {
   try {
     user = await User.findOne({ _id: userId, isArchived: false });
   } catch (err) {
-    if (err.name === 'CastError') {
-      return res.status(404).json({ general: 'User not found' });
+    if (err.name === "CastError") {
+      return res.status(404).json({ general: "User not found" });
     }
 
     console.log(`User with Id ${userId} failed to be found at archive-user.`);
@@ -21,7 +21,7 @@ module.exports = async (req, res, next) => {
   }
 
   if (!user) {
-    return res.status(404).json({ general: 'User not found' });
+    return res.status(404).json({ general: "User not found" });
   }
 
   let activateAccountTicket;
@@ -31,7 +31,7 @@ module.exports = async (req, res, next) => {
     [activateAccountTicket, passwordTicket, refreshToken] = await Promise.all([
       ActivationTicket.findOne({ email: user.email }),
       PasswordTicket.findOne({ email: user.email }),
-      RefreshToken.findOne({ userId: user.id })
+      RefreshToken.findOne({ userId: user.id }),
     ]);
   } catch (err) {
     console.log(
@@ -44,7 +44,7 @@ module.exports = async (req, res, next) => {
 
   if (activateAccountTicket) {
     try {
-      await activateAccountTicket.remove();
+      await ActivationTicket.deleteOne({ email: user.email });
     } catch (err) {
       console.log(
         `Activate user ticket with key ${
@@ -57,7 +57,7 @@ module.exports = async (req, res, next) => {
 
   if (passwordTicket) {
     try {
-      await passwordTicket.remove();
+      await PasswordTicket.deleteOne({ email: user.email });
     } catch (err) {
       console.log(
         `Password ticket with key ${
@@ -70,7 +70,7 @@ module.exports = async (req, res, next) => {
 
   if (refreshToken) {
     try {
-      await refreshToken.remove();
+      await RefreshToken.deleteOne({ userId: user.id });
     } catch (err) {
       console.log(
         `Refresh token with key ${
@@ -93,5 +93,5 @@ module.exports = async (req, res, next) => {
     return next(err);
   }
 
-  return res.status(200).json({ general: 'Success' });
+  return res.status(200).json({ general: "Success" });
 };

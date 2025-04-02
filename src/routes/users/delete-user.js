@@ -1,8 +1,8 @@
-const { User } = require('../../models/user');
+const { User } = require("../../models/user");
 
 module.exports = async (req, res, next) => {
   if (!req.user.isAdmin) {
-    return res.status(403).json({ general: 'Forbidden action' });
+    return res.status(403).json({ general: "Forbidden action" });
   }
 
   const userId = req.params.userId;
@@ -11,8 +11,8 @@ module.exports = async (req, res, next) => {
   try {
     user = await User.findOne({ _id: userId, isArchived: true });
   } catch (err) {
-    if (err.name === 'CastError') {
-      return res.status(404).json({ general: 'Archived user not found' });
+    if (err.name === "CastError") {
+      return res.status(404).json({ general: "Archived user not found" });
     }
 
     console.log(`User with Id ${userId} failed to be found at delete-user.`);
@@ -20,11 +20,11 @@ module.exports = async (req, res, next) => {
   }
 
   if (!user) {
-    return res.status(404).json({ general: 'Archived user not found' });
+    return res.status(404).json({ general: "Archived user not found" });
   }
 
   try {
-    await user.remove();
+    await User.deleteOne({ _id: userId, isArchived: true });
   } catch (err) {
     console.log(
       `User with email ${user.email} failed to be deleted at delete-user.`
@@ -32,5 +32,5 @@ module.exports = async (req, res, next) => {
     return next(err);
   }
 
-  return res.status(204).json({ general: 'Success' });
+  return res.status(204).json({ general: "Success" });
 };

@@ -1,8 +1,8 @@
-const { RefreshToken } = require('../../models/refresh-token');
+const { RefreshToken } = require("../../models/refresh-token");
 
 module.exports = async (req, res, next) => {
   if (req.user.isBlocked) {
-    return res.status(423).json({ general: 'You are blocked' });
+    return res.status(423).json({ general: "You are blocked" });
   }
 
   let refreshToken;
@@ -16,11 +16,11 @@ module.exports = async (req, res, next) => {
   }
 
   if (!refreshToken) {
-    return res.status(204).json({ general: 'Success' });
+    return res.status(204).json({ general: "Success" });
   }
 
   try {
-    await refreshToken.remove();
+    await RefreshToken.deleteOne({ userId: req.user.id });
   } catch (err) {
     console.log(
       `Refresh token with userId ${
@@ -30,5 +30,5 @@ module.exports = async (req, res, next) => {
     return next(err);
   }
 
-  return res.status(204).json({ general: 'Success' });
+  return res.status(204).json({ general: "Success" });
 };

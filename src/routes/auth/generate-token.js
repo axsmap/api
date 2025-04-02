@@ -1,9 +1,9 @@
-const jwt = require('jsonwebtoken');
-const moment = require('moment');
+const jwt = require("jsonwebtoken");
+const moment = require("moment");
 
-const { RefreshToken } = require('../../models/refresh-token');
+const { RefreshToken } = require("../../models/refresh-token");
 
-const { validateGenerateToken } = require('./validations');
+const { validateGenerateToken } = require("./validations");
 
 module.exports = async (req, res, next) => {
   const { errors, isValid } = validateGenerateToken(req.body);
@@ -24,14 +24,14 @@ module.exports = async (req, res, next) => {
   }
 
   if (!refreshToken) {
-    return res.status(404).json({ general: 'Refresh Token not found' });
+    return res.status(404).json({ general: "Refresh Token not found" });
   }
 
   const expiresAt = moment(refreshToken.expiresAt).utc();
   const today = moment.utc();
   if (expiresAt.isBefore(today)) {
     try {
-      await refreshToken.remove();
+      await RefreshToken.deleteOne({ key });
     } catch (err) {
       console.log(
         `Refresh Token with key ${
@@ -41,14 +41,14 @@ module.exports = async (req, res, next) => {
       return next(err);
     }
 
-    return res.status(401).json({ general: 'Refresh Token expired' });
+    return res.status(401).json({ general: "Refresh Token expired" });
   }
 
   const token = jwt.sign(
     { userId: refreshToken.userId },
     process.env.JWT_SECRET,
     {
-      expiresIn: 3600
+      expiresIn: 3600,
     }
   );
   return res.status(200).json({ token });

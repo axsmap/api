@@ -1,16 +1,16 @@
-const aws = require('aws-sdk');
-const { last } = require('lodash');
-const moment = require('moment');
+const aws = require("aws-sdk");
+const { last } = require("lodash");
+const moment = require("moment");
 
-const { Event } = require('../../models/event');
-const { Team } = require('../../models/team');
-const { User } = require('../../models/user');
+const { Event } = require("../../models/event");
+const { Team } = require("../../models/team");
+const { User } = require("../../models/user");
 
 const s3 = new aws.S3();
 
 module.exports = async (req, res, next) => {
   if (req.user.isBlocked) {
-    return res.status(423).json({ general: 'You are blocked' });
+    return res.status(423).json({ general: "You are blocked" });
   }
 
   const eventId = req.params.eventId;
@@ -19,22 +19,22 @@ module.exports = async (req, res, next) => {
   try {
     event = await Event.findOne({ _id: eventId });
   } catch (err) {
-    if (err.name === 'CastError') {
-      return res.status(404).json({ general: 'Event not found' });
+    if (err.name === "CastError") {
+      return res.status(404).json({ general: "Event not found" });
     }
     console.log(`Event ${eventId} failed to be found at delete-event`);
     return next(err);
   }
 
   if (!event) {
-    return res.status(404).json({ general: 'Event not found' });
+    return res.status(404).json({ general: "Event not found" });
   }
 
   if (
     !event.managers.find((m) => m.toString() === req.user.id) &&
     !req.user.isAdmin
   ) {
-    return res.status(403).json({ general: 'Forbidden action' });
+    return res.status(403).json({ general: "Forbidden action" });
   }
 
   const endDate = moment(event.endDate).utc();
@@ -43,7 +43,7 @@ module.exports = async (req, res, next) => {
   if (endDate.isBefore(today) && event.reviews > 0) {
     return res.status(423).json({
       general:
-        'It cannot be removed because it already ended and has one or more reviews'
+        "It cannot be removed because it already ended and has one or more reviews",
     });
   }
 
@@ -55,7 +55,7 @@ module.exports = async (req, res, next) => {
   try {
     participants = await Promise.all(participantsPromises);
   } catch (err) {
-    console.log('A participant failed to be found at delete-event');
+    console.log("A participant failed to be found at delete-event");
     return next(err);
   }
 
@@ -79,7 +79,7 @@ module.exports = async (req, res, next) => {
     for (const photo of event.photos) {
       const photoParams = {
         Bucket: process.env.AWS_S3_BUCKET,
-        Key: `events/photos/${last(photo.url.split('/'))}`
+        Key: `events/photos/${last(photo.url.split("/"))}`,
       };
 
       try {
@@ -102,7 +102,7 @@ module.exports = async (req, res, next) => {
     try {
       teams = await Promise.all(teamsPromises);
     } catch (err) {
-      console.log('A team failed to be found at delete-event');
+      console.log("A team failed to be found at delete-event");
       return next(err);
     }
 
@@ -120,11 +120,11 @@ module.exports = async (req, res, next) => {
   }
 
   try {
-    await event.remove();
+    await Event.deleteOne({ _id: eventId });
   } catch (err) {
     console.log(`Event ${event.id} failed to be removed at delete-event`);
     return next(err);
   }
 
-  return res.status(204).json({ general: 'Success' });
+  return res.status(204).json({ general: "Success" });
 };

@@ -1,7 +1,7 @@
-const moment = require('moment');
+const moment = require("moment");
 
-const { Event } = require('../../models/event');
-const { Petition } = require('../../models/petition');
+const { Event } = require("../../models/event");
+const { Petition } = require("../../models/petition");
 
 module.exports = async (req, res, next) => {
   const eventId = req.params.eventId;
@@ -10,8 +10,8 @@ module.exports = async (req, res, next) => {
   try {
     event = await Event.findOne({ _id: eventId, isArchived: false });
   } catch (err) {
-    if (err.name === 'CastError') {
-      return res.status(404).json({ general: 'Event not found' });
+    if (err.name === "CastError") {
+      return res.status(404).json({ general: "Event not found" });
     }
 
     console.log(`Event ${eventId} failed to be found at join-event`);
@@ -19,21 +19,21 @@ module.exports = async (req, res, next) => {
   }
 
   if (!event) {
-    return res.status(404).json({ general: 'Event not found' });
+    return res.status(404).json({ general: "Event not found" });
   }
 
   const eventParticipants = event.participants.map((p) => p.toString());
   if (eventParticipants.includes(req.user.id)) {
     return res
       .status(400)
-      .json({ general: 'You already are a participant in this event' });
+      .json({ general: "You already are a participant in this event" });
   }
 
   const eventManagers = event.managers.map((m) => m.toString());
   if (eventManagers.includes(req.user.id)) {
     return res
       .status(400)
-      .json({ general: 'You already are a participant in this event' });
+      .json({ general: "You already are a participant in this event" });
   }
 
   if (event.isOpen) {
@@ -57,14 +57,14 @@ module.exports = async (req, res, next) => {
       return next(err);
     }
 
-    return res.status(200).json({ general: 'Joined' });
+    return res.status(200).json({ general: "Joined" });
   } else {
     let petition;
     try {
       petition = await Petition.findOne({
         event: event.id,
         sender: req.user.id,
-        type: 'request-user-event'
+        type: "request-user-event",
       });
     } catch (err) {
       console.log(
@@ -75,18 +75,22 @@ module.exports = async (req, res, next) => {
       return next(err);
     }
 
-    if (petition && petition.state === 'pending') {
+    if (petition && petition.state === "pending") {
       return res.status(400).json({
-        general: 'You already have a pending petition with this event'
+        general: "You already have a pending petition with this event",
       });
     }
 
     if (
       petition &&
-      (petition.state === 'rejected' || petition.state === 'canceled')
+      (petition.state === "rejected" || petition.state === "canceled")
     ) {
       try {
-        await petition.remove();
+        await Petition.deleteOne({
+          event: event.id,
+          sender: req.user.id,
+          type: "request-user-event",
+        });
       } catch (err) {
         console.log(
           `Petition ${petition.id} failed to be removed at join-event`
@@ -100,18 +104,18 @@ module.exports = async (req, res, next) => {
     if (endDate.isBefore(today)) {
       return res
         .status(423)
-        .json({ general: 'This event has already finished' });
+        .json({ general: "This event has already finished" });
     }
 
     const petitionData = {
       event: event.id,
       sender: req.user.id,
-      type: 'request-user-event'
+      type: "request-user-event",
     };
     try {
       await Petition.create(petitionData);
     } catch (err) {
-      if (typeof err.errors === 'object') {
+      if (typeof err.errors === "object") {
         const validationErrors = {};
 
         Object.keys(err.errors).forEach((key) => {
@@ -129,6 +133,6 @@ module.exports = async (req, res, next) => {
       return next(err);
     }
 
-    return res.status(200).json({ general: 'Requested' });
+    return res.status(200).json({ general: "Requested" });
   }
 };

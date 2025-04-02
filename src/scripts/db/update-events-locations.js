@@ -1,10 +1,10 @@
-const axios = require('axios');
-const mongoose = require('mongoose');
+const axios = require("axios");
+const mongoose = require("mongoose");
 
-require('dotenv').config();
+require("dotenv").config();
 
-const { eventSchema } = require('../../models/event');
-const { venueSchema } = require('../../models/venue');
+const { eventSchema } = require("../../models/event");
+const { venueSchema } = require("../../models/venue");
 
 mongoose.Promise = global.Promise;
 
@@ -23,21 +23,21 @@ const uri = process.env.MONGODB_URI;
 const options = {
   useMongoClient: true,
   socketTimeoutMS: 0,
-  keepAlive: 2000
+  keepAlive: 2000,
 };
 const db = mongoose.createConnection(uri, options);
 
-db.on('connected', async () => {
-  console.log('Connection to DB established successfully');
+db.on("connected", async () => {
+  console.log("Connection to DB established successfully");
 
-  const Event = db.model('Event', eventSchema);
-  const Venue = db.model('Venue', venueSchema);
+  const Event = db.model("Event", eventSchema);
+  const Venue = db.model("Venue", venueSchema);
 
   let totalEvents;
   try {
     totalEvents = await Event.count();
   } catch (error) {
-    console.log('Events failed to be count');
+    console.log("Events failed to be count");
     console.log(error);
     await closeConnections(db);
   }
@@ -54,7 +54,7 @@ db.on('connected', async () => {
         .skip(page * pageLimit)
         .limit(pageLimit);
     } catch (error) {
-      console.log('Events failed to be found');
+      console.log("Events failed to be found");
       console.log(error);
       await closeConnections(db);
     }
@@ -66,7 +66,7 @@ db.on('connected', async () => {
     try {
       venues = await Promise.all(getVenues);
     } catch (err) {
-      console.log('Venues failed to be found');
+      console.log("Venues failed to be found");
       console.log(err);
       await closeConnections(db);
     }
@@ -86,7 +86,7 @@ db.on('connected', async () => {
     try {
       places = await Promise.all(getPlaces);
     } catch (err) {
-      console.log('Places failed to be found');
+      console.log("Places failed to be found");
       console.log(err);
       await closeConnections(db);
     }
@@ -106,7 +106,7 @@ db.on('connected', async () => {
         updateEvents.push(event.save());
       } else {
         const event = events[i];
-        removeEvents.push(event.remove());
+        removeEvents.push(Event.deleteOne({ _id: event?._id }));
       }
     });
     try {
@@ -115,14 +115,14 @@ db.on('connected', async () => {
       console.log(
         `Events failed to be updated.\nData: ${JSON.stringify({
           page,
-          i
+          i,
         })}`
       );
       console.log(err);
       await closeConnections(db);
     }
 
-    console.log('Events updated');
+    console.log("Events updated");
 
     page = page + 1;
     i = i + events.length;
@@ -131,7 +131,7 @@ db.on('connected', async () => {
     try {
       totalEvents = await Event.count();
     } catch (error) {
-      console.log('Events failed to be count');
+      console.log("Events failed to be count");
       console.log(error);
       await closeConnections(db);
     }
@@ -140,11 +140,11 @@ db.on('connected', async () => {
   await closeConnections(db);
 });
 
-db.on('error', (err) => {
-  console.log('Connection to DB failed ' + err);
+db.on("error", (err) => {
+  console.log("Connection to DB failed " + err);
   process.exit(0);
 });
 
-db.on('disconnected', () => {
-  console.log('Connection from DB closed');
+db.on("disconnected", () => {
+  console.log("Connection from DB closed");
 });
