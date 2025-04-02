@@ -128,13 +128,14 @@ module.exports = async (req, res, next) => {
   }
 
   const subject = "Activate Account";
+  // TODO change base URL for ACTIVATION
   const htmlContent = `
     <h3>Welcome to AXS Map!</h3>
     <p>To <strong>activate</strong> your account use the <strong>link</strong> below:</p>
     <br/>
     <a href="
-    ${process.env.API_URL}/auth/activate-account/${activationTicket.key}">
-    ${process.env.API_URL}/auth/activate-account/${activationTicket.key}
+    https://axsmap.com//auth/activate-account/${activationTicket.key}">
+    https://axsmap.com//auth/activate-account/${activationTicket.key}
     </a>
     <br/><br/>
     <p>Stay awesome.</p>

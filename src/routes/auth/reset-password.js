@@ -1,10 +1,10 @@
-const moment = require('moment');
+const moment = require("moment");
 
-const { PasswordTicket } = require('../../models/password-ticket');
-const { RefreshToken } = require('../../models/refresh-token');
-const { User } = require('../../models/user');
+const { PasswordTicket } = require("../../models/password-ticket");
+const { RefreshToken } = require("../../models/refresh-token");
+const { User } = require("../../models/user");
 
-const { validateResetPassword } = require('./validations');
+const { validateResetPassword } = require("./validations");
 
 module.exports = async (req, res, next) => {
   const { errors, isValid } = validateResetPassword(req.body);
@@ -26,14 +26,14 @@ module.exports = async (req, res, next) => {
   }
 
   if (!passwordTicket) {
-    return res.status(404).json({ general: 'Password Ticket not found' });
+    return res.status(404).json({ general: "Password Ticket not found" });
   }
 
   const expiresAt = moment(passwordTicket.expiresAt).utc();
   const today = moment.utc();
   if (expiresAt.isBefore(today)) {
     try {
-      await passwordTicket.remove();
+      await PasswordTicket.deleteOne({ key });
     } catch (err) {
       console.log(
         `Password Ticket with key ${
@@ -43,14 +43,14 @@ module.exports = async (req, res, next) => {
       return next(err);
     }
 
-    return res.status(400).json({ general: 'Password Ticket expired' });
+    return res.status(400).json({ general: "Password Ticket expired" });
   }
 
   let user;
   try {
     user = await User.findOne({
       email: passwordTicket.email,
-      isArchived: false
+      isArchived: false,
     });
   } catch (err) {
     console.log(
@@ -63,7 +63,7 @@ module.exports = async (req, res, next) => {
 
   if (!user) {
     try {
-      await passwordTicket.remove();
+      await PasswordTicket.deleteOne({ key });
     } catch (err) {
       console.log(
         `Password Ticket with key ${
@@ -73,12 +73,12 @@ module.exports = async (req, res, next) => {
       return next(err);
     }
 
-    return res.status(400).json({ general: 'User not found' });
+    return res.status(400).json({ general: "User not found" });
   }
 
   const passwordMatches = user.comparePassword(password);
   if (passwordMatches) {
-    return res.status(400).json({ password: 'Is already used' });
+    return res.status(400).json({ password: "Is already used" });
   }
 
   user.password = password;
@@ -107,7 +107,7 @@ module.exports = async (req, res, next) => {
 
   if (refreshToken) {
     try {
-      await refreshToken.remove();
+      await RefreshToken.deleteOne({ userId: user.id });
     } catch (err) {
       console.log(
         `Refresh Token with userId ${
@@ -119,7 +119,7 @@ module.exports = async (req, res, next) => {
   }
 
   try {
-    await passwordTicket.remove();
+    await PasswordTicket.deleteOne({ key });
   } catch (err) {
     console.log(
       `Password Ticket with key ${
@@ -129,5 +129,5 @@ module.exports = async (req, res, next) => {
     return next(err);
   }
 
-  return res.status(200).json({ general: 'Success' });
+  return res.status(200).json({ general: "Success" });
 };

@@ -33,7 +33,7 @@ module.exports = async (req, res, next) => {
   const now = moment.utc();
   if (expiresAt.isBefore(now)) {
     try {
-      await activationTicket.remove();
+      await ActivationTicket.deleteOne({ key });
     } catch (err) {
       console.log(
         `Activation ticket with key ${
@@ -125,7 +125,7 @@ module.exports = async (req, res, next) => {
   }
 
   try {
-    await activationTicket.remove();
+    await ActivationTicket.deleteOne({ key });
   } catch (err) {
     console.log(
       `Activation ticket with key ${
@@ -134,6 +134,7 @@ module.exports = async (req, res, next) => {
     );
     return next(err);
   }
+  // TODO change base URL
 
-  return res.redirect(`${process.env.APP_URL}/sign-in`);
+  return res.redirect(`https://axsmap.com/sign-in`);
 };

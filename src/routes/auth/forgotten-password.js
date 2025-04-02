@@ -56,6 +56,7 @@ module.exports = async (req, res, next) => {
     );
     return next(err);
   }
+  console.log(passwordTicket);
 
   const htmlContent = `
     <h3>Hi from AXS Map!</h3>
