@@ -131,7 +131,7 @@ module.exports = async (req, res, next) => {
       (petition.state === "rejected" || petition.state === "canceled")
     ) {
       try {
-        await Petition.findOne({
+        await Petition.deleteOne({
           event: data.event,
           type: data.type,
           user: data.user,
