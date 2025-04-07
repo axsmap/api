@@ -134,8 +134,8 @@ module.exports = async (req, res, next) => {
     <p>To <strong>activate</strong> your account use the <strong>link</strong> below:</p>
     <br/>
     <a href="
-    https://axsmap.com//auth/activate-account/${activationTicket.key}">
-    https://axsmap.com//auth/activate-account/${activationTicket.key}
+    https://axsmap.com/auth/activate-account/${activationTicket.key}">
+    https://axsmap.com/auth/activate-account/${activationTicket.key}
     </a>
     <br/><br/>
     <p>Stay awesome.</p>
