@@ -1,17 +1,17 @@
-const express = require('express');
+const express = require("express");
 
-const { isAuthenticated } = require('../../helpers');
+const { isAuthenticated } = require("../../helpers");
 
-const archiveVenue = require('./archive-venue');
-const getVenue = require('./get-venue');
-const listVenues = require('./list-venues');
+const archiveVenue = require("./archive-venue");
+const getVenue = require("./get-venue");
+const listVenues = require("./list-venues");
 
 const router = new express.Router();
 
-router.get('', listVenues);
-router.get('/:placeId', getVenue);
+router.get("", isAuthenticated({ isOptional: true }), listVenues);
+router.get("/:placeId", getVenue);
 router.put(
-  '/:venueId/archive',
+  "/:venueId/archive",
   isAuthenticated({ isOptional: false }),
   archiveVenue
 );

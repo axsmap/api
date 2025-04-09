@@ -129,6 +129,28 @@ const userSchema = new mongoose.Schema(
       default: false,
       required: [true, "Is required"],
     },
+    lastActivityTime: {
+      type: Date,
+      default: null,
+    },
+    lastLocation: {
+      type: {
+        lat: {
+          type: Number,
+        },
+        lng: {
+          type: Number,
+        },
+      },
+      default: {
+        lat: null,
+        lng: null,
+      },
+    },
+    device: {
+      type: String,
+      default: "",
+    },
     showEmail: {
       type: Boolean,
       default: false,
