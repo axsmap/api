@@ -1,4 +1,4 @@
-export const activationEmailTemplate = (link,name) => {
+const activationEmailTemplate = (link,name) => {
   return `
     <!DOCTYPE html>
 <html lang="en">
@@ -50,3 +50,8 @@ export const activationEmailTemplate = (link,name) => {
 </html>
 `;
 };
+
+
+module.exports={
+  activationEmailTemplate
+}
