@@ -36,7 +36,32 @@ const activationTicketSchema = new mongoose.Schema(
       username: {
         type: String,
         maxlength: [67, 'Should have less than 68 characters']
-      }
+      },
+      aboutMe: {
+        type: String,
+        default:null,
+        maxlength: [67, 'Should have less than 68 characters']
+      },
+      dateOfBirth: {
+        type: String,
+        default:null,
+        maxlength: [67, 'Should have less than 68 characters']
+      },
+      disability: {
+        type: String,
+        default:null,
+        maxlength: [67, 'Should have less than 68 characters']
+      },
+      gender: {
+        type: String,
+        default:null,
+        maxlength: [67, 'Should have less than 68 characters']
+      },
+      race: {
+        type: String,
+        default:null,
+        maxlength: [67, 'Should have less than 68 characters']
+      },
     }
   },
   { timestamps: true }

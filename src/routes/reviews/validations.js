@@ -182,13 +182,6 @@ module.exports = {
       errors.place = 'Should be a string';
     }
 
-    if (typeof data.steps !== 'undefined') {
-      if (typeof data.steps !== 'number') {
-        errors.steps = 'Should be a number';
-      } else if (data.steps < 0 || data.steps > 3) {
-        errors.steps = 'Should be between 0 and 3';
-      }
-    }
 
     if (data.team) {
       if (typeof data.team !== 'string') {

@@ -10,6 +10,7 @@ const { cleanSpaces, sendEmail } = require("../../helpers");
 const { User } = require("../../models/user");
 
 const { validateSignUp } = require("./validations");
+const { activationEmailTemplate } = require("../../helpers/mail-template");
 
 module.exports = async (req, res, next) => {
   const { errors, isValid } = validateSignUp(req.body);
@@ -23,7 +24,13 @@ module.exports = async (req, res, next) => {
     "isSubscribed",
     "lastName",
     "password",
+    "aboutMe",
+    "dateOfBirth",
+    "disability",
+    "gender",
+    "race",
   ]);
+  data.aboutMe = cleanSpaces(data.aboutMe);
   data.firstName = cleanSpaces(data.firstName);
   data.lastName = cleanSpaces(data.lastName);
   data.username = `${slugify(data.firstName)}-${slugify(data.lastName)}`;
@@ -114,6 +121,11 @@ module.exports = async (req, res, next) => {
       lastName: data.lastName,
       password: data.password,
       username: data.username,
+      aboutMe: data.aboutMe || null,
+      dateOfBirth: data.dateOfBirth || null,
+      disability: data.disability || null,
+      gender: data.gender || null,
+      race: data.race || null,
     },
   };
   try {
@@ -147,10 +159,12 @@ module.exports = async (req, res, next) => {
     Stay awesome.
   `;
   const receiversEmails = [activationTicket.email];
+  const activationLink = `https://axsmap.com/auth/activate-account/${activationTicket.key}`;
+  const name = `${(activationTicket?.userData?.firstName ?? '')} ${(activationTicket?.userData?.lastName?? '')}`;
 
   sendEmail({
     subject,
-    htmlContent,
+    htmlContent:activationEmailTemplate(activationLink,name),
     textContent,
     receiversEmails,
   });

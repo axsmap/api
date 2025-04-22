@@ -64,6 +64,7 @@ module.exports = async (req, res, next) => {
   user.disability = data.disability || "";
   user.birthday = data.birthday || user.birthday;
   user.race = data.race || "";
+  user.aboutMe = data.aboutMe || "";
 
   user.firstName = data.firstName
     ? cleanSpaces(data.firstName)
@@ -162,6 +163,7 @@ module.exports = async (req, res, next) => {
     showPhone: user.showPhone,
     username: user.username,
     zip: user.zip,
+    aboutMe:user.aboutMe
   };
   return res.status(200).json(dataResponse);
 };

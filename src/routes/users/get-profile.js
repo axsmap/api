@@ -3,7 +3,6 @@ const { Team } = require("../../models/team");
 const { User } = require("../../models/user");
 
 module.exports = async (req, res, next) => {
-  console.log(req.user.teams);
   const getUserTeams = req.user.teams.map((t) => Team.findOne({ _id: t }));
   let userTeams;
   try {
@@ -101,6 +100,7 @@ module.exports = async (req, res, next) => {
     birthday: req.user?.birthday,
     disability: req.user.disability,
     ranking,
+    aboutMe:req.user.aboutMe,
   };
   return res.status(200).json(userData);
 };

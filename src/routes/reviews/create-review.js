@@ -1,50 +1,55 @@
-const axios = require('axios');
-const moment = require('moment');
+const axios = require("axios");
+const moment = require("moment");
 
-const { Event } = require('../../models/event');
-const { Photo } = require('../../models/photo');
-const { Review } = require('../../models/review');
-const { Team } = require('../../models/team');
-const { Venue } = require('../../models/venue');
+const { Event } = require("../../models/event");
+const { Photo } = require("../../models/photo");
+const { Review } = require("../../models/review");
+const { Team } = require("../../models/team");
+const { Venue } = require("../../models/venue");
 
-const { validateCreateEditReview } = require('./validations');
-const venueReviewSummary = require('../../helpers/venue-review-summary.js');
+const { validateCreateEditReview } = require("./validations");
+const venueReviewSummary = require("../../helpers/venue-review-summary.js");
 
 module.exports = async (req, res, next) => {
-  console.log('body: ', req.body);
-  const { errors, isValid } = validateCreateEditReview(req.body);
-  if (!isValid) return res.status(400).json(errors);
+  // const { errors, isValid } = validateCreateEditReview(req.body);
+  // if (!isValid) return res.status(400).json(errors);
 
   const data = {
-    //new expanded fields
-    hasPermanentRamp: req.body.hasPermanentRamp,
-    hasPortableRamp: req.body.hasPortableRamp,
-    hasWideEntrance: req.body.hasWideEntrance,
-    hasAccessibleTableHeight: req.body.hasAccessibleTableHeight,
-    hasAccessibleElevator: req.body.hasAccessibleElevator,
-    hasInteriorRamp: req.body.hasInteriorRamp,
-    hasSwingOutDoor: req.body.hasSwingOutDoor,
-    hasLargeStall: req.body.hasLargeStall,
-    hasSupportAroundToilet: req.body.hasSupportAroundToilet,
-    hasLoweredSinks: req.body.hasLoweredSinks,
-    interiorScore: req.body.interiorScore,
-    _isScoreConverted: true,
-
-    //original fields
-    allowsGuideDog: req.body.allowsGuideDog,
-    //bathroomScore: req.body.bathroomScore,
-    comments: req.body.comments,
-    //entryScore: req.body.entryScore,
-    event: req.body.event,
+    // existing fields
     hasParking: req.body.hasParking,
-    hasSecondEntry: req.body.hasSecondEntry,
     hasWellLit: req.body.hasWellLit,
-    isQuiet: req.body.isQuiet,
-    isSpacious: req.body.isSpacious,
     steps: req.body.steps,
+    hasWideEntrance: req.body.hasWideEntrance,
+    hasAccessibleElevator: req.body.hasAccessibleElevator,
+    hasSupportAroundToilet: req.body.hasSupportAroundToilet,
+    // new added fields
+    has2Step: req.body.has2Step,
+    has1Step: req.body.has1Step,
+    multipleFloors: req.body.multipleFloors,
+    hasWashroom: req.body.hasWashroom,
+    brightLightTitle: req.body.brightLightTitle,
+    hasSecondEntry: req.body.hasSecondEntry,
+    hasPermanentRamp: req.body.hasPermanentRamp,
+    hasLoweredSinks: req.body.hasLoweredSinks,
+
+    // hasPortableRamp: req.body.hasPortableRamp,
+    // hasAccessibleTableHeight: req.body.hasAccessibleTableHeight,
+    // hasInteriorRamp: req.body.hasInteriorRamp,
+    // hasSwingOutDoor: req.body.hasSwingOutDoor,
+    // hasLargeStall: req.body.hasLargeStall,
+    // interiorScore: req.body.interiorScore,
+    // _isScoreConverted: true,
+    // allowsGuideDog: req.body.allowsGuideDog,
+    // isQuiet: req.body.isQuiet,
+    // isSpacious: req.body.isSpacious,
+    // extra fields
+    event: req.body.event,
     team: req.body.team,
-    user: req.user.id
+    user: req.user.id,
+    comments: req.body.comments,
   };
+
+  console.log(data);
 
   let event;
   if (data.event) {
@@ -56,7 +61,7 @@ module.exports = async (req, res, next) => {
     }
 
     if (!event) {
-      return res.status(404).json({ event: 'Event not found' });
+      return res.status(404).json({ event: "Event not found" });
     }
 
     if (
@@ -65,16 +70,16 @@ module.exports = async (req, res, next) => {
     ) {
       return res
         .status(400)
-        .json({ event: 'You are not a participant of this event' });
+        .json({ event: "You are not a participant of this event" });
     }
 
     const startDate = moment(event.startDate).utc();
     const endDate = moment(event.endDate).utc();
-    const today = moment().startOf('day').utc();
+    const today = moment().startOf("day").utc();
     if (startDate.isAfter(today)) {
-      return res.status(400).json({ event: 'Event has not started yet' });
+      return res.status(400).json({ event: "Event has not started yet" });
     } else if (endDate.isBefore(today)) {
-      return res.status(400).json({ event: 'Event has already finished' });
+      return res.status(400).json({ event: "Event has already finished" });
     }
   }
 
@@ -88,7 +93,7 @@ module.exports = async (req, res, next) => {
     }
 
     if (!team) {
-      return res.status(404).json({ team: 'Team not found' });
+      return res.status(404).json({ team: "Team not found" });
     }
 
     if (
@@ -97,7 +102,7 @@ module.exports = async (req, res, next) => {
     ) {
       return res
         .status(400)
-        .json({ team: 'You are not a member of this team' });
+        .json({ team: "You are not a member of this team" });
     }
   }
 
@@ -128,8 +133,8 @@ module.exports = async (req, res, next) => {
     }
 
     const statusResponse = response.data.status;
-    if (statusResponse !== 'OK') {
-      return res.status(404).json({ general: 'Place not found' });
+    if (statusResponse !== "OK") {
+      return res.status(404).json({ general: "Place not found" });
     }
 
     const placeData = response.data.result;
@@ -138,12 +143,12 @@ module.exports = async (req, res, next) => {
       location: {
         coordinates: [
           placeData.geometry.location.lng,
-          placeData.geometry.location.lat
-        ]
+          placeData.geometry.location.lat,
+        ],
       },
       name: placeData.name,
       placeId,
-      types: placeData.types
+      types: placeData.types,
     };
 
     try {
@@ -163,7 +168,7 @@ module.exports = async (req, res, next) => {
   try {
     review = await Review.create(data);
   } catch (err) {
-    if (typeof err.errors === 'object') {
+    if (typeof err.errors === "object") {
       const validationErrors = {};
 
       Object.keys(err.errors).forEach((key) => {
@@ -242,7 +247,7 @@ module.exports = async (req, res, next) => {
     }
 
     if (!photo) {
-      return res.status(404).json({ photo: 'Not found' });
+      return res.status(404).json({ photo: "Not found" });
     }
 
     venue.photos = [...venue.photos, photo.id];
@@ -273,129 +278,176 @@ module.exports = async (req, res, next) => {
   //
   //new expanded fields
   //
-  if (typeof review.hasPermanentRamp !== 'undefined') {
-    venue.hasPermanentRamp = {
-      yes: review.hasPermanentRamp
-        ? venue.hasPermanentRamp.yes + 1
-        : venue.hasPermanentRamp.yes,
-      no: review.hasPermanentRamp
-        ? venue.hasPermanentRamp.no
-        : venue.hasPermanentRamp.no + 1
-    };
-  }
+  // hasParking: req.body.hasParking,
+  // hasWellLit: req.body.hasWellLit,
+  // steps: req.body.steps,
+  // hasWideEntrance: req.body.hasWideEntrance,
+  // hasAccessibleElevator: req.body.hasAccessibleElevator,
+  // hasSupportAroundToilet: req.body.hasSupportAroundToilet,
+  // // new added fields
+  // has2Step:req.body.has2Step ,
+  // multipleFloors: req.body.multipleFloors,
+  // hasWashroom: req.body.hasWashroom,
+  // brightLightTitle: req.body.brightLightTitle,
+  // has1Step: req.body.has1Step,
 
-  if (typeof review.hasPortableRamp !== 'undefined') {
-    venue.hasPortableRamp = {
-      yes: review.hasPortableRamp
-        ? venue.hasPortableRamp.yes + 1
-        : venue.hasPortableRamp.yes,
-      no: review.hasPortableRamp
-        ? venue.hasPortableRamp.no
-        : venue.hasPortableRamp.no + 1
-    };
-  }
+  const keys = [
+    "hasParking",
+    "hasWellLit",
+    "hasWideEntrance",
+    "hasAccessibleElevator",
+    "hasSupportAroundToilet",
+    "multipleFloors",
+    "hasWashroom",
+    "brightLightTitle",
+    "hasSecondEntry",
+    "hasPermanentRamp",
+    "hasLoweredSinks",
+  ];
 
-  if (typeof review.hasWideEntrance !== 'undefined') {
-    venue.hasWideEntrance = {
-      yes: review.hasWideEntrance
-        ? venue.hasWideEntrance.yes + 1
-        : venue.hasWideEntrance.yes,
-      no: review.hasWideEntrance
-        ? venue.hasWideEntrance.no
-        : venue.hasWideEntrance.no + 1
-    };
-  }
+  keys.forEach((key) => {
+    if (typeof review[key] !== "undefined") {
+      venue[key] = {
+        yes: venue[key].yes + (review[key] ? 1 : 0),
+        no: venue[key].no + (review[key] ? 0 : 1),
+      };
+    }
+  });
 
-  if (typeof review.hasAccessibleTableHeight !== 'undefined') {
-    venue.hasAccessibleTableHeight = {
-      yes: review.hasAccessibleTableHeight
-        ? venue.hasAccessibleTableHeight.yes + 1
-        : venue.hasAccessibleTableHeight.yes,
-      no: review.hasAccessibleTableHeight
-        ? venue.hasAccessibleTableHeight.no
-        : venue.hasAccessibleTableHeight.no + 1
-    };
-  }
+  // if (typeof review.hasPermanentRamp !== "undefined") {
+  //   venue.hasPermanentRamp = {
+  //     yes: review.hasPermanentRamp
+  //       ? venue.hasPermanentRamp.yes + 1
+  //       : venue.hasPermanentRamp.yes,
+  //     no: review.hasPermanentRamp
+  //       ? venue.hasPermanentRamp.no
+  //       : venue.hasPermanentRamp.no + 1,
+  //   };
+  // }
 
-  if (typeof review.hasAccessibleElevator !== 'undefined') {
-    venue.hasAccessibleElevator = {
-      yes: review.hasAccessibleElevator
-        ? venue.hasAccessibleElevator.yes + 1
-        : venue.hasAccessibleElevator.yes,
-      no: review.hasAccessibleElevator
-        ? venue.hasAccessibleElevator.no
-        : venue.hasAccessibleElevator.no + 1
-    };
-  }
+  // if (typeof review.hasPermanentRamp !== "undefined") {
+  //   venue.hasPermanentRamp = {
+  //     yes: review.hasPermanentRamp
+  //       ? venue.hasPermanentRamp.yes + 1
+  //       : venue.hasPermanentRamp.yes,
+  //     no: review.hasPermanentRamp
+  //       ? venue.hasPermanentRamp.no
+  //       : venue.hasPermanentRamp.no + 1,
+  //   };
+  // }
 
-  if (typeof review.hasInteriorRamp !== 'undefined') {
-    venue.hasInteriorRamp = {
-      yes: review.hasInteriorRamp
-        ? venue.hasInteriorRamp.yes + 1
-        : venue.hasInteriorRamp.yes,
-      no: review.hasInteriorRamp
-        ? venue.hasInteriorRamp.no
-        : venue.hasInteriorRamp.no + 1
-    };
-  }
+  // if (typeof review.hasPortableRamp !== "undefined") {
+  //   venue.hasPortableRamp = {
+  //     yes: review.hasPortableRamp
+  //       ? venue.hasPortableRamp.yes + 1
+  //       : venue.hasPortableRamp.yes,
+  //     no: review.hasPortableRamp
+  //       ? venue.hasPortableRamp.no
+  //       : venue.hasPortableRamp.no + 1,
+  //   };
+  // }
 
-  if (typeof review.hasSwingOutDoor !== 'undefined') {
-    venue.hasSwingOutDoor = {
-      yes: review.hasSwingOutDoor
-        ? venue.hasSwingOutDoor.yes + 1
-        : venue.hasSwingOutDoor.yes,
-      no: review.hasSwingOutDoor
-        ? venue.hasSwingOutDoor.no
-        : venue.hasSwingOutDoor.no + 1
-    };
-  }
+  // if (typeof review.hasWideEntrance !== "undefined") {
+  //   venue.hasWideEntrance = {
+  //     yes: review.hasWideEntrance
+  //       ? venue.hasWideEntrance.yes + 1
+  //       : venue.hasWideEntrance.yes,
+  //     no: review.hasWideEntrance
+  //       ? venue.hasWideEntrance.no
+  //       : venue.hasWideEntrance.no + 1,
+  //   };
+  // }
 
-  if (typeof review.hasLargeStall !== 'undefined') {
-    venue.hasLargeStall = {
-      yes: review.hasLargeStall
-        ? venue.hasLargeStall.yes + 1
-        : venue.hasLargeStall.yes,
-      no: review.hasLargeStall
-        ? venue.hasLargeStall.no
-        : venue.hasLargeStall.no + 1
-    };
-  }
+  // if (typeof review.hasAccessibleTableHeight !== "undefined") {
+  //   venue.hasAccessibleTableHeight = {
+  //     yes: review.hasAccessibleTableHeight
+  //       ? venue.hasAccessibleTableHeight.yes + 1
+  //       : venue.hasAccessibleTableHeight.yes,
+  //     no: review.hasAccessibleTableHeight
+  //       ? venue.hasAccessibleTableHeight.no
+  //       : venue.hasAccessibleTableHeight.no + 1,
+  //   };
+  // }
 
-  if (typeof review.hasSupportAroundToilet !== 'undefined') {
-    venue.hasSupportAroundToilet = {
-      yes: review.hasSupportAroundToilet
-        ? venue.hasSupportAroundToilet.yes + 1
-        : venue.hasSupportAroundToilet.yes,
-      no: review.hasSupportAroundToilet
-        ? venue.hasSupportAroundToilet.no
-        : venue.hasSupportAroundToilet.no + 1
-    };
-  }
+  // if (typeof review.hasAccessibleElevator !== "undefined") {
+  //   venue.hasAccessibleElevator = {
+  //     yes: review.hasAccessibleElevator
+  //       ? venue.hasAccessibleElevator.yes + 1
+  //       : venue.hasAccessibleElevator.yes,
+  //     no: review.hasAccessibleElevator
+  //       ? venue.hasAccessibleElevator.no
+  //       : venue.hasAccessibleElevator.no + 1,
+  //   };
+  // }
 
-  if (typeof review.hasLoweredSinks !== 'undefined') {
-    venue.hasLoweredSinks = {
-      yes: review.hasLoweredSinks
-        ? venue.hasLoweredSinks.yes + 1
-        : venue.hasLoweredSinks.yes,
-      no: review.hasLoweredSinks
-        ? venue.hasLoweredSinks.no
-        : venue.hasLoweredSinks.no + 1
-    };
-  }
+  // if (typeof review.hasInteriorRamp !== "undefined") {
+  //   venue.hasInteriorRamp = {
+  //     yes: review.hasInteriorRamp
+  //       ? venue.hasInteriorRamp.yes + 1
+  //       : venue.hasInteriorRamp.yes,
+  //     no: review.hasInteriorRamp
+  //       ? venue.hasInteriorRamp.no
+  //       : venue.hasInteriorRamp.no + 1,
+  //   };
+  // }
+
+  // if (typeof review.hasSwingOutDoor !== "undefined") {
+  //   venue.hasSwingOutDoor = {
+  //     yes: review.hasSwingOutDoor
+  //       ? venue.hasSwingOutDoor.yes + 1
+  //       : venue.hasSwingOutDoor.yes,
+  //     no: review.hasSwingOutDoor
+  //       ? venue.hasSwingOutDoor.no
+  //       : venue.hasSwingOutDoor.no + 1,
+  //   };
+  // }
+
+  // if (typeof review.hasLargeStall !== "undefined") {
+  //   venue.hasLargeStall = {
+  //     yes: review.hasLargeStall
+  //       ? venue.hasLargeStall.yes + 1
+  //       : venue.hasLargeStall.yes,
+  //     no: review.hasLargeStall
+  //       ? venue.hasLargeStall.no
+  //       : venue.hasLargeStall.no + 1,
+  //   };
+  // }
+
+  // if (typeof review.hasSupportAroundToilet !== "undefined") {
+  //   venue.hasSupportAroundToilet = {
+  //     yes: review.hasSupportAroundToilet
+  //       ? venue.hasSupportAroundToilet.yes + 1
+  //       : venue.hasSupportAroundToilet.yes,
+  //     no: review.hasSupportAroundToilet
+  //       ? venue.hasSupportAroundToilet.no
+  //       : venue.hasSupportAroundToilet.no + 1,
+  //   };
+  // }
+
+  // if (typeof review.hasLoweredSinks !== "undefined") {
+  //   venue.hasLoweredSinks = {
+  //     yes: review.hasLoweredSinks
+  //       ? venue.hasLoweredSinks.yes + 1
+  //       : venue.hasLoweredSinks.yes,
+  //     no: review.hasLoweredSinks
+  //       ? venue.hasLoweredSinks.no
+  //       : venue.hasLoweredSinks.no + 1,
+  //   };
+  // }
 
   //
   //original fields
   //
-  if (typeof review.allowsGuideDog !== 'undefined') {
-    venue.allowsGuideDog = {
-      yes: review.allowsGuideDog
-        ? venue.allowsGuideDog.yes + 1
-        : venue.allowsGuideDog.yes,
-      no: review.allowsGuideDog
-        ? venue.allowsGuideDog.no
-        : venue.allowsGuideDog.no + 1
-    };
-  }
+  // if (typeof review.allowsGuideDog !== "undefined") {
+  //   venue.allowsGuideDog = {
+  //     yes: review.allowsGuideDog
+  //       ? venue.allowsGuideDog.yes + 1
+  //       : venue.allowsGuideDog.yes,
+  //     no: review.allowsGuideDog
+  //       ? venue.allowsGuideDog.no
+  //       : venue.allowsGuideDog.no + 1,
+  //   };
+  // }
 
   /*
   if (typeof review.bathroomScore !== 'undefined') {
@@ -421,83 +473,80 @@ module.exports = async (req, res, next) => {
   }
   */
 
-  if (typeof review.hasParking !== 'undefined') {
-    venue.hasParking = {
-      yes: review.hasParking ? venue.hasParking.yes + 1 : venue.hasParking.yes,
-      no: review.hasParking ? venue.hasParking.no : venue.hasParking.no + 1
-    };
-  }
+  // if (typeof review.hasParking !== "undefined") {
+  //   venue.hasParking = {
+  //     yes: review.hasParking ? venue.hasParking.yes + 1 : venue.hasParking.yes,
+  //     no: review.hasParking ? venue.hasParking.no : venue.hasParking.no + 1,
+  //   };
+  // }
 
-  if (typeof review.hasSecondEntry !== 'undefined') {
-    venue.hasSecondEntry = {
-      yes: review.hasSecondEntry
-        ? venue.hasSecondEntry.yes + 1
-        : venue.hasSecondEntry.yes,
-      no: review.hasSecondEntry
-        ? venue.hasSecondEntry.no
-        : venue.hasSecondEntry.no + 1
-    };
-  }
+  // if (typeof review.hasSecondEntry !== "undefined") {
+  //   venue.hasSecondEntry = {
+  //     yes: review.hasSecondEntry
+  //       ? venue.hasSecondEntry.yes + 1
+  //       : venue.hasSecondEntry.yes,
+  //     no: review.hasSecondEntry
+  //       ? venue.hasSecondEntry.no
+  //       : venue.hasSecondEntry.no + 1,
+  //   };
+  // }
 
-  if (typeof review.hasWellLit !== 'undefined') {
-    venue.hasWellLit = {
-      yes: review.hasWellLit ? venue.hasWellLit.yes + 1 : venue.hasWellLit.yes,
-      no: review.hasWellLit ? venue.hasWellLit.no : venue.hasWellLit.no + 1
-    };
-  }
+  // if (typeof review.hasWellLit !== "undefined") {
+  //   venue.hasWellLit = {
+  //     yes: review.hasWellLit ? venue.hasWellLit.yes + 1 : venue.hasWellLit.yes,
+  //     no: review.hasWellLit ? venue.hasWellLit.no : venue.hasWellLit.no + 1,
+  //   };
+  // }
 
-  if (typeof review.isQuiet !== 'undefined') {
-    venue.isQuiet = {
-      yes: review.isQuiet ? venue.isQuiet.yes + 1 : venue.isQuiet.yes,
-      no: review.isQuiet ? venue.isQuiet.no : venue.isQuiet.no + 1
-    };
-  }
+  // if (typeof review.isQuiet !== "undefined") {
+  //   venue.isQuiet = {
+  //     yes: review.isQuiet ? venue.isQuiet.yes + 1 : venue.isQuiet.yes,
+  //     no: review.isQuiet ? venue.isQuiet.no : venue.isQuiet.no + 1,
+  //   };
+  // }
 
-  if (typeof review.isSpacious !== 'undefined') {
-    venue.isSpacious = {
-      yes: review.isSpacious ? venue.isSpacious.yes + 1 : venue.isSpacious.yes,
-      no: review.isSpacious ? venue.isSpacious.no : venue.isSpacious.no + 1
-    };
-  }
+  // if (typeof review.isSpacious !== "undefined") {
+  //   venue.isSpacious = {
+  //     yes: review.isSpacious ? venue.isSpacious.yes + 1 : venue.isSpacious.yes,
+  //     no: review.isSpacious ? venue.isSpacious.no : venue.isSpacious.no + 1,
+  //   };
+  // }
 
   venue.reviews = [...venue.reviews, review.id];
 
-  if (typeof review.steps !== 'undefined') {
+  if (typeof review.steps !== "undefined") {
     venue.steps = {
-      zero: review.steps === 0 ? venue.steps.zero + 1 : venue.steps.zero,
-      one: review.steps === 1 ? venue.steps.one + 1 : venue.steps.one,
-      two: review.steps === 2 ? venue.steps.two + 1 : venue.steps.two,
-      moreThanTwo:
-        review.steps === 3
-          ? venue.steps.moreThanTwo + 1
-          : venue.steps.moreThanTwo
+      zero: review.steps ? 1 : 0,
+      one: review.has1Step ? 1 : 0,
+      two: review.has2Step ? 1 : 0,
+      moreThanTwo: review.has2Step ? 1 : 0,
     };
   }
 
-  let scoring;
-  //calculate entranceScore, glyphs
-  scoring = venueReviewSummary.calculateRatingLevel('entrance', venue);
-  //console.log('entrance score: ', scoring);
-  venue.entranceScore = scoring.ratingLevel;
-  venue.entranceGlyphs = scoring.ratingGlyphs;
+  // let scoring;
+  // //calculate entranceScore, glyphs
+  // scoring = venueReviewSummary.calculateRatingLevel("entrance", venue);
+  // //console.log('entrance score: ', scoring);
+  // venue.entranceScore = scoring.ratingLevel;
+  // venue.entranceGlyphs = scoring.ratingGlyphs;
 
-  //calculate interiorScore, glyphs
-  scoring = venueReviewSummary.calculateRatingLevel('interior', venue);
-  //console.log('interior score: ', scoring);
-  venue.interiorScore = scoring.ratingLevel;
-  venue.interiorGlyphs = scoring.ratingGlyphs;
+  // //calculate interiorScore, glyphs
+  // scoring = venueReviewSummary.calculateRatingLevel("interior", venue);
+  // //console.log('interior score: ', scoring);
+  // venue.interiorScore = scoring.ratingLevel;
+  // venue.interiorGlyphs = scoring.ratingGlyphs;
 
-  //calculate restroomScore, glyphs
-  scoring = venueReviewSummary.calculateRatingLevel('restroom', venue);
-  //console.log('restroom score: ', scoring);
-  venue.restroomScore = scoring.ratingLevel;
-  venue.restroomGlyphs = scoring.ratingGlyphs;
+  // //calculate restroomScore, glyphs
+  // scoring = venueReviewSummary.calculateRatingLevel("restroom", venue);
+  // //console.log('restroom score: ', scoring);
+  // venue.restroomScore = scoring.ratingLevel;
+  // venue.restroomGlyphs = scoring.ratingGlyphs;
 
-  venue.mapMarkerScore = venueReviewSummary.calculateMapMarkerScore(
-    venue.entranceScore,
-    venue.interiorScore,
-    venue.restroomScore
-  );
+  // venue.mapMarkerScore = venueReviewSummary.calculateMapMarkerScore(
+  //   venue.entranceScore,
+  //   venue.interiorScore,
+  //   venue.restroomScore
+  // );
 
   //console.log('venue: ', venue);
 
@@ -549,7 +598,7 @@ module.exports = async (req, res, next) => {
     user: review.user,
     userReviewFieldsAmount: req.user.reviewFieldsAmount,
     userReviewsAmount: req.user.reviewsAmount,
-    venue: review.venue
+    venue: review.venue,
   };
   return res.status(201).json(dataResponse);
 };

@@ -13,6 +13,36 @@ const venueSchema = new mongoose.Schema(
         default: 0
       }
     },
+    brightLightTitle: {
+      yes: {
+        type: Number,
+        default: 0
+      },
+      no: {
+        type: Number,
+        default: 0
+      }
+    },
+    hasWashroom: {
+      yes: {
+        type: Number,
+        default: 0
+      },
+      no: {
+        type: Number,
+        default: 0
+      }
+    },
+    multipleFloors: {
+      yes: {
+        type: Number,
+        default: 0
+      },
+      no: {
+        type: Number,
+        default: 0
+      }
+    },
     hasPortableRamp: {
       yes: {
         type: Number,

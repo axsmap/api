@@ -62,9 +62,9 @@ module.exports = async (req, res, next) => {
     );
     return next(err);
   }
-
+console.log(process.env.JWT_SECRET)
   const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
-    expiresIn: 36000,
+    expiresIn: '30d',
   });
   return res.status(200).json({ refreshToken: refreshToken.key, token });
 };

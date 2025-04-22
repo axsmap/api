@@ -149,6 +149,7 @@ module.exports = {
     } else if (data.password.length > 30) {
       errors.password = 'Should have less than 31 characters';
     }
+    
 
     return { errors, isValid: isEmpty(errors) };
   }

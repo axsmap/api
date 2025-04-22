@@ -414,10 +414,10 @@ module.exports = async (req, res, next) => {
 
     let placesResponse;
     try {
-      console.log(
-        "performing google search: " +
-          `https://maps.googleapis.com/maps/api/place/${searchType}/json${nearbyParams}`
-      );
+      // console.log(
+      //   "performing google search: " +
+      //     `https://maps.googleapis.com/maps/api/place/${searchType}/json${nearbyParams}`
+      // );
       placesResponse = await axios.get(
         `https://maps.googleapis.com/maps/api/place/${searchType}/json${nearbyParams}`
       );
@@ -487,7 +487,7 @@ module.exports = async (req, res, next) => {
       placesIds.push(place.place_id);
     });
 
-    console.log("calling venues");
+    // console.log("calling venues");
     //Use array of Google Place IDs to find AXS Venues
     let venues;
     try {
@@ -498,31 +498,20 @@ module.exports = async (req, res, next) => {
       );
       return next(err);
     }
-    console.log("venues length", venues.length);
     //Perform ratings logic on all returned venues
     venues.forEach((venue) => {
-      //console.log('In scoring assignment');
-      let scoring;
-      //calculate entranceScore, glyphs
-      scoring = venueReviewSummary.calculateRatingLevel("entrance", venue);
-      venue.entranceScore = scoring.ratingLevel;
-      venue.entranceGlyphs = scoring.ratingGlyphs;
-
-      //calculate interiorScore, glyphs
-      scoring = venueReviewSummary.calculateRatingLevel("interior", venue);
-      venue.interiorScore = scoring.ratingLevel;
-      venue.interiorGlyphs = scoring.ratingGlyphs;
-
-      //calculate restroomScore, glyphs
-      scoring = venueReviewSummary.calculateRatingLevel("restroom", venue);
-      venue.restroomScore = scoring.ratingLevel;
-      venue.restroomGlyphs = scoring.ratingGlyphs;
-
-      venue.mapMarkerScore = venueReviewSummary.calculateMapMarkerScore(
-        venue.entranceScore,
-        venue.interiorScore,
-        venue.restroomScore
+      const entrance = venueReviewSummary.calculateEntranceScore(venue);
+      venue.entranceScore = entrance;
+      const interior = venueReviewSummary.calculateInteriorScore(venue);
+      venue.interiorScore = interior;
+      const bathroomScore = venueReviewSummary.calculateBathroomScore(venue);
+      venue.restroomScore = bathroomScore;
+      const mapScore = venueReviewSummary.calculateMapMarkerScore(
+        entrance,
+        interior,
+        bathroomScore
       );
+      venue.mapMarkerScore = mapScore;
     });
 
     //Filter out, remove, Google Places that are not AXS Venues
@@ -590,7 +579,6 @@ module.exports = async (req, res, next) => {
     //
     places = places.map((place) => {
       const venue = find(venues, (venue) => venue.placeId === place.placeId);
-      console.log(venue);
       if (venue) {
         return Object.assign({}, place, {
           //new expanded fields
@@ -605,25 +593,21 @@ module.exports = async (req, res, next) => {
           hasLargeStall: venue.hasLargeStall,
           hasSupportAroundToilet: venue.hasSupportAroundToilet,
           hasLoweredSinks: venue.hasLoweredSinks,
-
-          entranceScore: venue.entranceScore,
           entranceGlyphs: venue.entranceGlyphs,
-          interiorScore: venue.interiorScore,
           interiorGlyphs: venue.interiorGlyphs,
-          restroomScore: venue.restroomScore,
           restroomGlyphs: venue.restroomGlyphs,
-          mapMarkerScore: venue.mapMarkerScore,
-
-          //original fields
           allowsGuideDog: venue.allowsGuideDog,
-          //_bathroomScore: venue.bathroomScore,
-          //_entryScore: venue.entryScore,
           hasParking: venue.hasParking,
           hasSecondEntry: venue.hasSecondEntry,
           hasWellLit: venue.hasWellLit,
           isQuiet: venue.isQuiet,
           isSpacious: venue.isSpacious,
           steps: venue.steps,
+          restroomScore: venue.restroomScore,
+          entranceScore: venue.entranceScore,
+          interiorScore: venue.interiorScore,
+          mapMarkerScore: venue.mapMarkerScore,
+          isReviewed:true
         });
       }
 
@@ -641,20 +625,12 @@ module.exports = async (req, res, next) => {
         hasLargeStall: { yes: 0, no: 0 },
         hasSupportAroundToilet: { yes: 0, no: 0 },
         hasLoweredSinks: { yes: 0, no: 0 },
-        interiorScore: 0,
         interiorGlyphs: "interior",
-        restroomScore: 0,
         restroomGlyphs: "restroom",
-        entranceScore: 0,
         entranceGlyphs: "entrylg",
-        mapMarkerScore: 0,
 
-        //original fields
+        // original fields
         allowsGuideDog: { yes: 0, no: 0 },
-        //_bathroomReviews: 0,
-        //_bathroomScore: null,
-        //_entryReviews: 0,
-        //_entryScore: null,
         hasParking: { yes: 0, no: 0 },
         hasSecondEntry: { yes: 0, no: 0 },
         hasWellLit: { yes: 0, no: 0 },
@@ -666,6 +642,11 @@ module.exports = async (req, res, next) => {
           two: 0,
           moreThanTwo: 0,
         },
+        entranceScore: 0,
+        interiorScore: 0,
+        restroomScore: 0,
+        mapMarkerScore: 0,
+        isReviewed:false
       });
     });
 

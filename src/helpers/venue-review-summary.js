@@ -1,5 +1,5 @@
 //const { ReviewLogic } = require('review-icon-logic-2.json');
-const reviewLogic = require('./review-icon-logic-2.json');
+const reviewLogic = require("./review-icon-logic-2.json");
 
 function assignFromYesNo(venueField) {
   //field may not exist for old data
@@ -8,8 +8,8 @@ function assignFromYesNo(venueField) {
   //  Mongoose hasOwnProperty test issues
   if (
     venueField &&
-    'yes' in venueField &&
-    'no' in venueField &&
+    "yes" in venueField &&
+    "no" in venueField &&
     !(venueField.yes === 0 && venueField.no === 0)
   ) {
     if (venueField.yes >= venueField.no) {
@@ -23,10 +23,10 @@ function assignFromYesNo(venueField) {
 }
 
 function assignFromSteps(stepField) {
-  let moreThanTwo = 'moreThanTwo' in stepField ? stepField.moreThanTwo : 0;
-  let two = 'two' in stepField ? stepField.two : 0;
-  let one = 'one' in stepField ? stepField.one : 0;
-  let zero = 'zero' in stepField ? stepField.zero : 0;
+  let moreThanTwo = "moreThanTwo" in stepField ? stepField.moreThanTwo : 0;
+  let two = "two" in stepField ? stepField.two : 0;
+  let one = "one" in stepField ? stepField.one : 0;
+  let zero = "zero" in stepField ? stepField.zero : 0;
 
   if (moreThanTwo === 0 && two === 0 && one === 0 && zero === 0) {
     return null;
@@ -97,14 +97,14 @@ module.exports = {
       //valid values: entrance, restroom, interior
       sectionLogic = reviewSummaryLogic[sectionName];
     } else {
-      console.log('Error: Logic not found for sectionLogic: ' + sectionName);
+      console.log("Error: Logic not found for sectionLogic: " + sectionName);
       return {
-        errors: 'Logic not found for sectionLogic: ' + sectionName
+        errors: "Logic not found for sectionLogic: " + sectionName,
       };
     }
 
     let ratingLevel, ratingGlyphs;
-    const ratingLevels = ['alert', 'caution', 'accessible'];
+    const ratingLevels = ["alert", "caution", "accessible"];
 
     for (let rl = 0; rl < ratingLevels.length; rl++) {
       if (
@@ -117,26 +117,26 @@ module.exports = {
           let ratingDefinitionMatch = false;
 
           if (
-            'field' in ratingDefinition &&
+            "field" in ratingDefinition &&
             ratingDefinition.field in venueData
           ) {
             if (
-              ('matchValue' in ratingDefinition &&
+              ("matchValue" in ratingDefinition &&
                 venueData[ratingDefinition.field] ===
                   ratingDefinition.matchValue) ||
-              ('notMatchValue' in ratingDefinition &&
+              ("notMatchValue" in ratingDefinition &&
                 venueData[ratingDefinition.field] !==
                   ratingDefinition.notMatchValue)
             ) {
               ratingDefinitionMatch = true;
             }
-          } else if ('fields' in ratingDefinition) {
+          } else if ("fields" in ratingDefinition) {
             let fieldMatchCount = 0;
             for (let field of ratingDefinition.fields) {
               if (
-                ('matchValue' in ratingDefinition &&
+                ("matchValue" in ratingDefinition &&
                   venueData[field] === ratingDefinition.matchValue) ||
-                ('notMatchValue' in ratingDefinition &&
+                ("notMatchValue" in ratingDefinition &&
                   venueData[field] !== ratingDefinition.notMatchValue)
               ) {
                 fieldMatchCount++;
@@ -148,18 +148,18 @@ module.exports = {
             }
           }
 
-          if (ratingDefinitionMatch === true && 'and' in ratingDefinition) {
+          if (ratingDefinitionMatch === true && "and" in ratingDefinition) {
             //console.log('Evaluate AND condition in ' + sectionName);
             if (
-              'field' in ratingDefinition.and &&
+              "field" in ratingDefinition.and &&
               ratingDefinition.and.field in venueData
             ) {
               //evaluate 'and' condition depending on match or noMatch value
-              if ('matchValue' in ratingDefinition.and) {
+              if ("matchValue" in ratingDefinition.and) {
                 ratingDefinitionMatch =
                   venueData[ratingDefinition.and.field] ==
                   ratingDefinition.and.matchValue;
-              } else if ('notMatchValue' in ratingDefinition.and) {
+              } else if ("notMatchValue" in ratingDefinition.and) {
                 ratingDefinitionMatch =
                   venueData[ratingDefinition.and.field] !==
                   ratingDefinition.and.notMatchValue;
@@ -173,11 +173,11 @@ module.exports = {
           if (ratingDefinitionMatch === true) {
             //console.log('Found rule match for ' + sectionName);
 
-            if (ratingLevels[rl] == 'alert') {
+            if (ratingLevels[rl] == "alert") {
               ratingLevel = 1;
-            } else if (ratingLevels[rl] == 'caution') {
+            } else if (ratingLevels[rl] == "caution") {
               ratingLevel = 3;
-            } else if (ratingLevels[rl] == 'accessible') {
+            } else if (ratingLevels[rl] == "accessible") {
               ratingLevel = 5;
             }
 
@@ -197,16 +197,91 @@ module.exports = {
       //console.log('ratingLevel not set: ', sectionLogic);
       ratingLevel = 0;
       ratingGlyphs =
-        'default' in sectionLogic &&
+        "default" in sectionLogic &&
         sectionLogic.default.length > 0 &&
-        'showGlyph' in sectionLogic.default[0]
+        "showGlyph" in sectionLogic.default[0]
           ? sectionLogic.default[0].showGlyph
-          : '';
+          : "";
     }
 
     return {
       ratingLevel: ratingLevel,
-      ratingGlyphs: ratingGlyphs
+      ratingGlyphs: ratingGlyphs,
     };
-  }
+  },
+  calculateInteriorScore(venue) {
+    const multipleFloors = venue.multipleFloors?.yes === 1;
+    const hasAccessibleElevator = venue.hasAccessibleElevator?.yes === 1;
+    const hasInteriorRamp = venue.hasInteriorRamp?.yes === 1;
+    const hasFlashingLights = venue.brightLightTitle?.yes === 1;
+
+    const hasAnyGreen =
+      venue.multipleFloors?.no === 1 ||
+      hasAccessibleElevator ||
+      hasInteriorRamp;
+
+    const isYellow = venue.hasWellLit?.no === 1 && hasFlashingLights;
+
+    const isRed =
+      multipleFloors &&
+      venue.hasAccessibleElevator?.no === 1 &&
+      venue.hasInteriorRamp?.no === 1;
+
+    if (isRed) return 1;
+    if (isYellow) return 3;
+    if (hasAnyGreen) return 5;
+
+    return 3;
+  },
+  calculateEntranceScore(venue) {
+    const hasStep = venue.steps?.zero === 1;
+    const hasPermanentRamp = venue.hasPermanentRamp?.yes === 1;
+    const hasSecondEntry = venue.hasSecondEntry?.yes === 1;
+    const hasWideEntrance = venue.hasWideEntrance?.yes === 1;
+
+    const hasAnyGreenCondition =
+      hasStep || hasWideEntrance || hasPermanentRamp || hasSecondEntry;
+
+    const isYellowCondition =
+      hasStep && venue.hasPermanentRamp.no === 1 && hasSecondEntry;
+
+    const isRedCondition =
+      hasStep &&
+      venue.hasPermanentRamp.no === 1 &&
+      venue.hasSecondEntry?.no === 1;
+
+    if (isRedCondition) return 1;
+    if (isYellowCondition) return 3;
+    if (hasAnyGreenCondition) return 5;
+
+    return 3;
+  },
+  calculateBathroomScore(venue) {
+    const hasWashroom = venue.hasWashroom?.yes === 1;
+    const hasSupportAroundToilet = venue.hasSupportAroundToilet?.yes === 1;
+
+    if (venue.hasWashroom?.no === 1) {
+      return 1;
+    }
+    if (
+      venue.hasSupportAroundToilet?.no === 1 &&
+      venue.hasLoweredSinks?.no === 1
+    ) {
+      return 3;
+    }
+
+    if (hasWashroom || hasSupportAroundToilet) return 5;
+
+    return 3;
+  },
+  calculateMapIconScore() {
+    const total = entranceScore + interiorScore + restroomScore;
+    const avg = total / 3;
+
+    // Maximum possible total is 15 (5 points each for entrance, interior, restroom)
+    // Scale the average to account for max possible score
+    if (avg > 3) return 5;
+    if (avg > 1) return 3;
+    return 1;
+  },
 };

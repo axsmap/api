@@ -175,6 +175,9 @@ const userSchema = new mongoose.Schema(
       type: String,
       maxlength: [32, "Should be less than 33 characters"],
     },
+    aboutMe: {
+      type: String,
+    },
     birthday: {
       type: Date,
       default: null,
