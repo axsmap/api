@@ -30,10 +30,12 @@ module.exports = async (req, res, next) => {
     "gender",
     "race",
   ]);
-  data.aboutMe = cleanSpaces(data.aboutMe);
+  data.aboutMe = cleanSpaces(data.aboutMe ?? '');
   data.firstName = cleanSpaces(data.firstName);
   data.lastName = cleanSpaces(data.lastName);
   data.username = `${slugify(data.firstName)}-${slugify(data.lastName)}`;
+
+  console.log('replacing error')
 
   let activationTicket;
   try {
