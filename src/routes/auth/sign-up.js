@@ -30,12 +30,12 @@ module.exports = async (req, res, next) => {
     "gender",
     "race",
   ]);
-  data.aboutMe = cleanSpaces(data.aboutMe ?? '');
+  data.aboutMe = cleanSpaces(data.aboutMe ?? "");
   data.firstName = cleanSpaces(data.firstName);
   data.lastName = cleanSpaces(data.lastName);
   data.username = `${slugify(data.firstName)}-${slugify(data.lastName)}`;
 
-  console.log('replacing error')
+  console.log(data)
 
   let activationTicket;
   try {
@@ -127,7 +127,7 @@ module.exports = async (req, res, next) => {
       dateOfBirth: data.dateOfBirth || null,
       disability: data.disability || null,
       gender: data.gender || null,
-      race: data.race || null,
+      race: data?.race || '',
     },
   };
   try {
@@ -162,11 +162,11 @@ module.exports = async (req, res, next) => {
   `;
   const receiversEmails = [activationTicket.email];
   const activationLink = `https://axsmap.com/auth/activate-account/${activationTicket.key}`;
-  const name = `${(activationTicket?.userData?.firstName ?? '')} ${(activationTicket?.userData?.lastName?? '')}`;
+  const name = `${activationTicket?.userData?.firstName ?? ""} ${activationTicket?.userData?.lastName ?? ""}`;
 
   sendEmail({
     subject,
-    htmlContent:activationEmailTemplate(activationLink,name),
+    htmlContent: activationEmailTemplate(activationLink, name),
     textContent,
     receiversEmails,
   });

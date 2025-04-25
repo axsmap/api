@@ -18,10 +18,6 @@ module.exports = async (req, res, next) => {
     if (err.name === "CastError") {
       return res.status(404).json({ general: "Activation ticket not found" });
     }
-
-    console.log(
-      `Activation ticket with key ${key} failed to be found at activate-account.`
-    );
     return next(err);
   }
 
@@ -35,20 +31,27 @@ module.exports = async (req, res, next) => {
     try {
       await ActivationTicket.deleteOne({ key });
     } catch (err) {
-      console.log(
-        `Activation ticket with key ${
-          activationTicket.key
-        } failed to be deleted at activate-account.`
-      );
       return next(err);
     }
 
     return res.status(400).json({ general: "Activation ticket expired" });
   }
 
-  const userData = Object.assign({}, activationTicket.userData, {
-    email: activationTicket.email,
-  });
+  const userData = {
+    firstName: activationTicket?.userData?.firstName,
+    isSubscribed: activationTicket?.userData?.isSubscribed,
+    lastName: activationTicket?.userData?.lastName,
+    password: activationTicket?.userData?.password,
+    username: activationTicket?.userData?.username,
+    aboutMe: activationTicket?.userData?.aboutMe || '',
+    dateOfBirth: activationTicket?.userData?.dateOfBirth || null,
+    disability: activationTicket?.userData?.disability || '',
+    gender: activationTicket?.userData?.gender || 'not-to-say',
+    race: activationTicket?.userData?.race || '',
+    email: activationTicket?.email,
+  };
+  
+  console.log(userData);
 
   let repeatedUsers;
   try {

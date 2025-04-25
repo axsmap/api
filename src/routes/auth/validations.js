@@ -1,17 +1,19 @@
-const freemail = require('freemail');
-const { isEmail } = require('validator');
-const { isEmpty } = require('lodash');
+const freemail = require("freemail");
+const { isEmail } = require("validator");
+const { isEmpty } = require("lodash");
 
-const { cleanSpaces } = require('../../helpers');
+const { cleanSpaces } = require("../../helpers");
+
+const { disability, race, genders } = require("../../helpers/constants");
 
 module.exports = {
   validateFacebookSignIn(data) {
     const errors = {};
 
     if (!data.code) {
-      errors.code = 'Is required';
-    } else if (typeof data.code !== 'string') {
-      errors.code = 'Should be a string';
+      errors.code = "Is required";
+    } else if (typeof data.code !== "string") {
+      errors.code = "Should be a string";
     }
 
     return { errors, isValid: isEmpty(errors) };
@@ -20,11 +22,11 @@ module.exports = {
     const errors = {};
 
     if (!data.email) {
-      errors.email = 'Is required';
-    } else if (typeof data.email !== 'string') {
-      errors.email = 'Should be a string';
+      errors.email = "Is required";
+    } else if (typeof data.email !== "string") {
+      errors.email = "Should be a string";
     } else if (!isEmail(data.email)) {
-      errors.email = 'Should be a valid email';
+      errors.email = "Should be a valid email";
     }
 
     return { errors, isValid: isEmpty(errors) };
@@ -33,9 +35,9 @@ module.exports = {
     const errors = {};
 
     if (!data.key) {
-      errors.key = 'Is required';
-    } else if (typeof data.key !== 'string') {
-      errors.key = 'Should be a string';
+      errors.key = "Is required";
+    } else if (typeof data.key !== "string") {
+      errors.key = "Should be a string";
     }
 
     return { errors, isValid: isEmpty(errors) };
@@ -44,9 +46,9 @@ module.exports = {
     const errors = {};
 
     if (!data.code) {
-      errors.code = 'Is required';
-    } else if (typeof data.code !== 'string') {
-      errors.code = 'Should be a string';
+      errors.code = "Is required";
+    } else if (typeof data.code !== "string") {
+      errors.code = "Should be a string";
     }
 
     return { errors, isValid: isEmpty(errors) };
@@ -55,19 +57,19 @@ module.exports = {
     const errors = {};
 
     if (!data.key) {
-      errors.key = 'Is required';
-    } else if (typeof data.key !== 'string') {
-      errors.key = 'Should be a string';
+      errors.key = "Is required";
+    } else if (typeof data.key !== "string") {
+      errors.key = "Should be a string";
     }
 
     if (!data.password) {
-      errors.password = 'Is required';
-    } else if (typeof data.password !== 'string') {
-      errors.password = 'Should be a string';
+      errors.password = "Is required";
+    } else if (typeof data.password !== "string") {
+      errors.password = "Should be a string";
     } else if (data.password.length < 8) {
-      errors.password = 'Should have more than 7 characters';
+      errors.password = "Should have more than 7 characters";
     } else if (data.password.length > 30) {
-      errors.password = 'Should have less than 31 characters';
+      errors.password = "Should have less than 31 characters";
     }
 
     return { errors, isValid: isEmpty(errors) };
@@ -76,15 +78,15 @@ module.exports = {
     const errors = {};
 
     if (!data.email) {
-      errors.email = 'Is required';
-    } else if (typeof data.email !== 'string') {
-      errors.email = 'Should be a string';
+      errors.email = "Is required";
+    } else if (typeof data.email !== "string") {
+      errors.email = "Should be a string";
     }
 
     if (!data.password) {
-      errors.password = 'Is required';
-    } else if (typeof data.password !== 'string') {
-      errors.password = 'Should be a string';
+      errors.password = "Is required";
+    } else if (typeof data.password !== "string") {
+      errors.password = "Should be a string";
     }
 
     return { errors, isValid: isEmpty(errors) };
@@ -93,64 +95,73 @@ module.exports = {
     const errors = {};
 
     if (!data.email) {
-      errors.email = 'Is required';
-    } else if (typeof data.email !== 'string') {
-      errors.email = 'Should be a string';
+      errors.email = "Is required";
+    } else if (typeof data.email !== "string") {
+      errors.email = "Should be a string";
     } else if (cleanSpaces(data.email).length > 254) {
-      errors.email = 'Should have less than 255 characters';
+      errors.email = "Should have less than 255 characters";
     } else if (!isEmail(data.email) || freemail.isDisposable(data.email)) {
-      errors.email = 'Should be a valid email';
+      errors.email = "Should be a valid email";
     }
 
     if (!data.firstName) {
-      errors.firstName = 'Is required';
-    } else if (typeof data.firstName !== 'string') {
-      errors.firstName = 'Should be a string';
+      errors.firstName = "Is required";
+    } else if (typeof data.firstName !== "string") {
+      errors.firstName = "Should be a string";
     } else if (/[~`!#$%^&*+=\-[\]\\';,./{}|\\":<>?\d]/g.test(data.firstName)) {
-      errors.firstName = 'Should only have letters';
+      errors.firstName = "Should only have letters";
     } else if (cleanSpaces(data.firstName).length > 24) {
-      errors.firstName = 'Should have less than 25 characters';
+      errors.firstName = "Should have less than 25 characters";
     } else {
       const firstName = cleanSpaces(data.firstName);
 
-      if (firstName.split(' ').length > 1) {
-        errors.firstName = 'Should only be one name';
+      if (firstName.split(" ").length > 1) {
+        errors.firstName = "Should only be one name";
       }
     }
 
-    if (typeof data.isSubscribed === 'undefined') {
-      errors.isSubscribed = 'Is required';
-    } else if (typeof data.isSubscribed !== 'boolean') {
-      errors.isSubscribed = 'Should be a boolean';
+    if (typeof data.isSubscribed === "undefined") {
+      errors.isSubscribed = "Is required";
+    } else if (typeof data.isSubscribed !== "boolean") {
+      errors.isSubscribed = "Should be a boolean";
     }
 
     if (!data.lastName) {
-      errors.lastName = 'Is required';
-    } else if (typeof data.lastName !== 'string') {
-      errors.lastName = 'Should be a string';
+      errors.lastName = "Is required";
+    } else if (typeof data.lastName !== "string") {
+      errors.lastName = "Should be a string";
     } else if (/[~`!#$%^&*+=\-[\]\\';,./{}|\\":<>?\d]/g.test(data.lastName)) {
-      errors.lastName = 'Should only have letters';
+      errors.lastName = "Should only have letters";
     } else if (cleanSpaces(data.lastName).length > 36) {
-      errors.lastName = 'Should have less than 37 characters';
+      errors.lastName = "Should have less than 37 characters";
     } else {
       const lastName = cleanSpaces(data.lastName);
 
-      if (lastName.split(' ').length > 1) {
-        errors.lastName = 'Should only be one surname';
+      if (lastName.split(" ").length > 1) {
+        errors.lastName = "Should only be one surname";
       }
     }
 
     if (!data.password) {
-      errors.password = 'Is required';
-    } else if (typeof data.password !== 'string') {
-      errors.password = 'Should be a string';
+      errors.password = "Is required";
+    } else if (typeof data.password !== "string") {
+      errors.password = "Should be a string";
     } else if (data.password.length < 8) {
-      errors.password = 'Should have more than 7 characters';
+      errors.password = "Should have more than 7 characters";
     } else if (data.password.length > 30) {
-      errors.password = 'Should have less than 31 characters';
+      errors.password = "Should have less than 31 characters";
     }
-    
+
+    if (data.disability && !disability.includes(data.disability)) {
+      errors.disability = "Please select a valid disability option";
+    }
+    if (data.gender && !genders.includes(data.gender)) {
+      errors.gender = "Please select a valid gender option";
+    }
+    if (data.race && !race.includes(data.race)) {
+      errors.race = "Please select a valid race option";
+    }
 
     return { errors, isValid: isEmpty(errors) };
-  }
+  },
 };
