@@ -13,8 +13,6 @@ module.exports = async (req, res, next) => {
     if (err.name === "CastError") {
       return res.status(404).json({ general: "Event not found" });
     }
-
-    console.log(`Event ${eventId} failed to be found at join-event`);
     return next(err);
   }
 
@@ -24,6 +22,7 @@ module.exports = async (req, res, next) => {
 
   const endDate = moment(event.endDate).utc();
   const today = moment.utc();
+
   if (endDate.isBefore(today)) {
     return res
       .status(423)
@@ -43,15 +42,6 @@ module.exports = async (req, res, next) => {
       .status(400)
       .json({ general: "You already are a participant in this event" });
   }
-  req.user.events = [...req.user.events, event.id];
-  req.user.updatedAt = moment.utc().toDate();
-
-  try {
-    await req.user.save();
-  } catch (err) {
-    console.log(`User ${req.user.id} failed to be updated at join-event`);
-    return next(err);
-  }
 
   event.participants = [...event.participants, req.user.id];
   event.updatedAt = moment.utc().toDate();
@@ -62,6 +52,17 @@ module.exports = async (req, res, next) => {
     console.log(`Event ${event.id} failed to be updated at join-event`);
     return next(err);
   }
+
+  req.user.events = [...req.user.events, event.id];
+  req.user.updatedAt = moment.utc().toDate();
+
+  try {
+    await req.user.save();
+  } catch (err) {
+    console.log(`User ${req.user.id} failed to be updated at join-event`);
+    return next(err);
+  }
+
 
   return res.status(200).json({ general: "Joined" });
 
