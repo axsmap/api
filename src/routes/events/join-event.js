@@ -22,6 +22,14 @@ module.exports = async (req, res, next) => {
     return res.status(404).json({ general: "Event not found" });
   }
 
+  const endDate = moment(event.endDate).utc();
+  const today = moment.utc();
+  if (endDate.isBefore(today)) {
+    return res
+      .status(423)
+      .json({ general: "This event has already finished" });
+  }
+
   const eventParticipants = event.participants.map((p) => p.toString());
   if (eventParticipants.includes(req.user.id)) {
     return res
@@ -35,27 +43,33 @@ module.exports = async (req, res, next) => {
       .status(400)
       .json({ general: "You already are a participant in this event" });
   }
+  req.user.events = [...req.user.events, event.id];
+  req.user.updatedAt = moment.utc().toDate();
+
+  try {
+    await req.user.save();
+  } catch (err) {
+    console.log(`User ${req.user.id} failed to be updated at join-event`);
+    return next(err);
+  }
+
+  event.participants = [...event.participants, req.user.id];
+  event.updatedAt = moment.utc().toDate();
+
+  try {
+    await event.save();
+  } catch (err) {
+    console.log(`Event ${event.id} failed to be updated at join-event`);
+    return next(err);
+  }
+
+  return res.status(200).json({ general: "Joined" });
 
   if (true || event.isOpen) {
     req.user.events = [...req.user.events, event.id];
     req.user.updatedAt = moment.utc().toDate();
 
-    try {
-      await req.user.save();
-    } catch (err) {
-      console.log(`User ${req.user.id} failed to be updated at join-event`);
-      return next(err);
-    }
-
-    event.participants = [...event.participants, req.user.id];
-    event.updatedAt = moment.utc().toDate();
-
-    try {
-      await event.save();
-    } catch (err) {
-      console.log(`Event ${event.id} failed to be updated at join-event`);
-      return next(err);
-    }
+    
 
     return res.status(200).json({ general: "Joined" });
   } else {
