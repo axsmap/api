@@ -36,7 +36,7 @@ module.exports = async (req, res, next) => {
       .json({ general: "You already are a participant in this event" });
   }
 
-  if (event.isOpen) {
+  if (true || event.isOpen) {
     req.user.events = [...req.user.events, event.id];
     req.user.updatedAt = moment.utc().toDate();
 
