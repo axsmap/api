@@ -51,7 +51,6 @@ module.exports = async (req, res, next) => {
     email: activationTicket?.email,
   };
   
-  console.log(userData);
 
   let repeatedUsers;
   try {
