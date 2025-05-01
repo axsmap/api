@@ -245,7 +245,7 @@ function hashPassword(password) {
 }
 
 function comparePassword(password) {
-  return bcrypt.compareSync(password, this.hashedPassword);
+  return bcrypt.compareSync(password, this.hashedPassword ?? '');
 }
 
 userSchema.virtual("password").set(hashPassword);

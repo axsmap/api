@@ -13,6 +13,16 @@ const venueSchema = new mongoose.Schema(
         default: 0
       }
     },
+    hasWheelchairParking: {
+      yes: {
+        type: Number,
+        default: 0
+      },
+      no: {
+        type: Number,
+        default: 0
+      }
+    },
     brightLightTitle: {
       yes: {
         type: Number,

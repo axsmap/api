@@ -28,7 +28,6 @@ module.exports = async (req, res, next) => {
   if (!passwordTicket) {
     return res.status(404).json({ general: "Password Ticket not found" });
   }
-
   const expiresAt = moment(passwordTicket.expiresAt).utc();
   const today = moment.utc();
   if (expiresAt.isBefore(today)) {
@@ -45,7 +44,6 @@ module.exports = async (req, res, next) => {
 
     return res.status(400).json({ general: "Password Ticket expired" });
   }
-
   let user;
   try {
     user = await User.findOne({
@@ -75,10 +73,11 @@ module.exports = async (req, res, next) => {
 
     return res.status(400).json({ general: "User not found" });
   }
-
-  const passwordMatches = user.comparePassword(password);
-  if (passwordMatches) {
-    return res.status(400).json({ password: "Is already used" });
+  if (user?.hashedPassword) {
+    const passwordMatches = user.comparePassword(password);
+    if (passwordMatches) {
+      return res.status(400).json({ password: "Is already used" });
+    }
   }
 
   user.password = password;

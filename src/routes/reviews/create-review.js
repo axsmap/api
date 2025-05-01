@@ -31,8 +31,9 @@ module.exports = async (req, res, next) => {
     hasSecondEntry: req.body.hasSecondEntry,
     hasPermanentRamp: req.body.hasPermanentRamp,
     hasLoweredSinks: req.body.hasLoweredSinks,
+    hasPortableRamp: req.body.hasPortableRamp,
+    hasWheelchairParking:req.body.hasWheelchairParking,
 
-    // hasPortableRamp: req.body.hasPortableRamp,
     // hasAccessibleTableHeight: req.body.hasAccessibleTableHeight,
     // hasInteriorRamp: req.body.hasInteriorRamp,
     // hasSwingOutDoor: req.body.hasSwingOutDoor,
@@ -303,6 +304,8 @@ module.exports = async (req, res, next) => {
     "hasSecondEntry",
     "hasPermanentRamp",
     "hasLoweredSinks",
+    "hasWheelchairParking",
+    "hasPortableRamp",
   ];
 
   keys.forEach((key) => {
