@@ -5,11 +5,13 @@ const { isAuthenticated } = require("../../helpers");
 const archiveVenue = require("./archive-venue");
 const getVenue = require("./get-venue");
 const listVenues = require("./list-venues");
+const venuDetails = require("./venue-details");
 
 const router = new express.Router();
 
 router.get("", isAuthenticated({ isOptional: true }), listVenues);
 router.get("/:placeId", getVenue);
+router.get("/detail/:placeId", venuDetails);
 router.put(
   "/:venueId/archive",
   isAuthenticated({ isOptional: false }),
