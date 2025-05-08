@@ -10,6 +10,8 @@ module.exports = async (req, res, next) => {
       placeId,
     });
     let customReviews;
+    // console.log("venue", venue);
+
     if (venue) {
       customReviews = await Review.aggregate([
         {
@@ -47,8 +49,16 @@ module.exports = async (req, res, next) => {
         },
       }
     );
-
-    const googleData = googleResponse.data.result;
+    let photo;
+    if (googleResponse.data.result.photos) {
+      photo = `https://maps.googleapis.com/maps/api/place/photo?key=${
+        process.env.PLACES_API_KEY
+      }&maxwidth=300&photoreference=${googleResponse.data.result.photos[0].photo_reference}`;
+    }
+    const googleData = {
+      ...googleResponse.data.result,
+      photo,
+    };
 
     if (!googleData) {
       return res
