@@ -51,17 +51,21 @@ module.exports = async (req, res) => {
     const key = `${user._id}${crypto.randomBytes(28).toString("hex")}`;
 
     const refreshToken = randomstring.generate(80);
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "30d",
+    });
     const expiryDate = moment().add(30, "days").toDate();
 
     await RefreshToken.create({
       userId: user._id,
       key,
-      token: refreshToken,
+      token: token,
       expiresAt: expiryDate,
     });
 
     return res.json({
       success: true,
+      token,
       refreshToken,
       user: {
         id: user._id,
