@@ -18,184 +18,52 @@ module.exports = async (req, res, next) => {
   }
 
   const code = req.body.code;
-
-  const getTokenUrl = "https://graph.facebook.com/v2.10/oauth/access_token";
-  const getTokenParams = {
-    code,
-    client_id: process.env.FACEBOOK_CLIENT_ID,
-    client_secret: process.env.FACEBOOK_CLIENT_SECRET,
-    redirect_uri: `${process.env.APP_URL}/auth/facebook`,
-  };
-  let getTokenResponse;
   try {
-    getTokenResponse = await axios.get(getTokenUrl, { params: getTokenParams });
-  } catch (err) {
-    console.err(err);
-    return res.status(400).json({ general: "Invalid code" });
-  }
-
-  const facebookToken = getTokenResponse.data.access_token;
-
-  const getProfileUrl =
-    "https://graph.facebook.com/v2.10/me?fields=id,email,first_name,last_name,locale";
-  const getProfileOptions = {
-    params: {
-      access_token: facebookToken,
-    },
-  };
-  let getProfileResponse;
-  try {
-    getProfileResponse = await axios.get(getProfileUrl, getProfileOptions);
-  } catch (err) {
-    console.log("Profile data failed to be found at facebook-sign-in.");
-    return next(err);
-  }
-
-  const email = getProfileResponse.data.email
-    ? getProfileResponse.data.email
-    : "";
-  const facebookId = getProfileResponse.data.id;
-  let user;
-  try {
-    user = await User.findOne({
-      $or: [{ email }, { facebookId }],
-      isArchived: false,
-    });
-  } catch (err) {
-    console.log(
-      `User with facebookId ${facebookId} and email ${email} failed to be found at facebook-sign-in.`
-    );
-    return next(err);
-  }
-
-  let accessToken;
-  let refreshToken;
-
-  if (!user) {
-    console.log(getProfileResponse.data);
-    const userData = {
-      email: getProfileResponse.data.email ? getProfileResponse.data.email : "",
-      facebookId: getProfileResponse.data.id,
-      firstName: getProfileResponse.data.first_name,
-      lastName: getProfileResponse.data.last_name,
-    };
-    userData.username = `${slugify(userData.firstName)}-${slugify(
-      userData.lastName
-    )}`;
-
-    let repeatedUsers;
-    try {
-      repeatedUsers = await User.find({
-        username: userData.username,
-        isArchived: false,
-      });
-    } catch (err) {
-      console.log("Users failed to be found at facebook-sign-in.");
-      return next(err);
-    }
-
-    if (repeatedUsers && repeatedUsers.length > 0) {
-      let repeatedUser;
-      do {
-        userData.username = `${slugify(userData.firstName)}-${slugify(
-          userData.lastName
-        )}-${randomstring.generate({
-          length: 5,
-          capitalization: "lowercase",
-        })}`;
-
-        try {
-          repeatedUser = await User.findOne({
-            username: userData.username,
-            isArchived: false,
-          });
-        } catch (err) {
-          console.log(
-            `User with username ${
-              userData.username
-            } failed to be found at facebook-sign-in.`
-          );
-          return next(err);
-        }
-      } while (repeatedUser && repeatedUser.username === userData.username);
-    }
-
-    const getPictureUrl = `https://graph.facebook.com/v2.10/${
-      userData.facebookId
-    }/picture`;
-    const getPictureOptions = {
+    const fbUserResponse = await axios.get(`https://graph.facebook.com/me`, {
       params: {
-        access_token: accessToken,
-        redirect: false,
-        type: "large",
+        access_token: code,
+        fields: "id,name,email,picture",
       },
-    };
-    let getPictureResponse;
-    try {
-      getPictureResponse = await axios.get(getPictureUrl, getPictureOptions);
-    } catch (err) {
-      console.log("User picture failed to be found at facebook-sign-in.");
-      return next(err);
-    }
+    });
 
-    const isSilhouette = getPictureResponse.data.data.is_silhouette;
-    if (!isSilhouette) {
-      userData.avatar = getPictureResponse.data.data.url;
-    }
+    const fbUser = fbUserResponse.data;
 
-    try {
-      user = await User.create(userData);
-    } catch (err) {
-      console.log(
-        `User failed to be created at facebook-sign-in.\nData: ${JSON.stringify(
-          userData
-        )}`
-      );
-      return next(err);
-    }
+    const email = fbUser.email || "No email available";
 
-    const today = moment.utc();
-    const expiresAt = today.add(30, "days").toDate();
-    const refreshTokenData = {
-      expiresAt,
-      key: `${user.id}${crypto.randomBytes(28).toString("hex")}`,
-      userId: user.id,
-    };
+    let user = await User.findOne({ facebookId: fbUser.id });
 
-    try {
-      refreshToken = await RefreshToken.create(refreshTokenData);
-    } catch (err) {
-      console.log(
-        `Refresh token failed to be created at facebook-sign-in.\nData: ${JSON.stringify(
-          refreshTokenData
-        )}`
-      );
-      return next(err);
+    const [firstName, lastName] = fbUser.name.split(" ");
+
+    if (!user) {
+      user = new User({
+        fbId: fbUser.id,
+        email,
+        firstName: firstName || "",
+        lastName: lastName || "",
+        picture: fbUser.picture.data.url,
+      });
+
+      await user.save();
     }
-  } else {
-    const userId = user.id;
+    const userId = user._id;
     const today = moment.utc();
     const expiresAt = today.add(30, "days").toDate();
     const key = `${userId}${crypto.randomBytes(28).toString("hex")}`;
 
-    try {
-      refreshToken = await RefreshToken.findOneAndUpdate(
-        { userId },
-        { expiresAt, key, userId },
-        { new: true, setDefaultsOnInsert: true, upsert: true }
-      );
-    } catch (err) {
-      console.log(
-        `Refresh Token for userId ${userId} failed to be created or updated at facebook-sign-in.`
-      );
-      return next(err);
-    }
+    let refreshToken = await RefreshToken.findOneAndUpdate(
+      { userId },
+      { expiresAt, key, userId },
+      { new: true, setDefaultsOnInsert: true, upsert: true }
+    );
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "30d",
+    });
+
+    res.json({
+      refreshToken: refreshToken.key,
+      token,
+    });
+  } catch (err) {
+    res.status(401).json({ success: false, error: "Invalid Facebook token" });
   }
-
-  const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
-    expiresIn: 3600,
-  });
-  refreshToken = refreshToken.key;
-
-  return res.status(200).json({ token, refreshToken });
 };

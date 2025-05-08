@@ -48,31 +48,25 @@ module.exports = async (req, res) => {
       });
       await user.save();
     }
-    const key = `${user._id}${crypto.randomBytes(28).toString("hex")}`;
 
-    const refreshToken = randomstring.generate(80);
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
       expiresIn: "30d",
     });
-    const expiryDate = moment().add(30, "days").toDate();
 
-    await RefreshToken.create({
-      userId: user._id,
-      key,
-      token: token,
-      expiresAt: expiryDate,
-    });
+    const userId = user._id;
+    const today = moment.utc();
+    const expiresAt = today.add(30, "days").toDate();
+    const key = `${userId}${crypto.randomBytes(28).toString("hex")}`;
+
+    let refreshToken = await RefreshToken.findOneAndUpdate(
+      { userId },
+      { expiresAt, key, userId },
+      { new: true, setDefaultsOnInsert: true, upsert: true }
+    );
 
     return res.json({
-      success: true,
       token,
-      refreshToken,
-      user: {
-        id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-      },
+      refreshToken: refreshToken.key,
     });
   } catch (err) {
     return res.status(401).json({ error: "Invalid ID token" });
