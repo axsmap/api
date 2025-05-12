@@ -20,23 +20,23 @@ const surveySchema = new mongoose.Schema(
     },
     additionalFeatures: {
       type: String,
-      required: [true, "Is required"],
+      required: true,
     },
     satisfaction: {
       type: String,
-      required: [true, "Is required"],
+      required: false,
     },
     challenges: {
       type: String,
-      required: [true, "Is required"],
+      required: false,
     },
     recommend: {
       type: String,
-      required: [true, "Is required"],
+      required: false,
     },
     frequency: {
       type: String,
-      required: [true, "Is required"],
+      required: false,
     },
   },
   { timestamps: true }
