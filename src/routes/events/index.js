@@ -11,10 +11,12 @@ const listEvents = require("./list-events");
 const listOldEvents = require("./list-old-events");
 const joinEvent = require("./join-event");
 const listUpcoimgEvents = require("./list-upcoimg-events");
+const JoinedEvents = require("./joined-events");
 
 const router = new express.Router();
 
 router.get("", listEvents);
+router.get("/joinedEvents", JoinedEvents);
 router.get("/old", isAuthenticated({ isOptional: false }), listOldEvents);
 router.get("/upComing", listUpcoimgEvents);
 router.post("", isAuthenticated({ isOptional: false }), createEvent);
