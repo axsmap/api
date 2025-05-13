@@ -1,9 +1,21 @@
 const moment = require("moment");
 
 const { Event } = require("../../models/event");
+const jwt = require("jsonwebtoken");
 
 module.exports = async (req, res, next) => {
-  const userId = req?.body?.userId;
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res
+      .status(401)
+      .json({ message: "Authorization token missing or invalid" });
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  const decoded = jwt.verify(token, process.env.JWT_SECRET);
+  const userId = decoded.userId;
+
   const eventsQuery = {};
   const currentDate = moment().startOf("day").utc().toDate();
 
