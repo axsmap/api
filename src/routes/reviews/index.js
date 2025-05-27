@@ -4,6 +4,7 @@ const { isAuthenticated } = require('../../helpers');
 
 const banReview = require('./ban-review');
 const createReview = require('./create-review');
+const createAiReview = require('./create-ai-review');
 const editReview = require('./edit-review');
 const flagReview = require('./flag-review');
 const listReviews = require('./list-reviews');
@@ -14,6 +15,7 @@ const router = new express.Router();
 router.get('', isAuthenticated({ isOptional: false }), listReviews);
 router.post('', isAuthenticated({ isOptional: false }), createReview);
 router.put('/:reviewId', isAuthenticated({ isOptional: false }), editReview);
+router.post('/create', isAuthenticated({ isOptional: false }), createAiReview);
 router.put(
   '/:reviewId/vote',
   isAuthenticated({ isOptional: false }),
