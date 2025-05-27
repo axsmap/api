@@ -48,7 +48,7 @@ module.exports = async (req, res, next) => {
     { userId: refreshToken.userId },
     process.env.JWT_SECRET,
     {
-      expiresIn: 3600,
+      expiresIn: '30d',
     }
   );
   return res.status(200).json({ token });
