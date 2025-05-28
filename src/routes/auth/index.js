@@ -4,6 +4,7 @@ const { isAuthenticated } = require('../../helpers');
 
 const activateAccount = require('./activate-account');
 const facebookSignIn = require('./facebook-sign-in');
+const appleSignin = require('./apple-sign-in');
 const forgottenPassword = require('./forgotten-password');
 const generateToken = require('./generate-token');
 const googleSignIn = require('./google-sign-in');
@@ -16,6 +17,7 @@ const router = new express.Router();
 
 router.get('/activate-account/:key', activateAccount);
 router.post('/facebook', facebookSignIn);
+router.post('/apple', appleSignin);
 router.post('/forgotten-password', forgottenPassword);
 router.post('/google', googleSignIn);
 router.put('/reset-password', resetPassword);

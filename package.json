@@ -28,6 +28,7 @@
     "prettier": "3.3.3"
   },
   "dependencies": {
+    "apple-signin-auth": "^2.0.0",
     "aws-sdk": "2.1660.0",
     "axios": "1.7.2",
     "bcrypt-nodejs": "0.0.3",

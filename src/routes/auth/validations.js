@@ -18,6 +18,17 @@ module.exports = {
 
     return { errors, isValid: isEmpty(errors) };
   },
+  validateAppleSignIn(data) {
+    const errors = {};
+
+    if (!data.identityToken) {
+      errors.identityToken = "Is required";
+    } else if (typeof data.identityToken !== "string") {
+      errors.identityToken = "Should be a string";
+    }
+
+    return { errors, isValid: isEmpty(errors) };
+  },
   validateForgottenPassword(data) {
     const errors = {};
 

@@ -12,7 +12,7 @@ Use these guidelines to form your comment:
 
 Answer in a friendly and informative tone, as if a person is giving a brief review summary.`;
 
-module.exports = async (req, res, next) => {
+module.exports = async (req, res,) => {
   try {
     const openai = new OPENAI({
       apiKey:process.env.OPENAI_API_KEY,

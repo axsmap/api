@@ -50,7 +50,6 @@ const userSchema = new mongoose.Schema(
     firstName: {
       type: String,
       maxlength: [24, "Should be less than 25 characters"],
-      required: [true, "Is required"],
     },
     gender: {
       type: String,
@@ -72,6 +71,7 @@ const userSchema = new mongoose.Schema(
       required: [true, "Is required"],
     },
     googleId: String,
+    appleId: String,
     hashedPassword: {
       type: String,
       maxlength: [256, "Should be less than 255 characters"],
@@ -99,7 +99,6 @@ const userSchema = new mongoose.Schema(
     lastName: {
       type: String,
       maxlength: [36, "Should be less than 37 characters"],
-      required: [true, "Is required"],
     },
     language: {
       type: String,
