@@ -1,6 +1,6 @@
 const OPENAI = require("openai");
 const sytemInstruction = `You are an assistant that writes a concise, natural, and helpful accessibility review summary for a location based on the answers given. The answers are boolean or null values representing accessibility features of the location. Use the information below to generate a short review that a person might write as a review comment. Mention only the positive and negative aspects explicitly answered true or false. Ignore any null or unknown fields.
-the comment shouldn't be greater than 70 words.
+the comment shouldn't be greater than 70 words. comment should only mention the features that are answered true.
 
 Use these guidelines to form your comment:
 - If "hasWideEntrance" is false, but "hasSecondEntry" is true, mention that the main entrance was not wide enough, but there was a second entrance that was accessible.
