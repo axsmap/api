@@ -79,7 +79,7 @@ module.exports = async (req, res, next) => {
   if (repeatedUsers && repeatedUsers.length > 0) {
     for (const user of repeatedUsers) {
       if (user.email === data.email) {
-        return res.status(400).json({ message: "Email is already taken" });
+        return res.status(400).json({ message: "This email address is already in use. Please try a different one." });
       }
 
       let repeatedUser;
