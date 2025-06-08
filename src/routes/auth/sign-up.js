@@ -35,7 +35,6 @@ module.exports = async (req, res, next) => {
   data.lastName = cleanSpaces(data.lastName);
   data.username = `${slugify(data.firstName)}-${slugify(data.lastName)}`;
 
-  console.log(data)
 
   let activationTicket;
   try {
@@ -80,7 +79,7 @@ module.exports = async (req, res, next) => {
   if (repeatedUsers && repeatedUsers.length > 0) {
     for (const user of repeatedUsers) {
       if (user.email === data.email) {
-        return res.status(400).json({ email: "Is already taken" });
+        return res.status(400).json({ message: "Email is already taken" });
       }
 
       let repeatedUser;
