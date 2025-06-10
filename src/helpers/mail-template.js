@@ -29,7 +29,7 @@ const activationEmailTemplate = (link,name) => {
               </div>
 
               <p style="font-size: 14px; color: #777; line-height: 1.5;">
-                If you didn’t sign up for [Your App Name], no worries — you can safely ignore this email.
+                If you didn’t sign up for AXS Map, no worries — you can safely ignore this email.
               </p>
             </td>
           </tr>

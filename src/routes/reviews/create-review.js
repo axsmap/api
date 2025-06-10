@@ -50,7 +50,6 @@ module.exports = async (req, res, next) => {
     comments: req.body.comments,
   };
 
-  console.log(data);
 
   let event;
   if (data.event) {

@@ -49,14 +49,8 @@ module.exports = async (req, res, next) => {
   try {
     passwordTicket = await PasswordTicket.create({ email, expiresAt, key });
   } catch (err) {
-    console.log(
-      `Password ticket failed to be created at forgotten-password.\nData: ${JSON.stringify(
-        { email, expiresAt, key }
-      )}`
-    );
     return next(err);
   }
-  console.log(passwordTicket);
 
   const htmlContent = `
     <h3>Hi from AXS Map!</h3>

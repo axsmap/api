@@ -72,14 +72,13 @@ module.exports = async (req, res, next) => {
       isArchived: false,
     });
   } catch (err) {
-    console.log("Users failed to be found at sign-up.");
     return next(err);
   }
 
   if (repeatedUsers && repeatedUsers.length > 0) {
     for (const user of repeatedUsers) {
       if (user.email === data.email) {
-        return res.status(400).json({ message: "This email address is already in use. Please try a different one." });
+        return res.status(400).json({ message: "This email address is already in use. Please use forgot password to login." });
       }
 
       let repeatedUser;
@@ -142,17 +141,6 @@ module.exports = async (req, res, next) => {
 
   const subject = "Activate Account";
   // TODO change base URL for ACTIVATION
-  const htmlContent = `
-    <h3>Welcome to AXS Map!</h3>
-    <p>To <strong>activate</strong> your account use the <strong>link</strong> below:</p>
-    <br/>
-    <a href="
-    https://axsmap.com/auth/activate-account/${activationTicket.key}">
-    https://axsmap.com/auth/activate-account/${activationTicket.key}
-    </a>
-    <br/><br/>
-    <p>Stay awesome.</p>
-  `;
   const textContent = `
     Welcome to AXS Map!
     To activate your account use the link below:
