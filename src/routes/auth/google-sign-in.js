@@ -23,18 +23,17 @@ module.exports = async (req, res) => {
     return res.status(400).json(errors);
   }
 
+
   const code = req.body.code;
-  const oauth2Client = new OAuth2Client(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
+  const oauth2Client = new OAuth2Client(CLIENT_ID);
   try {
-    const { tokens } = await oauth2Client.getToken(code);
-    oauth2Client.setCredentials(tokens);
     const ticket = await oauth2Client.verifyIdToken({
-      idToken: tokens.id_token,
+      idToken: code,
       audience: CLIENT_ID,
     });
 
     const payload = ticket.getPayload();
-    const { sub: googleId, email, name, picture } = payload;
+    const { email, name, picture } = payload;
 
     const [firstName, lastName] = name.split(" ");
 
@@ -45,6 +44,7 @@ module.exports = async (req, res) => {
         firstName: firstName || name,
         lastName: lastName || "",
         createdAt: new Date(),
+        avatar:picture
       });
       await user.save();
     }
@@ -69,6 +69,7 @@ module.exports = async (req, res) => {
       refreshToken: refreshToken.key,
     });
   } catch (err) {
-    return res.status(401).json({ error: "Invalid ID token" });
+    console.log(err)
+    return res.status(500).json({ error: "Something went wrong" });
   }
 };
