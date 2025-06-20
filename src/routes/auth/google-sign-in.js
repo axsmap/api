@@ -21,7 +21,7 @@ module.exports = async (req, res) => {
     return res.status(400).json(errors);
   }
 
-  let token = req.body.code;
+  let code = req.body.code;
   const oauth2Client = new OAuth2Client(CLIENT_ID);
   try {
     const deviceType = req.headers["x-device-type"];
@@ -38,11 +38,11 @@ module.exports = async (req, res) => {
           grant_type: "authorization_code",
         }),
       });
-      token = await tokenRes.json();
+      code = await tokenRes.json();
     }
 
     const ticket = await oauth2Client.verifyIdToken({
-      idToken: token,
+      idToken: code,
       audience: CLIENT_ID,
     });
 
