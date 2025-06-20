@@ -14,8 +14,6 @@ const { User } = require("../../models/user");
 const { validateGoogleSignIn } = require("./validations");
 
 const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
-const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
-const REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI;
 
 module.exports = async (req, res) => {
   const { errors, isValid } = validateGoogleSignIn(req.body);
@@ -23,12 +21,27 @@ module.exports = async (req, res) => {
     return res.status(400).json(errors);
   }
 
-
-  const code = req.body.code;
+  let token = req.body.code;
   const oauth2Client = new OAuth2Client(CLIENT_ID);
   try {
+    const deviceType = req.headers["x-device-type"];
+    if (deviceType === "web") {
+      const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          code: token,
+          client_id: process.env.GOOGLE_CLIENT_ID,
+          client_secret: process.env.GOOGLE_CLIENT_SECRET,
+          redirect_uri: process.env.GOOGLE_REDIRECT_URI,
+          grant_type: "authorization_code",
+        }),
+      });
+      token = await tokenRes.json();
+    }
+
     const ticket = await oauth2Client.verifyIdToken({
-      idToken: code,
+      idToken: token,
       audience: CLIENT_ID,
     });
 
@@ -44,7 +57,7 @@ module.exports = async (req, res) => {
         firstName: firstName || name,
         lastName: lastName || "",
         createdAt: new Date(),
-        avatar:picture
+        avatar: picture,
       });
       await user.save();
     }
@@ -69,7 +82,7 @@ module.exports = async (req, res) => {
       refreshToken: refreshToken.key,
     });
   } catch (err) {
-    console.log(err)
+    console.log(err);
     return res.status(500).json({ error: "Something went wrong" });
   }
 };
