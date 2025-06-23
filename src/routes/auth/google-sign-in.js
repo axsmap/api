@@ -25,7 +25,6 @@ module.exports = async (req, res) => {
   const oauth2Client = new OAuth2Client(CLIENT_ID);
   try {
     const deviceType = req.headers["x-device-type"];
-    console.log(deviceType === "web",deviceType)
     if (deviceType === "web") {
       const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
         method: "POST",
