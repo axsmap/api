@@ -37,7 +37,8 @@ module.exports = async (req, res) => {
           grant_type: "authorization_code",
         }),
       });
-      code = await tokenRes.json();
+      const googleToken = await tokenRes.json();
+      code =googleToken?.id_token
     }
 
     const ticket = await oauth2Client.verifyIdToken({
