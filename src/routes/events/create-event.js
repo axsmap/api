@@ -33,7 +33,8 @@ module.exports = async (req, res, next) => {
 
   data.address = cleanSpaces(data.address);
 
-  data.endDate = moment(data.endDate).endOf("day").utc().toDate();
+  data.endDate = moment(data.endDate).endOf("day").toDate();
+  data.startDate = moment(data.startDate).startOf("day").toDate();
 
   data.location = {
     coordinates: [data.locationCoordinates[1], data.locationCoordinates[0]],
@@ -69,7 +70,6 @@ module.exports = async (req, res, next) => {
     }
   }
 
-  data.startDate = moment(data.startDate).startOf("day").utc().toDate();
 
   if (data.teamManager) {
     let team;
