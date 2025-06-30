@@ -23,13 +23,11 @@ const reviewSchema = new mongoose.Schema(
     allowsGuideDog: Boolean,
     comments: {
       type: String,
-      maxlength: [300, "Should be less than 301 characters"],
     },
     complaints: [
       {
         comments: {
           type: String,
-          maxlength: [300, "Should be less than 30 characters"],
         },
         createdAt: {
           type: Date,
