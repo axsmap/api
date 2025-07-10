@@ -17,7 +17,7 @@ module.exports = async (req, res, next) => {
   const { errors, isValid } = validateSignUp(req.body);
   console.log(errors)
   if (!isValid) {
-    return res.status(400).json({message:errors});
+    return res.status(400).json({message:Object.entries(errors)[0][1]});
   }
 
   const data = pick(req.body, [
