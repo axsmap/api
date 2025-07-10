@@ -163,15 +163,15 @@ module.exports = {
       errors.password = "Should have less than 31 characters";
     }
 
-    if (data.disability && !disability.includes(data.disability)) {
-      errors.disability = "Please select a valid disability option";
-    }
-    if (data.gender && !genders.includes(data.gender)) {
-      errors.gender = "Please select a valid gender option";
-    }
-    if (data.race && !race.includes(data.race)) {
-      errors.race = "Please select a valid race option";
-    }
+    // if (data.disability && !disability.includes(data.disability)) {
+    //   errors.disability = "Please select a valid disability option";
+    // }
+    // if (data.gender && !genders.includes(data.gender)) {
+    //   errors.gender = "Please select a valid gender option";
+    // }
+    // if (data.race && !race.includes(data.race)) {
+    //   errors.race = "Please select a valid race option";
+    // }
 
     return { errors, isValid: isEmpty(errors) };
   },

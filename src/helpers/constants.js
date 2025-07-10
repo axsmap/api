@@ -127,7 +127,7 @@ module.exports = {
     "subpremise",
   ],
   disability: [
-    "yes", "No", "not-to-say", ""
+    "yes", "no", "not-to-say", ""
   ],
   genders: [
     "female",
