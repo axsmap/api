@@ -13,6 +13,7 @@ const { validateSignUp } = require("./validations");
 const { activationEmailTemplate } = require("../../helpers/mail-template");
 
 module.exports = async (req, res, next) => {
+  console.log(req.body)
   const { errors, isValid } = validateSignUp(req.body);
   if (!isValid) {
     return res.status(400).json(errors);
@@ -30,7 +31,6 @@ module.exports = async (req, res, next) => {
     "gender",
     "race",
   ]);
-  console.log(data)
   data.aboutMe = cleanSpaces(data.aboutMe ?? "");
   data.firstName = cleanSpaces(data.firstName);
   data.lastName = cleanSpaces(data.lastName);
