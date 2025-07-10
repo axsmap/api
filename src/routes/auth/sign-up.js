@@ -13,10 +13,11 @@ const { validateSignUp } = require("./validations");
 const { activationEmailTemplate } = require("../../helpers/mail-template");
 
 module.exports = async (req, res, next) => {
-  console.log(req.body)
+
   const { errors, isValid } = validateSignUp(req.body);
+  console.log(errors)
   if (!isValid) {
-    return res.status(400).json(errors);
+    return res.status(400).json({message:errors});
   }
 
   const data = pick(req.body, [
