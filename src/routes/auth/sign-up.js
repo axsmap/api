@@ -30,6 +30,7 @@ module.exports = async (req, res, next) => {
     "gender",
     "race",
   ]);
+  console.log(data)
   data.aboutMe = cleanSpaces(data.aboutMe ?? "");
   data.firstName = cleanSpaces(data.firstName);
   data.lastName = cleanSpaces(data.lastName);
@@ -83,8 +84,8 @@ module.exports = async (req, res, next) => {
 
       let repeatedUser;
       do {
-        data.username = `${slugify(data.firstName)}-${slugify(
-          data.lastName
+        data.username = `${slugify(data?.firstName)}-${slugify(
+          data?.lastName
         )}-${randomstring.generate({
           length: 5,
           capitalization: "lowercase",
@@ -128,6 +129,7 @@ module.exports = async (req, res, next) => {
       race: data?.race || '',
     },
   };
+  console.log(activationTicketData)
   try {
     activationTicket = await ActivationTicket.create(activationTicketData);
   } catch (err) {
