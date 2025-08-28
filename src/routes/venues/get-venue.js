@@ -293,19 +293,16 @@ module.exports = async (req, res, next) => {
 
     //calculate entranceScore, glyphs
     scoring = venueReviewSummary.calculateRatingLevel('entrance', venue[0]);
-    console.log('entrance score: ', scoring);
     dataResponse.entranceScore = scoring.ratingLevel;
     dataResponse.entranceGlyphs = scoring.ratingGlyphs;
 
     //calculate interiorScore, glyphs
     scoring = venueReviewSummary.calculateRatingLevel('interior', venue[0]);
-    console.log('interior score: ', scoring);
     dataResponse.interiorScore = scoring.ratingLevel;
     dataResponse.interiorGlyphs = scoring.ratingGlyphs;
 
     //calculate restroomScore, glyphs
     scoring = venueReviewSummary.calculateRatingLevel('restroom', venue[0]);
-    console.log('restroom score: ', scoring);
     dataResponse.restroomScore = scoring.ratingLevel;
     dataResponse.restroomGlyphs = scoring.ratingGlyphs;
 

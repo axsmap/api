@@ -45,15 +45,17 @@ module.exports = {
             "-__v -createdAt -isAdmin -isArchived -isBlocked -hashedPassword -updatedAt"
           );
           if (req.originalUrl.startsWith("/venues?") && req.method === "GET") {
-            const location = req.query.location;
+            const location = req?.query?.location;
             if (location) {
               const [lat, lng] = location
                 .split(",")
-                .map((coord) => coord.trim());
-              user.lastLocation = {
-                lat,
-                lng,
-              };
+                .map((coord) => coord?.trim());
+              if (lat && lng) {
+                user.lastLocation = {
+                  lat,
+                  lng,
+                };
+              }
             }
           }
           user.lastActivityTime = new Date().toISOString();

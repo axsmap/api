@@ -414,12 +414,9 @@ module.exports = async (req, res, next) => {
 
     let placesResponse;
     try {
-      // console.log(
-      //   "performing google search: " +
-      //     `https://maps.googleapis.com/maps/api/place/${searchType}/json${nearbyParams}`
-      // );
+      console.log(`https://maps.googleapis.com/maps/api/place/${searchType}/json${nearbyParams}&fields=photos,place_id`)
       placesResponse = await axios.get(
-        `https://maps.googleapis.com/maps/api/place/${searchType}/json${nearbyParams}`
+        `https://maps.googleapis.com/maps/api/place/${searchType}/json${nearbyParams}&fields=photos,place_id`
       );
     } catch (err) {
       console.log(
@@ -456,6 +453,7 @@ module.exports = async (req, res, next) => {
     let places = [];
     const placesIds = [];
     placesResponse.data.results.forEach((place) => {
+      console.log(place?.photos)
       let photo = "";
       if (place.photos) {
         photo = `https://maps.googleapis.com/maps/api/place/photo?key=${

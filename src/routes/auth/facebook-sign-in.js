@@ -15,11 +15,26 @@ module.exports = async (req, res, next) => {
     return res.status(400).json(errors);
   }
 
-  const code = req.body.code;
+  let token = req.body.code;
   try {
+    if (req.body.web) {
+      const tokenResponse = await axios.get(
+        "https://graph.facebook.com/v17.0/oauth/access_token",
+        {
+          params: {
+            client_id: process.env.FACEBOOK_CLIENT_ID,
+            client_secret: process.env.FACEBOOK_CLIENT_SECRET,
+            redirect_uri: req.body.redirectUri, // must match exactly
+            code: req.body.code,
+          },
+        }
+      );
+
+      token = tokenResponse.data.access_token;
+    }
     const fbUserResponse = await axios.get(`https://graph.facebook.com/me`, {
       params: {
-        access_token: code,
+        access_token: token,
         fields: "id,name,email,picture",
       },
     });
@@ -28,7 +43,7 @@ module.exports = async (req, res, next) => {
     if (fbUser.email) {
       const email = fbUser.email;
 
-      let user = await User.findOne({ facebookId: fbUser.id });
+      let user = await User.findOne({ fbId: fbUser.id });
 
       const [firstName, lastName] = fbUser.name.split(" ");
 
@@ -62,12 +77,10 @@ module.exports = async (req, res, next) => {
         token,
       });
     } else {
-      res
-        .status(400)
-        .json({
-          success: false,
-          error: "Email is not linked with this account",
-        });
+      res.status(400).json({
+        success: false,
+        error: "Email is not linked with this account",
+      });
     }
   } catch (err) {
     res.status(401).json({ success: false, error: "Invalid Facebook token" });

@@ -57,16 +57,16 @@ module.exports = {
       }
     }
 
-    if (queryParams.allowsGuideDog) {
-      if (!isNumber(queryParams.allowsGuideDog)) {
-        errors.allowsGuideDog = 'Should be a number';
-      } else if (
-        parseFloat(queryParams.allowsGuideDog) !== 0 &&
-        parseFloat(queryParams.allowsGuideDog) !== 1
-      ) {
-        errors.allowsGuideDog = 'Should be 0 or 1';
-      }
-    }
+    // if (queryParams.allowsGuideDog) {
+    //   if (!isNumber(queryParams.allowsGuideDog)) {
+    //     errors.allowsGuideDog = 'Should be a number';
+    //   } else if (
+    //     parseFloat(queryParams.allowsGuideDog) !== 0 &&
+    //     parseFloat(queryParams.allowsGuideDog) !== 1
+    //   ) {
+    //     errors.allowsGuideDog = 'Should be 0 or 1';
+    //   }
+    // }
 
     if (queryParams.hasParking) {
       if (!isNumber(queryParams.hasParking)) {
@@ -79,71 +79,71 @@ module.exports = {
       }
     }
 
-    if (queryParams.hasRamp) {
-      if (!isNumber(queryParams.hasRamp)) {
-        errors.hasRamp = 'Should be a number';
-      } else if (
-        parseFloat(queryParams.hasRamp) !== 0 &&
-        parseFloat(queryParams.hasRamp) !== 1
-      ) {
-        errors.hasRamp = 'Should be 0 or 1';
-      }
-    }
+    // if (queryParams.hasRamp) {
+    //   if (!isNumber(queryParams.hasRamp)) {
+    //     errors.hasRamp = 'Should be a number';
+    //   } else if (
+    //     parseFloat(queryParams.hasRamp) !== 0 &&
+    //     parseFloat(queryParams.hasRamp) !== 1
+    //   ) {
+    //     errors.hasRamp = 'Should be 0 or 1';
+    //   }
+    // }
 
-    if (queryParams.hasSecondEntry) {
-      if (!isNumber(queryParams.hasSecondEntry)) {
-        errors.hasSecondEntry = 'Should be a number';
-      } else if (
-        parseFloat(queryParams.hasSecondEntry) !== 0 &&
-        parseFloat(queryParams.hasSecondEntry) !== 1
-      ) {
-        errors.hasSecondEntry = 'Should be 0 or 1';
-      }
-    }
+    // if (queryParams.hasSecondEntry) {
+    //   if (!isNumber(queryParams.hasSecondEntry)) {
+    //     errors.hasSecondEntry = 'Should be a number';
+    //   } else if (
+    //     parseFloat(queryParams.hasSecondEntry) !== 0 &&
+    //     parseFloat(queryParams.hasSecondEntry) !== 1
+    //   ) {
+    //     errors.hasSecondEntry = 'Should be 0 or 1';
+    //   }
+    // }
 
-    if (queryParams.hasWellLit) {
-      if (!isNumber(queryParams.hasWellLit)) {
-        errors.hasWellLit = 'Should be a number';
-      } else if (
-        parseFloat(queryParams.hasWellLit) !== 0 &&
-        parseFloat(queryParams.hasWellLit) !== 1
-      ) {
-        errors.hasWellLit = 'Should be 0 or 1';
-      }
-    }
+    // if (queryParams.hasWellLit) {
+    //   if (!isNumber(queryParams.hasWellLit)) {
+    //     errors.hasWellLit = 'Should be a number';
+    //   } else if (
+    //     parseFloat(queryParams.hasWellLit) !== 0 &&
+    //     parseFloat(queryParams.hasWellLit) !== 1
+    //   ) {
+    //     errors.hasWellLit = 'Should be 0 or 1';
+    //   }
+    // }
 
-    if (queryParams.isQuiet) {
-      if (!isNumber(queryParams.isQuiet)) {
-        errors.isQuiet = 'Should be a number';
-      } else if (
-        parseFloat(queryParams.isQuiet) !== 0 &&
-        parseFloat(queryParams.isQuiet) !== 1
-      ) {
-        errors.isQuiet = 'Should be 0 or 1';
-      }
-    }
+    // if (queryParams.isQuiet) {
+    //   if (!isNumber(queryParams.isQuiet)) {
+    //     errors.isQuiet = 'Should be a number';
+    //   } else if (
+    //     parseFloat(queryParams.isQuiet) !== 0 &&
+    //     parseFloat(queryParams.isQuiet) !== 1
+    //   ) {
+    //     errors.isQuiet = 'Should be 0 or 1';
+    //   }
+    // }
 
-    if (queryParams.isSpacious) {
-      if (!isNumber(queryParams.isSpacious)) {
-        errors.isSpacious = 'Should be a number';
-      } else if (
-        parseFloat(queryParams.isSpacious) !== 0 &&
-        parseFloat(queryParams.isSpacious) !== 1
-      ) {
-        errors.isSpacious = 'Should be 0 or 1';
-      }
-    }
+    // if (queryParams.isSpacious) {
+    //   if (!isNumber(queryParams.isSpacious)) {
+    //     errors.isSpacious = 'Should be a number';
+    //   } else if (
+    //     parseFloat(queryParams.isSpacious) !== 0 &&
+    //     parseFloat(queryParams.isSpacious) !== 1
+    //   ) {
+    //     errors.isSpacious = 'Should be 0 or 1';
+    //   }
+    // }
 
-    if (queryParams.steps) {
-      if (!isNumber(queryParams.steps)) {
-        errors.steps = 'Should be a number';
-      } else if (
-        parseFloat(queryParams.steps) < 0 ||
-        parseFloat(queryParams.steps) > 3
-      ) {
-        errors.steps = 'Should be between 0 and 3';
-      }
-    }
+    // if (queryParams.steps) {
+    //   if (!isNumber(queryParams.steps)) {
+    //     errors.steps = 'Should be a number';
+    //   } else if (
+    //     parseFloat(queryParams.steps) < 0 ||
+    //     parseFloat(queryParams.steps) > 3
+    //   ) {
+    //     errors.steps = 'Should be between 0 and 3';
+    //   }
+    // }
 
     if (queryParams.type && !placesTypes.includes(queryParams.type)) {
       errors.type = 'Should be a valid type';
