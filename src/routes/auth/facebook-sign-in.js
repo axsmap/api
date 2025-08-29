@@ -45,15 +45,15 @@ module.exports = async (req, res, next) => {
 
       let user = await User.findOne({ fbId: fbUser.id });
 
-      const [firstName, lastName] = fbUser.name.split(" ");
-
+      
       if (!user) {
+        const [firstName, lastName] = fbUser.name.split(" ");
         user = new User({
           fbId: fbUser.id,
           email,
           firstName: firstName || "",
           lastName: lastName || "",
-          picture: fbUser.picture.data.url,
+          avatar: fbUser.picture.data.url,
         });
 
         await user.save();
