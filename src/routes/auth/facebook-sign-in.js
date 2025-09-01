@@ -10,12 +10,12 @@ const { User } = require("../../models/user");
 const { validateFacebookSignIn } = require("./validations");
 
 module.exports = async (req, res, next) => {
-  const { errors, isValid } = validateFacebookSignIn(req.body);
-  if (!isValid) {
-    return res.status(400).json(errors);
-  }
+  // const { errors, isValid } = validateFacebookSignIn(req.body);
+  // if (!isValid) {
+  //   return res.status(400).json(errors);
+  // }
 
-  let token = req.body.code;
+  let token = req?.body?.code;
   try {
     if (req.body.web) {
       const tokenResponse = await axios.get(
@@ -32,7 +32,7 @@ module.exports = async (req, res, next) => {
 
       token = tokenResponse.data.access_token;
     }
-    
+
     let fbUser = req.body?.profile || {};
     if (!req.body.ios) {
       const fbUserResponse = await axios.get(`https://graph.facebook.com/me`, {
@@ -44,7 +44,7 @@ module.exports = async (req, res, next) => {
 
       fbUser = fbUserResponse.data;
     }
-    if (fbUser.email) {
+    if (fbUser?.email) {
       const email = fbUser.email;
 
       let user = await User.findOne({ fbId: fbUser.id });
