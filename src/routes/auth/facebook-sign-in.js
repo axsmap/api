@@ -31,6 +31,20 @@ module.exports = async (req, res, next) => {
       );
 
       token = tokenResponse.data.access_token;
+    } else {
+      const tokenResponse = await axios.get(
+        "https://graph.facebook.com/v17.0/oauth/access_token",
+        {
+          params: {
+            client_id: process.env.FACEBOOK_CLIENT_ID,
+            client_secret: process.env.FACEBOOK_CLIENT_SECRET,
+            grant_type: 'fb_exchange_token',
+            fb_exchange_token: req.body.code,
+          },
+        }
+      );
+
+      token = tokenResponse.data.access_token;
     }
     const fbUserResponse = await axios.get(`https://graph.facebook.com/me`, {
       params: {
@@ -45,7 +59,6 @@ module.exports = async (req, res, next) => {
 
       let user = await User.findOne({ fbId: fbUser.id });
 
-      
       if (!user) {
         const [firstName, lastName] = fbUser.name.split(" ");
         user = new User({
