@@ -34,7 +34,7 @@ module.exports = async (req, res, next) => {
     }
 
     let fbUser = req.body?.profile || {};
-    if (!req.body.ios) {
+    if (!req.body?.profile) {
       const fbUserResponse = await axios.get(`https://graph.facebook.com/me`, {
         params: {
           access_token: token,
@@ -47,7 +47,7 @@ module.exports = async (req, res, next) => {
     if (fbUser?.email) {
       const email = fbUser.email;
 
-      let user = await User.findOne({ fbId: fbUser.id });
+      let user = await User.findOne({ email: fbUser.email });
 
       if (!user) {
         const [firstName, lastName] = fbUser.name.split(" ");
