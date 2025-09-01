@@ -31,29 +31,19 @@ module.exports = async (req, res, next) => {
       );
 
       token = tokenResponse.data.access_token;
-    } else {
-      const tokenResponse = await axios.get(
-        "https://graph.facebook.com/v17.0/oauth/access_token",
-        {
-          params: {
-            client_id: process.env.FACEBOOK_CLIENT_ID,
-            client_secret: process.env.FACEBOOK_CLIENT_SECRET,
-            grant_type: 'fb_exchange_token',
-            fb_exchange_token: req.body.code,
-          },
-        }
-      );
-
-      token = tokenResponse.data.access_token;
     }
-    const fbUserResponse = await axios.get(`https://graph.facebook.com/me`, {
-      params: {
-        access_token: token,
-        fields: "id,name,email,picture",
-      },
-    });
+    
+    let fbUser = req.body?.profile || {};
+    if (!req.body.ios) {
+      const fbUserResponse = await axios.get(`https://graph.facebook.com/me`, {
+        params: {
+          access_token: token,
+          fields: "id,name,email,picture",
+        },
+      });
 
-    const fbUser = fbUserResponse.data;
+      fbUser = fbUserResponse.data;
+    }
     if (fbUser.email) {
       const email = fbUser.email;
 
