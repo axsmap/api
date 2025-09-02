@@ -155,8 +155,80 @@ const adminServeyMailTemplate = (name, email, answers) => {
 `;
 };
 
+const donationMailTemplate = (name) => {
+  return `
+  <!DOCTYPE html>
+<html lang="en">
+<body style="margin: 0; padding: 0; background-color: #f7f7f7; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f7f7f7;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="margin: 40px auto; background-color: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background-color: #FEE000; padding: 30px; text-align: center;">
+              <h2 style="margin: 0; font-size: 24px; color: #000;">Thank You for Supporting AXS Map 🙏</h2>
+              <p style="margin: 10px 0 0; color: #444;">Here’s your exclusive content</p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="font-size: 16px; color: #333; line-height: 1.6;">
+                Hi <strong>${name}</strong>,
+              </p>
+
+              <p style="font-size: 16px; color: #333; line-height: 1.6;">
+                Thank you so much for supporting AXS Map. Your generosity helps us continue making accessibility more visible and empowering communities everywhere.
+              </p>
+
+              <p style="font-size: 16px; color: #333; line-height: 1.6;">
+                As a token of our appreciation, we’re sharing exclusive content just for our donors. You can access it through this private playlist:
+              </p>
+
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="https://www.youtube.com/playlist?list=PLilbYJMtY0uVPv2v7o7ILS3WQDNc5g-d6" style="background-color: #FEE000; color: #000; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block;">
+                  👉 Exclusive AXS Map Content
+                </a>
+              </div>
+
+              <p style="font-size: 14px; color: #777; line-height: 1.5;">
+                Please keep this link private, as it’s reserved for supporters like you.
+              </p>
+
+              <p style="font-size: 16px; color: #333; line-height: 1.6;">
+                We’re grateful to have you with us on this journey toward a more accessible world. Enjoy the content, and thank you again for being part of the AXS Map community.
+              </p>
+
+              <p style="font-size: 16px; color: #333; line-height: 1.6;">
+                With gratitude,<br><strong>The AXS Map Team</strong>
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #FEE000; padding: 20px; text-align: center;">
+              <p style="margin: 0; font-size: 14px; color: #777;">
+                Need help? <a href="mailto:support@axsmap.com" style="color: #000; text-decoration: underline;">Contact Support</a>
+              </p>
+              <p style="margin: 5px 0 0; font-size: 13px; color: #777;">&copy; 2025 AXS MAP. All rights reserved.</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`;
+};
+
 module.exports = {
   activationEmailTemplate,
   submitServeyUserMailTemplate,
   adminServeyMailTemplate,
+  donationMailTemplate,
 };
