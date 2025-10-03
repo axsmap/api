@@ -44,17 +44,6 @@ module.exports = async (req, res, next) => {
   data.managers = [req.user.id];
 
   data.name = cleanSpaces(data.name);
-  let repeatedEvent;
-  try {
-    repeatedEvent = await Event.findOne({ name: data.name, isArchived: false });
-  } catch (err) {
-    console.log(`Event ${data.name} failed to be found at create-event`);
-    return next(err);
-  }
-  console.log("repeatedEvent", repeatedEvent);
-  if (repeatedEvent) {
-    return res.status(400).json(sendError({ name: "Is already taken" }));
-  }
 
   if (data.poster) {
     let poster;
@@ -69,7 +58,6 @@ module.exports = async (req, res, next) => {
       return res.status(404).json(sendError({ poster: "Not found" }));
     }
   }
-
 
   if (data.teamManager) {
     let team;
