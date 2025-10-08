@@ -7,10 +7,10 @@ const { validateListEvents } = require("./validations");
 module.exports = async (req, res, next) => {
   const queryParams = req.query;
 
-  console.log(queryParams);
-
   const { errors, isValid } = validateListEvents(queryParams);
-  if (!isValid) return res.status(400).json(errors);
+  if (!isValid) {
+    return res.status(400).json(errors);
+  }
 
   const eventsQuery = {};
 
@@ -35,10 +35,7 @@ module.exports = async (req, res, next) => {
 
   if (!isTest) {
     eventsQuery.name = {
-      $not: {
-        $regex:
-          /\b(tst|test|testing|tsting|testt|t3st|t[e3]sting|t3sting|testin)\b/i,
-      },
+      $not: /t[\W_0-9]*e[\W_0-9]*s[\W_0-9]*t/i,
     };
   }
 
