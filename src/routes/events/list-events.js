@@ -28,6 +28,20 @@ module.exports = async (req, res, next) => {
   eventsQuery.startDate = { $lte: currentDate };
   eventsQuery.endDate = { $gte: currentDate };
 
+  const isTest =
+    typeof queryParams.isTest === "boolean"
+      ? queryParams.isTest
+      : queryParams.isTest?.toLowerCase?.() === "true";
+
+  if (!isTest) {
+    eventsQuery.name = {
+      $not: {
+        $regex:
+          /\b(tst|test|testing|tsting|testt|t3st|t[e3]sting|t3sting|testin)\b/i,
+      },
+    };
+  }
+
   let events;
   let total;
   try {
@@ -68,7 +82,6 @@ module.exports = async (req, res, next) => {
     page = null;
     lastPage = null;
   }
-  console.log(events);
   return res.status(200).json({
     page: page + 1,
     lastPage,

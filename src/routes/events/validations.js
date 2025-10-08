@@ -387,6 +387,7 @@ module.exports = {
   validateListEvents(queryParams) {
     const errors = {};
 
+    // --- afterDate validation ---
     let isAfterDateValid = false;
     if (
       queryParams.afterDate &&
@@ -397,6 +398,7 @@ module.exports = {
       isAfterDateValid = true;
     }
 
+    // --- beforeDate validation ---
     let isBeforeDateValid = false;
     if (
       queryParams.beforeDate &&
@@ -407,6 +409,7 @@ module.exports = {
       isBeforeDateValid = true;
     }
 
+    // --- afterDate and beforeDate validation ---
     if (isAfterDateValid && isBeforeDateValid) {
       const afterDate = moment(queryParams.afterDate, "YYYY-MM-DD").utc();
       const beforeDate = moment(queryParams.beforeDate, "YYYY-MM-DD").utc();
@@ -416,6 +419,7 @@ module.exports = {
       }
     }
 
+    // --- sortBy validation ---
     const sortOptions = [
       "name",
       "-name",
@@ -428,6 +432,7 @@ module.exports = {
       errors.sortBy = "Should be a valid sort";
     }
 
+    // --- page validation ---
     if (queryParams.page) {
       if (!isInt(queryParams.page)) {
         errors.page = "Should be a integer";
@@ -436,6 +441,7 @@ module.exports = {
       }
     }
 
+    // --- pageLimit validation ---
     if (queryParams.pageLimit) {
       if (!isInt(queryParams.pageLimit)) {
         errors.pageLimit = "Should be a integer";
@@ -443,6 +449,23 @@ module.exports = {
         errors.pageLimit = "Should be a positive integer";
       } else if (parseInt(queryParams.pageLimit, 10) > 12) {
         errors.pageLimit = "Should be less than 13";
+      }
+    }
+
+    // --- isTest validation ---
+    if (queryParams.isTest !== undefined) {
+      const value =
+        typeof queryParams.isTest === "boolean"
+          ? queryParams.isTest
+          : queryParams.isTest.toLowerCase?.();
+
+      if (
+        value !== true &&
+        value !== false &&
+        value !== "true" &&
+        value !== "false"
+      ) {
+        errors.isTest = "Should be a boolean (true or false)";
       }
     }
 
