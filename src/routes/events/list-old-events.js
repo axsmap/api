@@ -27,6 +27,17 @@ module.exports = async (req, res, next) => {
     { participants: req?.user?.id },
   ];
 
+  const isTest =
+    typeof queryParams.isTest === "boolean"
+      ? queryParams.isTest
+      : queryParams.isTest?.toLowerCase?.() === "true";
+
+  if (!isTest) {
+    eventsQuery.name = {
+      $not: /t[\W_0-9]*e[\W_0-9]*s[\W_0-9]*t/i,
+    };
+  }
+
   let events;
   let total;
   try {
@@ -67,7 +78,6 @@ module.exports = async (req, res, next) => {
     page = null;
     lastPage = null;
   }
-  console.log(events);
   return res.status(200).json({
     page: page + 1,
     lastPage,

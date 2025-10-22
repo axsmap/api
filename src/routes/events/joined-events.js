@@ -3,7 +3,7 @@ const moment = require("moment");
 const { Event } = require("../../models/event");
 const jwt = require("jsonwebtoken");
 
-module.exports = async (req, res, next) => {
+module.exports = async (req, res) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res
@@ -22,6 +22,18 @@ module.exports = async (req, res, next) => {
   eventsQuery.startDate = { $lte: currentDate };
   eventsQuery.endDate = { $gte: currentDate };
   eventsQuery.$or = [{ managers: userId }, { participants: userId }];
+
+  const queryParams = req.query;
+  const isTest =
+    typeof queryParams.isTest === "boolean"
+      ? queryParams.isTest
+      : queryParams.isTest?.toLowerCase?.() === "true";
+
+  if (!isTest) {
+    eventsQuery.name = {
+      $not: /t[\W_0-9]*e[\W_0-9]*s[\W_0-9]*t/i,
+    };
+  }
 
   let events;
   let total;
