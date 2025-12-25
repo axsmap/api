@@ -86,6 +86,19 @@ const userSchema = new mongoose.Schema(
       default: false,
       required: [true, "Is required"],
     },
+    lastLogin: {
+      type: Date,
+      default: null,
+    },
+    inactivityEmailSent: {
+      type: Boolean,
+      default: false,
+      required: [true, "Is required"],
+    },
+    inactivityEmailSentAt: {
+      type: Date,
+      default: null,
+    },
     isBlocked: {
       type: Boolean,
       default: false,

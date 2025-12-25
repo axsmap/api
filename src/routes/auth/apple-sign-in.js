@@ -33,10 +33,24 @@ module.exports = async (req, res, next) => {
         firstName:appleResponse?.fullName?.givenName ?? "",
         lastName:appleResponse?.fullName?.familyName ?? "",
         appleId: appleResponse?.sub,
+        lastLogin: new Date(),
       });
 
       await user.save();
+    } else {
+      // Check if user is archived
+      if (user.isArchived) {
+        return res.status(403).json({ 
+          error: "Account archived",
+          isArchived: true,
+          userId: user._id.toString()
+        });
+      }
+      
+      // Update lastLogin for existing users
+      await User.findByIdAndUpdate(user._id, { lastLogin: new Date() });
     }
+
     const userId = user._id;
     const today = moment.utc();
     const expiresAt = today.add(30, "days").toDate();

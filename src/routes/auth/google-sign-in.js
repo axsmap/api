@@ -59,8 +59,21 @@ module.exports = async (req, res) => {
         lastName: lastName || "",
         createdAt: new Date(),
         avatar: picture,
+        lastLogin: new Date(),
       });
       await user.save();
+    } else {
+      // Check if user is archived
+      if (user.isArchived) {
+        return res.status(403).json({ 
+          error: "Account archived",
+          isArchived: true,
+          userId: user._id.toString()
+        });
+      }
+      
+      // Update lastLogin for existing users
+      await User.findByIdAndUpdate(user._id, { lastLogin: new Date() });
     }
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {

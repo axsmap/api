@@ -45,6 +45,15 @@ module.exports = async (req, res, next) => {
   }
 
   const userId = user.id;
+
+  // Update lastLogin timestamp
+  try {
+    await User.findByIdAndUpdate(userId, { lastLogin: new Date() });
+  } catch (updateErr) {
+    console.log(`Failed to update lastLogin for userId ${userId}: ${updateErr.message}`);
+    // Continue with login even if lastLogin update fails
+  }
+
   const today = moment.utc();
   const expiresAt = today.add(30, "days").toDate();
   const key = `${userId}${crypto.randomBytes(28).toString("hex")}`;
