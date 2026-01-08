@@ -7,9 +7,6 @@ const { Review } = require("../../models/review");
 const { Team } = require("../../models/team");
 const { Venue } = require("../../models/venue");
 
-const { validateCreateEditReview } = require("./validations");
-const venueReviewSummary = require("../../helpers/venue-review-summary.js");
-
 module.exports = async (req, res, next) => {
   // const { errors, isValid } = validateCreateEditReview(req.body);
   // if (!isValid) return res.status(400).json(errors);
@@ -32,7 +29,7 @@ module.exports = async (req, res, next) => {
     hasPermanentRamp: req.body.hasPermanentRamp,
     hasLoweredSinks: req.body.hasLoweredSinks,
     hasPortableRamp: req.body.hasPortableRamp,
-    hasWheelchairParking:req.body.hasWheelchairParking,
+    hasWheelchairParking: req.body.hasWheelchairParking,
 
     // hasAccessibleTableHeight: req.body.hasAccessibleTableHeight,
     // hasInteriorRamp: req.body.hasInteriorRamp,
@@ -49,7 +46,6 @@ module.exports = async (req, res, next) => {
     user: req.user.id,
     comments: req.body.comments,
   };
-
 
   let event;
   if (data.event) {

@@ -1,6 +1,5 @@
 const crypto = require("crypto");
 
-const axios = require("axios");
 const jwt = require("jsonwebtoken");
 const moment = require("moment");
 
@@ -11,7 +10,7 @@ const { validateAppleSignIn } = require("./validations");
 
 const appleSignin = require("apple-signin-auth");
 
-module.exports = async (req, res, next) => {
+module.exports = async (req, res) => {
   const { errors, isValid } = validateAppleSignIn(req.body);
   const { identityToken } = req.body;
   if (!isValid) {
@@ -30,12 +29,40 @@ module.exports = async (req, res, next) => {
     if (!user) {
       user = new User({
         email: appleResponse?.email,
-        firstName:appleResponse?.fullName?.givenName ?? "",
-        lastName:appleResponse?.fullName?.familyName ?? "",
+        firstName: appleResponse?.fullName?.givenName ?? "",
+        lastName: appleResponse?.fullName?.familyName ?? "",
         appleId: appleResponse?.sub,
+        lastSignIn: new Date(),
       });
 
       await user.save();
+    } else {
+      // Update last_sign_in timestamp and reset notification tracking
+      // (Non-blocking: if save fails, sign-in still proceeds)
+      user.lastSignIn = new Date();
+      user.notificationType = null;
+
+      // Link any device installations to this user
+      const deviceId = req.headers["x-device-id"];
+      if (deviceId) {
+        const {
+          DeviceInstallation,
+        } = require("../../models/device-installation");
+        DeviceInstallation.updateMany(
+          { deviceId, userId: null },
+          { userId: user._id }
+        ).catch((err) => {
+          console.log(
+            `Failed to link device ${deviceId} to user ${user._id}: ${err.message}`
+          );
+        });
+      }
+
+      user.save().catch((err) => {
+        console.log(
+          `User ${user._id} failed to update lastSignIn at apple-sign-in: ${err.message}`
+        );
+      });
     }
     const userId = user._id;
     const today = moment.utc();
@@ -54,7 +81,9 @@ module.exports = async (req, res, next) => {
       token,
     });
   } catch (err) {
-    console.log(err)
-    res.status(401).json({ success: false, error: "Invalid Apple token" });
+    console.log(err);
+    return res
+      .status(401)
+      .json({ success: false, error: "Invalid Apple token" });
   }
 };

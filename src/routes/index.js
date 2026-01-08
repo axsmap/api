@@ -1,6 +1,7 @@
 const express = require("express");
 
 const auth = require("./auth");
+const devices = require("./devices");
 const events = require("./events");
 const others = require("./others");
 const petitions = require("./petitions");
@@ -15,6 +16,7 @@ const router = new express.Router();
 
 router.use("", others);
 router.use("/auth", auth);
+router.use("/devices", devices);
 router.use("/events", events);
 router.use("/petitions", petitions);
 router.use("/photos", photos);

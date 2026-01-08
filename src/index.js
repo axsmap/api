@@ -13,6 +13,9 @@ require("dotenv").config();
 const port = process.env.PORT || 8000;
 const connectToDB = require("./helpers/db-connector");
 const routes = require("./routes");
+const {
+  initializeNotificationScheduler,
+} = require("./services/notification-cron");
 
 function connectedToDB() {
   const app = express();
@@ -60,6 +63,9 @@ function connectedToDB() {
   });
   app.listen(port, () => {
     console.log(`Listening on http://${ip.address()}:${port}`);
+
+    // Initialize notification scheduler
+    initializeNotificationScheduler();
   });
   // App Initialization
   // if (process.env.NODE_ENV === "production") {

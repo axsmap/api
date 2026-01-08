@@ -1,12 +1,8 @@
 const crypto = require("crypto");
-const querystring = require("querystring");
 
-const axios = require("axios");
 const { OAuth2Client } = require("google-auth-library");
 const jwt = require("jsonwebtoken");
 const moment = require("moment");
-const randomstring = require("randomstring");
-const slugify = require("speakingurl");
 
 const { RefreshToken } = require("../../models/refresh-token");
 const { User } = require("../../models/user");
@@ -38,7 +34,7 @@ module.exports = async (req, res) => {
         }),
       });
       const googleToken = await tokenRes.json();
-      code =googleToken?.id_token
+      code = googleToken?.id_token;
     }
 
     const ticket = await oauth2Client.verifyIdToken({
@@ -59,8 +55,36 @@ module.exports = async (req, res) => {
         lastName: lastName || "",
         createdAt: new Date(),
         avatar: picture,
+        lastSignIn: new Date(),
       });
       await user.save();
+    } else {
+      // Update last_sign_in timestamp and reset notification tracking
+      // (Non-blocking: if save fails, sign-in still proceeds)
+      user.lastSignIn = new Date();
+      user.notificationType = null;
+
+      // Link any device installations to this user
+      const deviceId = req.headers["x-device-id"];
+      if (deviceId) {
+        const {
+          DeviceInstallation,
+        } = require("../../models/device-installation");
+        DeviceInstallation.updateMany(
+          { deviceId, userId: null },
+          { userId: user._id }
+        ).catch((err) => {
+          console.log(
+            `Failed to link device ${deviceId} to user ${user._id}: ${err.message}`
+          );
+        });
+      }
+
+      user.save().catch((err) => {
+        console.log(
+          `User ${user._id} failed to update lastSignIn at google-sign-in: ${err.message}`
+        );
+      });
     }
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {

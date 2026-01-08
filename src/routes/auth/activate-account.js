@@ -43,14 +43,13 @@ module.exports = async (req, res, next) => {
     lastName: activationTicket?.userData?.lastName,
     password: activationTicket?.userData?.password,
     username: activationTicket?.userData?.username,
-    aboutMe: activationTicket?.userData?.aboutMe || '',
+    aboutMe: activationTicket?.userData?.aboutMe || "",
     dateOfBirth: activationTicket?.userData?.dateOfBirth || null,
-    disability: activationTicket?.userData?.disability || '',
-    gender: activationTicket?.userData?.gender || 'not-to-say',
-    race: activationTicket?.userData?.race || '',
+    disability: activationTicket?.userData?.disability || "",
+    gender: activationTicket?.userData?.gender || "not-to-say",
+    race: activationTicket?.userData?.race || "",
     email: activationTicket?.email,
   };
-  
 
   let repeatedUsers;
   try {
@@ -97,6 +96,7 @@ module.exports = async (req, res, next) => {
 
   let user;
   try {
+    userData.lastSignIn = new Date();
     user = await User.create(userData);
   } catch (err) {
     console.log(

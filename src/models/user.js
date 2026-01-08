@@ -206,9 +206,46 @@ const userSchema = new mongoose.Schema(
       enum: ["yes", "No", "not-to-say", ""],
       required: false,
     },
+    lastSignIn: {
+      type: Date,
+      default: null,
+      required: false,
+    },
+    fcmToken: {
+      type: String,
+      default: null,
+      required: false,
+    },
+    lastNotificationSent: {
+      type: Date,
+      default: null,
+      required: false,
+    },
+    notificationType: {
+      type: String,
+      enum: [
+        "download_24h",
+        "inactivity_3d",
+        "inactivity_7d",
+        "inactivity_14d",
+        "inactivity_30d",
+        null,
+      ],
+      default: null,
+      required: false,
+    },
   },
   { timestamps: true }
 );
+
+// Exclude internal fields from JSON serialization (not visible to user)
+userSchema.methods.toJSON = function () {
+  const obj = this.toObject();
+  delete obj.lastSignIn;
+  delete obj.lastNotificationSent;
+  delete obj.notificationType;
+  return obj;
+};
 
 userSchema.index(
   {
@@ -220,6 +257,9 @@ userSchema.index(
   },
   { weights: { email: 5, username: 5 } }
 );
+
+userSchema.index({ lastSignIn: 1 });
+userSchema.index({ createdAt: 1 });
 
 function hashPassword(password) {
   bcrypt.genSalt(10, (errorOnSaltGeneration, salt) => {
@@ -244,7 +284,7 @@ function hashPassword(password) {
 }
 
 function comparePassword(password) {
-  return bcrypt.compareSync(password, this.hashedPassword ?? '');
+  return bcrypt.compareSync(password, this.hashedPassword ?? "");
 }
 
 userSchema.virtual("password").set(hashPassword);
