@@ -46,9 +46,9 @@ module.exports = async (req, res, next) => {
   }
   let user;
   try {
+    // Find user by email - include archived users so they can recover via forgot password
     user = await User.findOne({
       email: passwordTicket.email,
-      isArchived: false,
     });
   } catch (err) {
     console.log(
@@ -80,8 +80,22 @@ module.exports = async (req, res, next) => {
     }
   }
 
+  // Track if user was archived before we reset flags
+  const wasArchived = user.isArchived;
+
+  // Update password and reset inactivity/archived flags
+  // User has proven ownership via email verification, so reactivate if archived
   user.password = password;
   user.updatedAt = moment.utc().toDate();
+  user.lastLogin = new Date();
+  user.isArchived = false;
+  user.inactivityEmailSent = false;
+  user.inactivityEmailSentAt = null;
+  
+  // If user was archived, set reactivatedAt
+  if (wasArchived) {
+    user.reactivatedAt = new Date();
+  }
 
   try {
     await user.save();

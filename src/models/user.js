@@ -99,6 +99,10 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    reactivatedAt: {
+      type: Date,
+      default: null,
+    },
     isBlocked: {
       type: Boolean,
       default: false,

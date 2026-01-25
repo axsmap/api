@@ -64,17 +64,23 @@ module.exports = async (req, res) => {
       });
       await user.save();
     } else {
-      // Check if user is archived
+      // Check if user is archived - return userId for reactivation flow
+      // For social login users, they'll need to contact support since they don't have a password
       if (user.isArchived) {
         return res.status(403).json({ 
-          error: "Account archived",
+          general: "Account is archived due to inactivity",
           isArchived: true,
-          userId: user._id.toString()
+          requiresReactivation: true,
+          userId: user.id
         });
       }
       
-      // Update lastLogin for existing users
-      await User.findByIdAndUpdate(user._id, { lastLogin: new Date() });
+      // Update lastLogin for existing users and reset inactivity tracking
+      await User.findByIdAndUpdate(user._id, { 
+        lastLogin: new Date(),
+        inactivityEmailSent: false,
+        inactivityEmailSentAt: null
+      });
     }
 
     // Set token expiration based on rememberMe

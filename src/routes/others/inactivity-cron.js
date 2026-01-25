@@ -1,0 +1,32 @@
+const { runInactivityCheck } = require("../../helpers/inactivity-checker");
+
+/**
+ * Endpoint to trigger inactivity check
+ * Should be called by a cron job daily
+ * Protected by a secret key in the header
+ */
+module.exports = {
+  runDailyCheck: async (req, res) => {
+    // Verify the cron secret to prevent unauthorized access
+    // Fail closed: reject if CRON_SECRET is not configured or header is missing
+    const cronSecret = req.headers["x-cron-secret"];
+    const expectedSecret = process.env.CRON_SECRET;
+    
+    if (!expectedSecret || !cronSecret || cronSecret !== expectedSecret) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    try {
+      const result = await runInactivityCheck();
+      return res.status(200).json({
+        success: true,
+        message: "Inactivity check completed",
+        warningsSent: result.warningsSent.length,
+        usersArchived: result.archivedUsers.length,
+      });
+    } catch (err) {
+      console.error("[Cron] Failed to run inactivity check:", err.message);
+      return res.status(500).json({ error: "Failed to run inactivity check" });
+    }
+  },
+};
