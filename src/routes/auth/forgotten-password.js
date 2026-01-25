@@ -18,7 +18,8 @@ module.exports = async (req, res, next) => {
 
   let user;
   try {
-    user = await User.findOne({ email, isArchived: false });
+    // Include archived users - they can recover via forgot password
+    user = await User.findOne({ email });
   } catch (err) {
     console.log(
       `User with email ${email} failed to be found at forgotten-password.`

@@ -39,8 +39,9 @@ module.exports = async (req, res, next) => {
   // Verify current password to prove account ownership
   if (!user.hashedPassword) {
     // User signed up via social login, can't use password reactivation
+    // They should use the forgot password flow instead
     return res.status(400).json({ 
-      general: "This account was created with social login. Please use Google or Facebook to sign in, then contact support if your account is archived."
+      general: "This account was created with social login. Please use the 'Forgot Password' feature to set a password and reactivate your account."
     });
   }
 

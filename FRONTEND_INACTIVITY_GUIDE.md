@@ -10,6 +10,12 @@ The reactivation flow requires **two-factor verification**:
 
 This prevents attackers from reactivating accounts without knowing the password.
 
+### Alternative Recovery: Forgot Password
+Users can also reactivate archived accounts using the **Forgot Password** flow:
+- Archived users can request a password reset email
+- Completing the reset will automatically reactivate their account
+- This is secure because it requires access to the user's email
+
 ---
 
 ## API Changes
@@ -57,7 +63,7 @@ When a user attempts to sign in and their account is archived, the API returns:
 }
 ```
 
-> **Note**: Social login users (Google/Facebook) cannot use the password reactivation endpoint since they don't have a password. They'll need to contact support.
+> **Note**: Social login users (Google/Facebook) should use the **Forgot Password** flow to reactivate, since they may not have a password set.
 
 ---
 
@@ -237,7 +243,7 @@ const ReactivateAccountPage = () => {
 
 ### Step 3: Handle Social Login Archived Users
 
-For Google/Facebook users, show a different message since they can't use password reactivation:
+For Google/Facebook users, they can use the **Forgot Password** flow to reactivate:
 
 ```jsx
 const handleGoogleSignIn = async (credential, rememberMe) => {
@@ -247,12 +253,13 @@ const handleGoogleSignIn = async (credential, rememberMe) => {
     redirectToDashboard();
   } catch (error) {
     if (error.response?.status === 403 && error.response?.data?.isArchived) {
-      // Social login users can't use password reactivation
+      // Social login users should use forgot password to reactivate
       showModal({
         title: 'Account Archived',
-        message: 'Your account has been archived due to inactivity. Since you signed up with Google, please contact support to reactivate your account.',
+        message: 'Your account has been archived due to inactivity. You can reactivate it by using the "Forgot Password" feature to set a new password.',
         actions: [
-          { label: 'Contact Support', onClick: () => window.location.href = '/contact' }
+          { label: 'Reset Password', onClick: () => window.location.href = '/forgotten-password' },
+          { label: 'Cancel', onClick: () => {} }
         ]
       });
     } else {
@@ -368,7 +375,7 @@ Content explains:
    - User attempts sign-in with archived account
    - Should receive 403 with `isArchived: true` and `userId`
 
-2. **Successful reactivation**
+2. **Successful reactivation via endpoint**
    - User provides correct userId + currentPassword
    - Account reactivated, tokens returned
 
@@ -378,12 +385,26 @@ Content explains:
 
 4. **Social login archived user**
    - User attempts Google/Facebook sign-in
-   - Should receive 403 with contact support message
-   - Cannot use password reactivation endpoint
+   - Should receive 403 with archived message
+   - Redirect to forgot password flow
 
 5. **Invalid userId**
    - User provides non-existent userId
    - Should receive 400 "Invalid credentials"
+
+6. **Forgot password reactivation (NEW)**
+   - Archived user requests password reset via `/auth/forgotten-password`
+   - Email is sent successfully (archived users are NOT excluded)
+   - User resets password via `/auth/reset-password`
+   - Account is automatically reactivated
+   - `lastLogin` is updated
+   - `isArchived` is set to `false`
+   - `inactivityEmailSent` is reset to `false`
+
+7. **Active user forgot password**
+   - Active user resets password
+   - `lastLogin` is updated (resets inactivity timer)
+   - Inactivity flags are cleared
 
 ---
 
