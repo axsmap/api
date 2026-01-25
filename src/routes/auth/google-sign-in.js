@@ -22,6 +22,7 @@ module.exports = async (req, res) => {
   }
 
   let code = req.body.code;
+  const rememberMe = req.body.rememberMe || false;
   const oauth2Client = new OAuth2Client(CLIENT_ID);
   try {
     const deviceType = req.headers["x-device-type"];
@@ -76,18 +77,23 @@ module.exports = async (req, res) => {
       await User.findByIdAndUpdate(user._id, { lastLogin: new Date() });
     }
 
+    // Set token expiration based on rememberMe
+    // If rememberMe is true: 90 days, otherwise: 7 days
+    const tokenExpirationDays = rememberMe ? 90 : 7;
+    const jwtExpiration = rememberMe ? '90d' : '7d';
+
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "30d",
+      expiresIn: jwtExpiration,
     });
 
     const userId = user._id;
     const today = moment.utc();
-    const expiresAt = today.add(30, "days").toDate();
+    const expiresAt = today.add(tokenExpirationDays, "days").toDate();
     const key = `${userId}${crypto.randomBytes(28).toString("hex")}`;
 
     let refreshToken = await RefreshToken.findOneAndUpdate(
       { userId },
-      { expiresAt, key, userId },
+      { expiresAt, key, userId, rememberMe },
       { new: true, setDefaultsOnInsert: true, upsert: true }
     );
 

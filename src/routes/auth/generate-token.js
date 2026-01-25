@@ -44,11 +44,15 @@ module.exports = async (req, res, next) => {
     return res.status(401).json({ general: "Refresh Token expired" });
   }
 
+  // Generate JWT with expiration based on rememberMe flag
+  // If rememberMe is true: 90 days, otherwise: 7 days
+  const jwtExpiration = refreshToken.rememberMe ? '90d' : '7d';
+
   const token = jwt.sign(
     { userId: refreshToken.userId },
     process.env.JWT_SECRET,
     {
-      expiresIn: '30d',
+      expiresIn: jwtExpiration,
     }
   );
   return res.status(200).json({ token });
