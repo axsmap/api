@@ -36,14 +36,36 @@ module.exports = {
           return res.status(401).json({ general: "Failed to authenticate" });
         }
 
+        // First check if user exists and if they are archived
         let user;
         try {
-          user = await User.findOne({
-            _id: decoded.userId,
-            isArchived: false,
-          }).select(
-            "-__v -createdAt -isAdmin -isArchived -isBlocked -hashedPassword -updatedAt"
-          );
+          user = await User.findOne({ _id: decoded.userId });
+        } catch (err) {
+          console.log(`User ${decoded.userId} failed to be found at authenticate`);
+          return next(err);
+        }
+
+        if (!user) {
+          return res.status(404).json({ general: "User not found" });
+        }
+
+        // Check if user is archived - they must reactivate first
+        if (user.isArchived) {
+          return res.status(403).json({ 
+            general: "Your account is archived. Please reactivate your account to continue.",
+            isArchived: true,
+            requiresReactivation: true,
+            userId: user.id
+          });
+        }
+
+        // Check if user is blocked
+        if (user.isBlocked) {
+          return res.status(423).json({ general: "You are blocked" });
+        }
+
+        // Update activity tracking
+        try {
           if (req.originalUrl.startsWith("/venues?") && req.method === "GET") {
             const location = req?.query?.location;
             if (location) {
@@ -60,28 +82,23 @@ module.exports = {
           }
           user.lastActivityTime = new Date().toISOString();
           user.device = deviceType || userAgent || "";
-          user.save();
-        } catch (err) {
-          console.log(
-            `User ${decoded.userId} failed to be found at authenticate`
-          );
-          return next(err);
+          await user.save();
+        } catch (saveErr) {
+          console.log(`Failed to update user activity for ${decoded.userId}:`, saveErr.message);
+          // Continue anyway - activity tracking failure shouldn't block the request
         }
 
-        if (user) {
-          req.user = user;
+        // Remove sensitive fields before attaching to request
+        req.user = user.toObject();
+        delete req.user.__v;
+        delete req.user.createdAt;
+        delete req.user.isAdmin;
+        delete req.user.isArchived;
+        delete req.user.isBlocked;
+        delete req.user.hashedPassword;
+        delete req.user.updatedAt;
 
-          if (
-            (isOptional && req.user && req.user.isBlocked) ||
-            (!isOptional && req.user.isBlocked)
-          ) {
-            return res.status(423).json({ general: "You are blocked" });
-          }
-
-          return next();
-        }
-
-        return res.status(404).json({ general: "User not found" });
+        return next();
       }
 
       if (isOptional) {

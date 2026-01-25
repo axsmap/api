@@ -13,6 +13,7 @@ const getProfile = require('./get-profile');
 const listUsers = require('./list-users');
 const unblockUser = require('./unblock-user');
 const deactivateUser = require('./deactivate-user');
+const reactivateAccount = require('../auth/reactivate-account');
 
 const router = new express.Router();
 
@@ -39,5 +40,8 @@ router.put(
   isAuthenticated({ isOptional: false }),
   unblockUser
 );
+
+// Legacy route for frontend compatibility - redirects to /auth/reactivate-account
+router.post('/reactivate', reactivateAccount);
 
 module.exports = router;

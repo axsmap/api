@@ -68,3 +68,6 @@ typings/
 
 # Documentation (local only)
 docs/*.md
+
+# AWS Lambda function (managed separately)
+src/AWSLambaFunction
