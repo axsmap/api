@@ -9,7 +9,10 @@ const { validateReactivateUser } = require("./validations");
 
 /**
  * Reactivate an archived user account
- * User must provide email, new password, and required profile fields
+ * User must provide userId (from archived login response), current password, and new password
+ * This prevents account takeover - user must:
+ * 1. Attempt login first (to get userId from 403 response)
+ * 2. Know their original password
  */
 module.exports = async (req, res, next) => {
   const { errors, isValid } = validateReactivateUser(req.body);
@@ -17,30 +20,44 @@ module.exports = async (req, res, next) => {
     return res.status(400).json(errors);
   }
 
-  const { email, password, firstName, lastName } = req.body;
+  const { userId, currentPassword, newPassword, firstName, lastName } = req.body;
 
   let user;
   try {
-    // Find the archived user by email
-    user = await User.findOne({ email, isArchived: true });
+    // Find the archived user by userId
+    user = await User.findOne({ _id: userId, isArchived: true });
   } catch (err) {
-    console.log(`User with email ${email} failed to be found at reactivate-user.`);
+    console.log(`Reactivation failed for userId ${userId}`);
     return next(err);
   }
 
+  // Return generic error to prevent enumeration
   if (!user) {
-    return res.status(404).json({ general: "Archived account not found with this email" });
+    return res.status(400).json({ general: "Invalid credentials" });
+  }
+
+  // Verify current password to prove account ownership
+  if (!user.hashedPassword) {
+    // User signed up via social login, can't use password reactivation
+    return res.status(400).json({ 
+      general: "This account was created with social login. Please use Google or Facebook to sign in, then contact support if your account is archived."
+    });
+  }
+
+  const passwordMatches = user.comparePassword(currentPassword);
+  if (!passwordMatches) {
+    return res.status(400).json({ general: "Invalid credentials" });
   }
 
   // Update user fields for reactivation
   user.isArchived = false;
-  user.password = password; // Will be hashed by the virtual setter
+  user.password = newPassword; // Will be hashed by the virtual setter
   user.firstName = firstName;
   user.lastName = lastName;
   user.lastLogin = new Date();
   user.inactivityEmailSent = false;
   user.inactivityEmailSentAt = null;
-  user.reactivatedAt = new Date(); // Track when user reactivated for reporting
+  user.reactivatedAt = new Date();
   user.updatedAt = moment.utc().toDate();
 
   // Update optional fields if provided
@@ -52,29 +69,28 @@ module.exports = async (req, res, next) => {
   try {
     await user.save();
   } catch (err) {
-    console.log(`User with email ${email} failed to be reactivated.`);
+    console.log(`User with userId ${userId} failed to be reactivated.`);
     return next(err);
   }
 
-  // Generate tokens for the reactivated user
-  const userId = user.id;
+  // Generate tokens for the reactivated user - use user.id instead of redeclaring
   const today = moment.utc();
   const expiresAt = today.add(7, "days").toDate();
-  const key = `${userId}${crypto.randomBytes(28).toString("hex")}`;
+  const key = `${user.id}${crypto.randomBytes(28).toString("hex")}`;
 
   let refreshToken;
   try {
     refreshToken = await RefreshToken.findOneAndUpdate(
-      { userId },
-      { expiresAt, key, userId, rememberMe: false },
+      { userId: user.id },
+      { expiresAt, key, userId: user.id, rememberMe: false },
       { new: true, setDefaultsOnInsert: true, upsert: true }
     );
   } catch (err) {
-    console.log(`Refresh Token for userId ${userId} failed to be created at reactivate-user.`);
+    console.log(`Refresh Token for userId ${user.id} failed to be created at reactivate-user.`);
     return next(err);
   }
 
-  const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
+  const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
     expiresIn: '7d',
   });
 

@@ -63,12 +63,14 @@ module.exports = async (req, res, next) => {
 
         await user.save();
       } else {
-        // Check if user is archived
+        // Check if user is archived - return userId for reactivation flow
+        // For social login users, they'll need to contact support since they don't have a password
         if (user.isArchived) {
           return res.status(403).json({ 
             general: "Account is archived due to inactivity",
             isArchived: true,
-            requiresReactivation: true
+            requiresReactivation: true,
+            userId: user.id
           });
         }
         

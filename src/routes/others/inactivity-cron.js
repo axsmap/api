@@ -1,4 +1,4 @@
-const { runInactivityCheck, runWeeklyReport } = require("../../helpers/inactivity-checker");
+const { runInactivityCheck } = require("../../helpers/inactivity-checker");
 
 /**
  * Endpoint to trigger inactivity check
@@ -27,28 +27,6 @@ module.exports = {
     } catch (err) {
       console.error("[Cron] Failed to run inactivity check:", err.message);
       return res.status(500).json({ error: "Failed to run inactivity check" });
-    }
-  },
-
-  runWeeklyReportEndpoint: async (req, res) => {
-    // Verify the cron secret to prevent unauthorized access
-    // Fail closed: reject if CRON_SECRET is not configured or header is missing
-    const cronSecret = req.headers["x-cron-secret"];
-    const expectedSecret = process.env.CRON_SECRET;
-    
-    if (!expectedSecret || !cronSecret || cronSecret !== expectedSecret) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-
-    try {
-      await runWeeklyReport();
-      return res.status(200).json({
-        success: true,
-        message: "Weekly report sent",
-      });
-    } catch (err) {
-      console.error("[Cron] Failed to send weekly report:", err.message);
-      return res.status(500).json({ error: "Failed to send weekly report" });
     }
   },
 };

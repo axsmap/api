@@ -299,22 +299,28 @@ module.exports = {
   validateReactivateUser(data) {
     const errors = {};
 
-    if (!data.email) {
-      errors.email = 'Is required';
-    } else if (typeof data.email !== 'string') {
-      errors.email = 'Should be a string';
-    } else if (!isEmail(data.email)) {
-      errors.email = 'Should be a valid email';
+    if (!data.userId) {
+      errors.userId = 'Is required';
+    } else if (typeof data.userId !== 'string') {
+      errors.userId = 'Should be a string';
+    } else if (data.userId.length !== 24) {
+      errors.userId = 'Should be a valid user ID';
     }
 
-    if (!data.password) {
-      errors.password = 'Is required';
-    } else if (typeof data.password !== 'string') {
-      errors.password = 'Should be a string';
-    } else if (data.password.length < 8) {
-      errors.password = 'Should have more than 7 characters';
-    } else if (data.password.length > 30) {
-      errors.password = 'Should have less than 31 characters';
+    if (!data.currentPassword) {
+      errors.currentPassword = 'Is required';
+    } else if (typeof data.currentPassword !== 'string') {
+      errors.currentPassword = 'Should be a string';
+    }
+
+    if (!data.newPassword) {
+      errors.newPassword = 'Is required';
+    } else if (typeof data.newPassword !== 'string') {
+      errors.newPassword = 'Should be a string';
+    } else if (data.newPassword.length < 8) {
+      errors.newPassword = 'Should have more than 7 characters';
+    } else if (data.newPassword.length > 30) {
+      errors.newPassword = 'Should have less than 31 characters';
     }
 
     if (!data.firstName) {

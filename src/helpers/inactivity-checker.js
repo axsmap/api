@@ -5,12 +5,10 @@ const { sendEmail } = require("../helpers");
 const {
   inactivityWarningEmailTemplate,
   accountArchivedEmailTemplate,
-  weeklyInactivityReportEmailTemplate,
 } = require("../helpers/mail-template");
 
 const INACTIVITY_THRESHOLD_DAYS = 365; // 1 year
 const ARCHIVE_GRACE_PERIOD_DAYS = 7; // 7 days after warning email
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@axsmap.com";
 const APP_URL = process.env.APP_URL || "https://www.axsmap.com";
 
 /**
@@ -139,60 +137,6 @@ async function archiveInactiveUsers() {
 }
 
 /**
- * Get count of users reactivated in the past week
- * Uses reactivatedAt timestamp set during account reactivation
- */
-async function getReactivatedUsersCount() {
-  const oneWeekAgo = moment.utc().subtract(7, "days").toDate();
-
-  try {
-    const count = await User.countDocuments({
-      isArchived: false,
-      reactivatedAt: { $gte: oneWeekAgo },
-    });
-    return count;
-  } catch (err) {
-    console.error("[Inactivity Check] Error counting reactivated users:", err.message);
-    return 0;
-  }
-}
-
-/**
- * Send weekly report to admin team
- */
-async function sendWeeklyReport(warningsSent, archivedUsers) {
-  const weekEndDate = moment.utc().format("MMMM D, YYYY");
-  const weekStartDate = moment.utc().subtract(7, "days").format("MMMM D, YYYY");
-
-  const totalReactivated = await getReactivatedUsersCount();
-
-  const reportData = {
-    weekStartDate,
-    weekEndDate,
-    totalWarningsSent: warningsSent.length,
-    totalArchived: archivedUsers.length,
-    totalReactivated,
-    archivedUsers,
-    warningsSentUsers: warningsSent,
-  };
-
-  const emailContent = weeklyInactivityReportEmailTemplate(reportData);
-
-  try {
-    await sendEmail({
-      receiversEmails: [ADMIN_EMAIL],
-      subject: `AXS Map Weekly Inactivity Report - ${weekEndDate}`,
-      htmlContent: emailContent,
-      textContent: `Weekly Inactivity Report: ${warningsSent.length} warnings sent, ${archivedUsers.length} users archived, ${totalReactivated} users reactivated.`,
-    });
-
-    console.log(`[Inactivity Check] Weekly report sent to ${ADMIN_EMAIL}`);
-  } catch (err) {
-    console.error("[Inactivity Check] Failed to send weekly report:", err.message);
-  }
-}
-
-/**
  * Main function to run the inactivity check process
  * This should be called by a cron job daily
  */
@@ -213,32 +157,8 @@ async function runInactivityCheck() {
   };
 }
 
-/**
- * Run the weekly report (should be called once per week)
- */
-async function runWeeklyReport() {
-  console.log("[Inactivity Check] Generating weekly report...");
-
-  // Get data from the past week
-  const oneWeekAgo = moment.utc().subtract(7, "days").toDate();
-
-  // Users who received warnings this week
-  const warningsSentUsers = await User.find({
-    inactivityEmailSentAt: { $gte: oneWeekAgo },
-  }).select("email firstName lastName");
-
-  // Users archived this week
-  const archivedUsers = await User.find({
-    isArchived: true,
-    updatedAt: { $gte: oneWeekAgo },
-  }).select("email firstName lastName");
-
-  await sendWeeklyReport(warningsSentUsers, archivedUsers);
-}
-
 module.exports = {
   runInactivityCheck,
-  runWeeklyReport,
   sendInactivityWarnings,
   archiveInactiveUsers,
 };

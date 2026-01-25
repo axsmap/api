@@ -368,90 +368,6 @@ const accountArchivedEmailTemplate = (name, reactivateUrl) => {
 `;
 };
 
-const weeklyInactivityReportEmailTemplate = (reportData) => {
-  const { 
-    weekStartDate, 
-    weekEndDate, 
-    totalWarningsSent, 
-    totalArchived, 
-    totalReactivated,
-    archivedUsers,
-    warningsSentUsers 
-  } = reportData;
-
-  const archivedUsersList = archivedUsers && archivedUsers.length > 0 
-    ? archivedUsers.map(u => `<li>${u.email} (${u.firstName} ${u.lastName})</li>`).join('') 
-    : '<li>No users archived this week</li>';
-
-  const warningsSentList = warningsSentUsers && warningsSentUsers.length > 0 
-    ? warningsSentUsers.map(u => `<li>${u.email} (${u.firstName} ${u.lastName})</li>`).join('') 
-    : '<li>No warnings sent this week</li>';
-
-  return `
-  <!DOCTYPE html>
-<html lang="en">
-<body style="margin: 0; padding: 0; background-color: #f7f7f7; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f7f7f7;">
-    <tr>
-      <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="margin: 40px auto; background-color: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);">
-          
-          <!-- Header -->
-          <tr>
-            <td style="background-color: #FEE000; padding: 30px; text-align: center;">
-              <h2 style="margin: 0; font-size: 24px; color: #000;">Weekly Inactivity Report 📊</h2>
-              <p style="margin: 10px 0 0; color: #444;">${weekStartDate} - ${weekEndDate}</p>
-            </td>
-          </tr>
-
-          <tr>
-            <td style="padding: 40px 30px;">
-              <h3 style="font-size: 18px; color: #333; margin-bottom: 20px;">Summary</h3>
-              
-              <table width="100%" cellpadding="10" cellspacing="0" style="border-collapse: collapse; margin-bottom: 30px;">
-                <tr style="background-color: #f9f9f9;">
-                  <td style="border: 1px solid #ddd; font-weight: bold;">Inactivity Warnings Sent</td>
-                  <td style="border: 1px solid #ddd; text-align: center;">${totalWarningsSent}</td>
-                </tr>
-                <tr>
-                  <td style="border: 1px solid #ddd; font-weight: bold;">Accounts Archived</td>
-                  <td style="border: 1px solid #ddd; text-align: center;">${totalArchived}</td>
-                </tr>
-                <tr style="background-color: #f9f9f9;">
-                  <td style="border: 1px solid #ddd; font-weight: bold;">Accounts Reactivated</td>
-                  <td style="border: 1px solid #ddd; text-align: center;">${totalReactivated}</td>
-                </tr>
-              </table>
-
-              <h3 style="font-size: 18px; color: #333; margin-bottom: 10px;">Archived Users</h3>
-              <ul style="font-size: 14px; color: #555; line-height: 1.8;">
-                ${archivedUsersList}
-              </ul>
-
-              <h3 style="font-size: 18px; color: #333; margin-bottom: 10px; margin-top: 20px;">Warnings Sent To</h3>
-              <ul style="font-size: 14px; color: #555; line-height: 1.8;">
-                ${warningsSentList}
-              </ul>
-            </td>
-          </tr>
-
-          <!-- Footer -->
-          <tr>
-            <td style="background-color: #FEE000; padding: 20px; text-align: center;">
-              <p style="margin: 0; font-size: 13px; color: #777;">This is an automated report from AXS Map</p>
-              <p style="margin: 5px 0 0; font-size: 13px; color: #777;">&copy; 2025 AXS MAP. Admin Report</p>
-            </td>
-          </tr>
-
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-`;
-};
-
 module.exports = {
   activationEmailTemplate,
   submitServeyUserMailTemplate,
@@ -459,5 +375,4 @@ module.exports = {
   donationMailTemplate,
   inactivityWarningEmailTemplate,
   accountArchivedEmailTemplate,
-  weeklyInactivityReportEmailTemplate,
 };

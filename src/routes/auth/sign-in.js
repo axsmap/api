@@ -31,12 +31,16 @@ module.exports = async (req, res, next) => {
     return res.status(400).json({ general: "Email or password incorrect" });
   }
 
-  // Check if user is archived - redirect to reactivation
+  // Check if user is archived - return userId for reactivation flow
+  // userId is safe to return here because:
+  // 1. User has already proven they know the email (a valid account email)
+  // 2. Reactivation still requires currentPassword verification
   if (user.isArchived) {
     return res.status(403).json({ 
       general: "Account is archived due to inactivity",
       isArchived: true,
-      requiresReactivation: true
+      requiresReactivation: true,
+      userId: user.id
     });
   }
 
