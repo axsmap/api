@@ -20,7 +20,8 @@ module.exports = async (req, res, next) => {
 
   let user;
   try {
-    user = await User.findOne({ email, isArchived: false });
+    // First check if user exists (including archived users)
+    user = await User.findOne({ email });
     console.log("User", user);
   } catch (err) {
     console.log(`User with email ${email} failed to be found at sign-in.`);
@@ -29,6 +30,16 @@ module.exports = async (req, res, next) => {
 
   if (!user) {
     return res.status(400).json({ general: "Email or password incorrect" });
+  }
+
+  // Check if user is archived - redirect to reactivation
+  if (user.isArchived) {
+    return res.status(403).json({ 
+      general: "Account is archived due to inactivity",
+      isArchived: true,
+      requiresReactivation: true,
+      userId: user._id.toString()
+    });
   }
 
   if (user.isBlocked) {
@@ -47,9 +58,13 @@ module.exports = async (req, res, next) => {
 
   const userId = user.id;
 
-  // Update lastLogin timestamp
+  // Update lastLogin timestamp and reset inactivity tracking
   try {
-    await User.findByIdAndUpdate(userId, { lastLogin: new Date() });
+    await User.findByIdAndUpdate(userId, { 
+      lastLogin: new Date(),
+      inactivityEmailSent: false,
+      inactivityEmailSentAt: null
+    });
   } catch (updateErr) {
     console.log(`Failed to update lastLogin for userId ${userId}: ${updateErr.message}`);
     // Continue with login even if lastLogin update fails

@@ -295,5 +295,48 @@ module.exports = {
     }
 
     return { errors, isValid: isEmpty(errors) };
+  },
+  validateReactivateUser(data) {
+    const errors = {};
+
+    if (!data.email) {
+      errors.email = 'Is required';
+    } else if (typeof data.email !== 'string') {
+      errors.email = 'Should be a string';
+    } else if (!isEmail(data.email)) {
+      errors.email = 'Should be a valid email';
+    }
+
+    if (!data.password) {
+      errors.password = 'Is required';
+    } else if (typeof data.password !== 'string') {
+      errors.password = 'Should be a string';
+    } else if (data.password.length < 8) {
+      errors.password = 'Should have more than 7 characters';
+    } else if (data.password.length > 30) {
+      errors.password = 'Should have less than 31 characters';
+    }
+
+    if (!data.firstName) {
+      errors.firstName = 'Is required';
+    } else if (typeof data.firstName !== 'string') {
+      errors.firstName = 'Should be a string';
+    } else if (/[~`!#$%^&*+=\-[\]\\';,./{}|\\":<>?\d]/g.test(data.firstName)) {
+      errors.firstName = 'Should only have letters';
+    } else if (cleanSpaces(data.firstName).length > 24) {
+      errors.firstName = 'Should have less than 25 characters';
+    }
+
+    if (!data.lastName) {
+      errors.lastName = 'Is required';
+    } else if (typeof data.lastName !== 'string') {
+      errors.lastName = 'Should be a string';
+    } else if (/[~`!#$%^&*+=\-[\]\\';,./{}|\\":<>?\d]/g.test(data.lastName)) {
+      errors.lastName = 'Should only have letters';
+    } else if (cleanSpaces(data.lastName).length > 36) {
+      errors.lastName = 'Should have less than 37 characters';
+    }
+
+    return { errors, isValid: isEmpty(errors) };
   }
 };

@@ -13,8 +13,12 @@ const getProfile = require('./get-profile');
 const listUsers = require('./list-users');
 const unblockUser = require('./unblock-user');
 const deactivateUser = require('./deactivate-user');
+const reactivateUser = require('./reactivate-user');
 
 const router = new express.Router();
+
+// Public endpoint for reactivating archived accounts (no auth required)
+router.post('/reactivate', reactivateUser);
 
 router.get('/profile', isAuthenticated({ isOptional: false }), getProfile);
 router.put('/password', isAuthenticated({ isOptional: false }), changePassword);

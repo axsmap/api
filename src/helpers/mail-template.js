@@ -226,9 +226,238 @@ const donationMailTemplate = (name) => {
 `;
 };
 
+const inactivityWarningEmailTemplate = (name, loginUrl) => {
+  return `
+  <!DOCTYPE html>
+<html lang="en">
+<body style="margin: 0; padding: 0; background-color: #f7f7f7; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f7f7f7;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="margin: 40px auto; background-color: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background-color: #FEE000; padding: 30px; text-align: center;">
+              <h2 style="margin: 0; font-size: 24px; color: #000;">We Miss You! 👋</h2>
+              <p style="margin: 10px 0 0; color: #444;">Your AXS Map account needs attention</p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="font-size: 16px; color: #333; line-height: 1.6;">
+                Hi <strong>${name}</strong>,
+              </p>
+
+              <p style="font-size: 16px; color: #333; line-height: 1.6;">
+                We noticed you haven't logged into AXS Map in over a year. We'd hate to see you go!
+              </p>
+
+              <p style="font-size: 16px; color: #333; line-height: 1.6;">
+                <strong>Important:</strong> To keep your account active, please log in within the next <strong>7 days</strong>. If we don't hear from you, your account will be archived for security purposes.
+              </p>
+
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${loginUrl}" style="background-color: #FEE000; color: #000; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block;">
+                  Log In to Keep My Account Active
+                </a>
+              </div>
+
+              <p style="font-size: 14px; color: #777; line-height: 1.5;">
+                Don't worry — even if your account is archived, you can always reactivate it by logging in and resetting your password.
+              </p>
+
+              <p style="font-size: 16px; color: #333; line-height: 1.6;">
+                We'd love to have you back helping make the world more accessible!
+              </p>
+
+              <p style="font-size: 16px; color: #333; line-height: 1.6;">
+                Best,<br><strong>The AXS Map Team</strong>
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #FEE000; padding: 20px; text-align: center;">
+              <p style="margin: 0; font-size: 14px; color: #777;">
+                Questions? <a href="mailto:support@axsmap.com" style="color: #000; text-decoration: underline;">Contact Support</a>
+              </p>
+              <p style="margin: 5px 0 0; font-size: 13px; color: #777;">&copy; 2025 AXS MAP. All rights reserved.</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`;
+};
+
+const accountArchivedEmailTemplate = (name, reactivateUrl) => {
+  return `
+  <!DOCTYPE html>
+<html lang="en">
+<body style="margin: 0; padding: 0; background-color: #f7f7f7; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f7f7f7;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="margin: 40px auto; background-color: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background-color: #FEE000; padding: 30px; text-align: center;">
+              <h2 style="margin: 0; font-size: 24px; color: #000;">Your Account Has Been Archived 📁</h2>
+              <p style="margin: 10px 0 0; color: #444;">But you can come back anytime!</p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="font-size: 16px; color: #333; line-height: 1.6;">
+                Hi <strong>${name}</strong>,
+              </p>
+
+              <p style="font-size: 16px; color: #333; line-height: 1.6;">
+                Due to inactivity, your AXS Map account has been archived. This is a security measure to protect your data.
+              </p>
+
+              <p style="font-size: 16px; color: #333; line-height: 1.6;">
+                <strong>Good news:</strong> You can reactivate your account at any time! Simply click the button below to start the reactivation process.
+              </p>
+
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${reactivateUrl}" style="background-color: #FEE000; color: #000; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block;">
+                  Reactivate My Account
+                </a>
+              </div>
+
+              <p style="font-size: 14px; color: #777; line-height: 1.5;">
+                During reactivation, you'll need to set a new password and confirm your profile information.
+              </p>
+
+              <p style="font-size: 16px; color: #333; line-height: 1.6;">
+                We hope to see you back soon!
+              </p>
+
+              <p style="font-size: 16px; color: #333; line-height: 1.6;">
+                Best,<br><strong>The AXS Map Team</strong>
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #FEE000; padding: 20px; text-align: center;">
+              <p style="margin: 0; font-size: 14px; color: #777;">
+                Questions? <a href="mailto:support@axsmap.com" style="color: #000; text-decoration: underline;">Contact Support</a>
+              </p>
+              <p style="margin: 5px 0 0; font-size: 13px; color: #777;">&copy; 2025 AXS MAP. All rights reserved.</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`;
+};
+
+const weeklyInactivityReportEmailTemplate = (reportData) => {
+  const { 
+    weekStartDate, 
+    weekEndDate, 
+    totalWarningsSent, 
+    totalArchived, 
+    totalReactivated,
+    archivedUsers,
+    warningsSentUsers 
+  } = reportData;
+
+  const archivedUsersList = archivedUsers && archivedUsers.length > 0 
+    ? archivedUsers.map(u => `<li>${u.email} (${u.firstName} ${u.lastName})</li>`).join('') 
+    : '<li>No users archived this week</li>';
+
+  const warningsSentList = warningsSentUsers && warningsSentUsers.length > 0 
+    ? warningsSentUsers.map(u => `<li>${u.email} (${u.firstName} ${u.lastName})</li>`).join('') 
+    : '<li>No warnings sent this week</li>';
+
+  return `
+  <!DOCTYPE html>
+<html lang="en">
+<body style="margin: 0; padding: 0; background-color: #f7f7f7; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f7f7f7;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="margin: 40px auto; background-color: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background-color: #FEE000; padding: 30px; text-align: center;">
+              <h2 style="margin: 0; font-size: 24px; color: #000;">Weekly Inactivity Report 📊</h2>
+              <p style="margin: 10px 0 0; color: #444;">${weekStartDate} - ${weekEndDate}</p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding: 40px 30px;">
+              <h3 style="font-size: 18px; color: #333; margin-bottom: 20px;">Summary</h3>
+              
+              <table width="100%" cellpadding="10" cellspacing="0" style="border-collapse: collapse; margin-bottom: 30px;">
+                <tr style="background-color: #f9f9f9;">
+                  <td style="border: 1px solid #ddd; font-weight: bold;">Inactivity Warnings Sent</td>
+                  <td style="border: 1px solid #ddd; text-align: center;">${totalWarningsSent}</td>
+                </tr>
+                <tr>
+                  <td style="border: 1px solid #ddd; font-weight: bold;">Accounts Archived</td>
+                  <td style="border: 1px solid #ddd; text-align: center;">${totalArchived}</td>
+                </tr>
+                <tr style="background-color: #f9f9f9;">
+                  <td style="border: 1px solid #ddd; font-weight: bold;">Accounts Reactivated</td>
+                  <td style="border: 1px solid #ddd; text-align: center;">${totalReactivated}</td>
+                </tr>
+              </table>
+
+              <h3 style="font-size: 18px; color: #333; margin-bottom: 10px;">Archived Users</h3>
+              <ul style="font-size: 14px; color: #555; line-height: 1.8;">
+                ${archivedUsersList}
+              </ul>
+
+              <h3 style="font-size: 18px; color: #333; margin-bottom: 10px; margin-top: 20px;">Warnings Sent To</h3>
+              <ul style="font-size: 14px; color: #555; line-height: 1.8;">
+                ${warningsSentList}
+              </ul>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #FEE000; padding: 20px; text-align: center;">
+              <p style="margin: 0; font-size: 13px; color: #777;">This is an automated report from AXS Map</p>
+              <p style="margin: 5px 0 0; font-size: 13px; color: #777;">&copy; 2025 AXS MAP. Admin Report</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`;
+};
+
 module.exports = {
   activationEmailTemplate,
   submitServeyUserMailTemplate,
   adminServeyMailTemplate,
   donationMailTemplate,
+  inactivityWarningEmailTemplate,
+  accountArchivedEmailTemplate,
+  weeklyInactivityReportEmailTemplate,
 };

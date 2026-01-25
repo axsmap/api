@@ -62,3 +62,9 @@ typings/
 
 # MacOS files
 .DS_Store
+
+# PEM files (SSH keys, certificates)
+*.pem
+
+# Documentation (local only)
+docs/*.md
