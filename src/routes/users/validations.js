@@ -295,54 +295,5 @@ module.exports = {
     }
 
     return { errors, isValid: isEmpty(errors) };
-  },
-  validateReactivateUser(data) {
-    const errors = {};
-
-    if (!data.userId) {
-      errors.userId = 'Is required';
-    } else if (typeof data.userId !== 'string') {
-      errors.userId = 'Should be a string';
-    } else if (data.userId.length !== 24) {
-      errors.userId = 'Should be a valid user ID';
-    }
-
-    if (!data.currentPassword) {
-      errors.currentPassword = 'Is required';
-    } else if (typeof data.currentPassword !== 'string') {
-      errors.currentPassword = 'Should be a string';
-    }
-
-    if (!data.newPassword) {
-      errors.newPassword = 'Is required';
-    } else if (typeof data.newPassword !== 'string') {
-      errors.newPassword = 'Should be a string';
-    } else if (data.newPassword.length < 8) {
-      errors.newPassword = 'Should have more than 7 characters';
-    } else if (data.newPassword.length > 30) {
-      errors.newPassword = 'Should have less than 31 characters';
-    }
-
-    if (!data.firstName) {
-      errors.firstName = 'Is required';
-    } else if (typeof data.firstName !== 'string') {
-      errors.firstName = 'Should be a string';
-    } else if (/[~`!#$%^&*+=\-[\]\\';,./{}|\\":<>?\d]/g.test(data.firstName)) {
-      errors.firstName = 'Should only have letters';
-    } else if (cleanSpaces(data.firstName).length > 24) {
-      errors.firstName = 'Should have less than 25 characters';
-    }
-
-    if (!data.lastName) {
-      errors.lastName = 'Is required';
-    } else if (typeof data.lastName !== 'string') {
-      errors.lastName = 'Should be a string';
-    } else if (/[~`!#$%^&*+=\-[\]\\';,./{}|\\":<>?\d]/g.test(data.lastName)) {
-      errors.lastName = 'Should only have letters';
-    } else if (cleanSpaces(data.lastName).length > 36) {
-      errors.lastName = 'Should have less than 37 characters';
-    }
-
-    return { errors, isValid: isEmpty(errors) };
   }
 };

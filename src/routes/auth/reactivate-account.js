@@ -1,4 +1,3 @@
-const bcrypt = require("bcrypt-nodejs");
 const crypto = require("crypto");
 
 const jwt = require("jsonwebtoken");
@@ -9,13 +8,14 @@ const { User } = require("../../models/user");
 
 /**
  * Reactivate an archived user account
- * Requires: userId, new password, and updated profile information
- * Sets isArchived to false and updates lastLogin
+ * Requires: userId (from 403 sign-in response), currentPassword (to prove ownership), newPassword
+ * Security: User must know their original password to reactivate
  */
 module.exports = async (req, res, next) => {
   const {
     userId,
-    password,
+    currentPassword,
+    newPassword,
     firstName,
     lastName,
     email,
@@ -34,12 +34,22 @@ module.exports = async (req, res, next) => {
 
   // Validation
   if (!userId) {
-    return res.status(400).json({ general: "User ID is required" });
+    return res.status(400).json({ userId: "User ID is required" });
   }
 
-  if (!password || password.length < 6) {
+  if (!currentPassword) {
+    return res.status(400).json({ currentPassword: "Current password is required" });
+  }
+
+  if (!newPassword || newPassword.length < 8) {
     return res.status(400).json({ 
-      password: "Password must be at least 6 characters" 
+      newPassword: "New password must be at least 8 characters" 
+    });
+  }
+
+  if (newPassword.length > 30) {
+    return res.status(400).json({ 
+      newPassword: "New password must be less than 31 characters" 
     });
   }
 
@@ -49,104 +59,88 @@ module.exports = async (req, res, next) => {
     });
   }
 
-  if (!email) {
-    return res.status(400).json({ email: "Email is required" });
-  }
-
-  // Find user
+  // Find user - use generic error to prevent enumeration
   let user;
   try {
-    user = await User.findById(userId);
+    user = await User.findOne({ _id: userId, isArchived: true });
   } catch (err) {
-    console.log(`User with ID ${userId} failed to be found at reactivation.`);
+    console.log(`Reactivation lookup failed for userId ${userId}`);
     return next(err);
   }
 
   if (!user) {
-    return res.status(404).json({ general: "User not found" });
+    return res.status(400).json({ general: "Invalid credentials" });
   }
 
-  if (!user.isArchived) {
+  // Verify current password to prove account ownership
+  if (!user.hashedPassword) {
+    // User signed up via social login, redirect to forgot password
     return res.status(400).json({ 
-      general: "Account is not archived" 
+      general: "This account was created with social login. Please use the 'Forgot Password' feature to set a password and reactivate your account."
     });
   }
 
-  // Hash new password
-  let hashedPassword;
-  try {
-    hashedPassword = await new Promise((resolve, reject) => {
-      bcrypt.genSalt(10, (saltErr, salt) => {
-        if (saltErr) return reject(saltErr);
-        
-        bcrypt.hash(password, salt, null, (hashErr, hash) => {
-          if (hashErr) return reject(hashErr);
-          resolve(hash);
-        });
-      });
-    });
-  } catch (err) {
-    console.log("Failed to hash password during reactivation");
-    return next(err);
+  const passwordMatches = user.comparePassword(currentPassword);
+  if (!passwordMatches) {
+    return res.status(400).json({ general: "Invalid credentials" });
   }
 
-  // Prepare update data
-  const updateData = {
-    hashedPassword,
-    firstName,
-    lastName,
-    email,
-    isArchived: false,
-    lastLogin: new Date(),
-    inactivityEmailSent: false,
-    inactivityEmailSentAt: null,
-  };
+  // Update user - set new password via the model's virtual setter
+  user.password = newPassword;
+  user.firstName = firstName;
+  user.lastName = lastName;
+  user.isArchived = false;
+  user.lastLogin = new Date();
+  user.inactivityEmailSent = false;
+  user.inactivityEmailSentAt = null;
+  user.reactivatedAt = new Date();
+  user.updatedAt = moment.utc().toDate();
 
   // Add optional fields if provided
-  if (disabilities !== undefined) updateData.disabilities = disabilities;
-  if (gender !== undefined) updateData.gender = gender;
-  if (zip !== undefined) updateData.zip = zip;
-  if (phone !== undefined) updateData.phone = phone;
-  if (showDisabilities !== undefined) updateData.showDisabilities = showDisabilities;
-  if (showEmail !== undefined) updateData.showEmail = showEmail;
-  if (showPhone !== undefined) updateData.showPhone = showPhone;
-  if (aboutMe !== undefined) updateData.aboutMe = aboutMe;
-  if (birthday !== undefined) updateData.birthday = birthday;
-  if (race !== undefined) updateData.race = race;
-  if (disability !== undefined) updateData.disability = disability;
+  if (email !== undefined) user.email = email;
+  if (disabilities !== undefined) user.disabilities = disabilities;
+  if (gender !== undefined) user.gender = gender;
+  if (zip !== undefined) user.zip = zip;
+  if (phone !== undefined) user.phone = phone;
+  if (showDisabilities !== undefined) user.showDisabilities = showDisabilities;
+  if (showEmail !== undefined) user.showEmail = showEmail;
+  if (showPhone !== undefined) user.showPhone = showPhone;
+  if (aboutMe !== undefined) user.aboutMe = aboutMe;
+  if (birthday !== undefined) user.birthday = birthday;
+  if (race !== undefined) user.race = race;
+  if (disability !== undefined) user.disability = disability;
 
-  // Update user
   try {
-    user = await User.findByIdAndUpdate(userId, updateData, { new: true });
+    await user.save();
   } catch (err) {
-    console.log(`Failed to reactivate user ${userId}`);
+    console.log(`Failed to reactivate user ${user.id}`);
     return next(err);
   }
 
-  // Generate tokens
+  // Generate tokens - use 7 days as default (non-rememberMe)
   const today = moment.utc();
-  const expiresAt = today.add(30, "days").toDate();
-  const key = `${userId}${crypto.randomBytes(28).toString("hex")}`;
+  const expiresAt = today.add(7, "days").toDate();
+  const key = `${user.id}${crypto.randomBytes(28).toString("hex")}`;
 
   let refreshToken;
   try {
     refreshToken = await RefreshToken.findOneAndUpdate(
-      { userId },
-      { expiresAt, key, userId },
+      { userId: user.id },
+      { expiresAt, key, userId: user.id, rememberMe: false },
       { new: true, setDefaultsOnInsert: true, upsert: true }
     );
   } catch (err) {
-    console.log(`Refresh Token for userId ${userId} failed to be created at reactivation.`);
+    console.log(`Refresh Token for userId ${user.id} failed to be created at reactivation.`);
     return next(err);
   }
 
-  const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
-    expiresIn: '30d',
+  const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
+    expiresIn: '7d',
   });
 
   return res.status(200).json({ 
     refreshToken: refreshToken.key, 
     token,
-    message: "Account reactivated successfully"
+    general: "Account reactivated successfully"
   });
 };

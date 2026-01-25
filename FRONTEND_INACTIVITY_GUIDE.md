@@ -69,7 +69,7 @@ When a user attempts to sign in and their account is archived, the API returns:
 
 ### 2. Reactivate Account Endpoint
 
-**POST /users/reactivate**
+**POST /auth/reactivate-account**
 
 Allows archived users to reactivate their account by verifying their identity with their current password.
 
@@ -84,6 +84,20 @@ Allows archived users to reactivate their account by verifying their identity wi
 }
 ```
 
+**Optional Fields** (can be updated during reactivation):
+- `email` - Update email address
+- `disabilities` - Disability information
+- `gender` - Gender
+- `zip` - Zip code
+- `phone` - Phone number
+- `showDisabilities` - Privacy setting
+- `showEmail` - Privacy setting
+- `showPhone` - Privacy setting
+- `aboutMe` - Bio/description
+- `birthday` - Date of birth
+- `race` - Race/ethnicity
+- `disability` - Disability type
+
 **Success Response (200):**
 ```json
 {
@@ -97,7 +111,9 @@ Allows archived users to reactivate their account by verifying their identity wi
 
 | Status | Scenario | Response |
 |--------|----------|----------|
-| 400 | Validation error | `{ "userId": "Is required", "currentPassword": "Is required", ... }` |
+| 400 | Missing userId | `{ "userId": "User ID is required" }` |
+| 400 | Missing currentPassword | `{ "currentPassword": "Current password is required" }` |
+| 400 | Invalid newPassword | `{ "newPassword": "New password must be at least 8 characters" }` |
 | 400 | Invalid userId or password | `{ "general": "Invalid credentials" }` |
 | 400 | Social login user | `{ "general": "This account was created with social login..." }` |
 
@@ -154,7 +170,7 @@ const ReactivateAccountPage = () => {
 
     setLoading(true);
     try {
-      const response = await api.post('/users/reactivate', {
+      const response = await api.post('/auth/reactivate-account', {
         userId,
         currentPassword: formData.currentPassword,
         newPassword: formData.newPassword,
@@ -314,7 +330,7 @@ User attempts login (email/password or social)
      - lastName
               │
               ▼
-    POST /users/reactivate
+    POST /auth/reactivate-account
               │
        ┌──────┴──────┐
        │             │
