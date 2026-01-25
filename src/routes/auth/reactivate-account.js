@@ -6,6 +6,67 @@ const moment = require("moment");
 const { RefreshToken } = require("../../models/refresh-token");
 const { User } = require("../../models/user");
 
+// Valid race enum values from User model
+const VALID_RACE_VALUES = [
+  "black/african american",
+  "caucasian",
+  "indigenous/first nation/native american",
+  "latino/hispanic",
+  "middle eastern/north african",
+  "native hawaiian/pacific islander",
+  "biracial/multiracial",
+  "asian",
+  "non-naucasian",
+  "not-to-disclose",
+  "",
+];
+
+// Normalize race value to match valid enum
+function normalizeRace(race) {
+  if (!race) return "";
+  
+  const lowercased = race.toLowerCase().trim();
+  
+  // Direct match
+  if (VALID_RACE_VALUES.includes(lowercased)) {
+    return lowercased;
+  }
+  
+  // Map common variations
+  const raceMapping = {
+    'asian': 'asian',
+    'black': 'black/african american',
+    'black/african american': 'black/african american',
+    'african american': 'black/african american',
+    'white': 'caucasian',
+    'caucasian': 'caucasian',
+    'hispanic': 'latino/hispanic',
+    'latino': 'latino/hispanic',
+    'latino/hispanic': 'latino/hispanic',
+    'native american': 'indigenous/first nation/native american',
+    'indigenous': 'indigenous/first nation/native american',
+    'first nation': 'indigenous/first nation/native american',
+    'middle eastern': 'middle eastern/north african',
+    'north african': 'middle eastern/north african',
+    'pacific islander': 'native hawaiian/pacific islander',
+    'native hawaiian': 'native hawaiian/pacific islander',
+    'hawaiian': 'native hawaiian/pacific islander',
+    'multiracial': 'biracial/multiracial',
+    'biracial': 'biracial/multiracial',
+    'mixed': 'biracial/multiracial',
+    'prefer not to say': 'not-to-disclose',
+    'not to disclose': 'not-to-disclose',
+    'prefer not to disclose': 'not-to-disclose',
+  };
+  
+  if (raceMapping[lowercased]) {
+    return raceMapping[lowercased];
+  }
+  
+  // If no match, return empty string
+  return "";
+}
+
 /**
  * Reactivate an archived user account
  * 
@@ -101,8 +162,16 @@ module.exports = async (req, res, next) => {
   if (showPhone !== undefined) user.showPhone = showPhone;
   if (aboutMe !== undefined) user.aboutMe = aboutMe;
   if (birthday !== undefined) user.birthday = birthday;
-  if (race !== undefined) user.race = race;
   if (disability !== undefined) user.disability = disability;
+
+  // Normalize race value - handle both new value and existing invalid value
+  if (race !== undefined) {
+    user.race = normalizeRace(race);
+  } else if (user.race && !VALID_RACE_VALUES.includes(user.race)) {
+    // Fix existing invalid race value in database
+    console.log('[Reactivate] Fixing invalid existing race value:', user.race);
+    user.race = normalizeRace(user.race);
+  }
 
   console.log('[Reactivate] Saving user updates...', { userId: user.id, isArchived: user.isArchived });
 
