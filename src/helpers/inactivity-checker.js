@@ -16,20 +16,19 @@ const APP_URL = process.env.APP_URL || "https://www.axsmap.com";
 /**
  * Find users who haven't logged in for over a year and haven't received an inactivity email yet
  * Send them a warning email
+ * Note: Only users with a recorded lastLogin will be checked (no fallback to createdAt)
  */
 async function sendInactivityWarnings() {
   const oneYearAgo = moment.utc().subtract(INACTIVITY_THRESHOLD_DAYS, "days").toDate();
   
   try {
+    // Only check users who have lastLogin recorded (not null)
     const inactiveUsers = await User.find({
       isArchived: false,
       isBlocked: false,
       inactivityEmailSent: { $ne: true },
-      $or: [
-        { lastLogin: { $lt: oneYearAgo } },
-        { lastLogin: null, createdAt: { $lt: oneYearAgo } }
-      ]
-    }).select("_id email firstName lastName lastLogin createdAt");
+      lastLogin: { $ne: null, $lt: oneYearAgo }
+    }).select("_id email firstName lastName lastLogin");
 
     console.log(`[Inactivity Check] Found ${inactiveUsers.length} users to send warnings to`);
 
