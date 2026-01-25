@@ -20,12 +20,17 @@ async function sendInactivityWarnings() {
   const oneYearAgo = moment.utc().subtract(INACTIVITY_THRESHOLD_DAYS, "days").toDate();
   
   try {
-    // Only check users who have lastLogin recorded (not null)
+    // Only check users who:
+    // 1. Have lastLogin recorded (not null) - must have logged in before
+    // 2. Have a valid email address
+    // 3. Are not already archived or blocked
+    // 4. Haven't received an inactivity email yet
     const inactiveUsers = await User.find({
       isArchived: false,
       isBlocked: false,
       inactivityEmailSent: { $ne: true },
-      lastLogin: { $ne: null, $lt: oneYearAgo }
+      lastLogin: { $ne: null, $lt: oneYearAgo },
+      email: { $ne: null, $exists: true, $ne: "" }
     }).select("_id email firstName lastName lastLogin");
 
     console.log(`[Inactivity Check] Found ${inactiveUsers.length} users to send warnings to`);
@@ -33,6 +38,12 @@ async function sendInactivityWarnings() {
     const warningsSent = [];
 
     for (const user of inactiveUsers) {
+      // Skip users without valid email
+      if (!user.email || !user.email.includes("@")) {
+        console.log(`[Inactivity Check] Skipping user ${user._id} - no valid email`);
+        continue;
+      }
+
       try {
         const loginUrl = `${APP_URL}/sign-in`;
         const displayName = user.firstName || "User";
@@ -102,30 +113,34 @@ async function archiveInactiveUsers() {
         // Delete their refresh token
         await RefreshToken.deleteOne({ userId: user._id.toString() });
 
-        // Send archived notification email
-        const reactivateUrl = `${APP_URL}/reactivate-account`;
-        const displayName = user.firstName || "User";
-        const emailContent = accountArchivedEmailTemplate(
-          displayName,
-          reactivateUrl
-        );
+        // Send archived notification email (only if user has valid email)
+        if (user.email && user.email.includes("@")) {
+          const reactivateUrl = `${APP_URL}/reactivate-account`;
+          const displayName = user.firstName || "User";
+          const emailContent = accountArchivedEmailTemplate(
+            displayName,
+            reactivateUrl
+          );
 
-        await sendEmail({
-          receiversEmails: [user.email],
-          subject: "Your AXS Map account has been archived",
-          htmlContent: emailContent,
-          textContent: `Hi ${displayName}, your AXS Map account has been archived due to inactivity. You can reactivate it anytime by visiting ${reactivateUrl}`,
-        });
+          await sendEmail({
+            receiversEmails: [user.email],
+            subject: "Your AXS Map account has been archived",
+            htmlContent: emailContent,
+            textContent: `Hi ${displayName}, your AXS Map account has been archived due to inactivity. You can reactivate it anytime by visiting ${reactivateUrl}`,
+          });
+          console.log(`[Inactivity Check] Archived user ${user.email} and sent notification`);
+        } else {
+          console.log(`[Inactivity Check] Archived user ${user._id} (no email to notify)`);
+        }
 
         archivedUsers.push({
-          email: user.email,
+          userId: user._id,
+          email: user.email || null,
           firstName: user.firstName,
           lastName: user.lastName,
         });
-
-        console.log(`[Inactivity Check] Archived user ${user.email}`);
       } catch (archiveErr) {
-        console.error(`[Inactivity Check] Failed to archive user ${user.email}:`, archiveErr.message);
+        console.error(`[Inactivity Check] Failed to archive user ${user.email || user._id}:`, archiveErr.message);
       }
     }
 
