@@ -8,8 +8,11 @@ const { runInactivityCheck, runWeeklyReport } = require("../../helpers/inactivit
 module.exports = {
   runDailyCheck: async (req, res) => {
     // Verify the cron secret to prevent unauthorized access
+    // Fail closed: reject if CRON_SECRET is not configured or header is missing
     const cronSecret = req.headers["x-cron-secret"];
-    if (cronSecret !== process.env.CRON_SECRET) {
+    const expectedSecret = process.env.CRON_SECRET;
+    
+    if (!expectedSecret || !cronSecret || cronSecret !== expectedSecret) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
@@ -29,8 +32,11 @@ module.exports = {
 
   runWeeklyReportEndpoint: async (req, res) => {
     // Verify the cron secret to prevent unauthorized access
+    // Fail closed: reject if CRON_SECRET is not configured or header is missing
     const cronSecret = req.headers["x-cron-secret"];
-    if (cronSecret !== process.env.CRON_SECRET) {
+    const expectedSecret = process.env.CRON_SECRET;
+    
+    if (!expectedSecret || !cronSecret || cronSecret !== expectedSecret) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 

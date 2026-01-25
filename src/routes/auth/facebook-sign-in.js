@@ -68,8 +68,7 @@ module.exports = async (req, res, next) => {
           return res.status(403).json({ 
             general: "Account is archived due to inactivity",
             isArchived: true,
-            requiresReactivation: true,
-            userId: user._id.toString()
+            requiresReactivation: true
           });
         }
         

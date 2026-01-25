@@ -22,7 +22,6 @@ module.exports = async (req, res, next) => {
   try {
     // First check if user exists (including archived users)
     user = await User.findOne({ email });
-    console.log("User", user);
   } catch (err) {
     console.log(`User with email ${email} failed to be found at sign-in.`);
     return next(err);
@@ -37,8 +36,7 @@ module.exports = async (req, res, next) => {
     return res.status(403).json({ 
       general: "Account is archived due to inactivity",
       isArchived: true,
-      requiresReactivation: true,
-      userId: user._id.toString()
+      requiresReactivation: true
     });
   }
 

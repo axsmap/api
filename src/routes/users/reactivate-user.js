@@ -40,6 +40,7 @@ module.exports = async (req, res, next) => {
   user.lastLogin = new Date();
   user.inactivityEmailSent = false;
   user.inactivityEmailSentAt = null;
+  user.reactivatedAt = new Date(); // Track when user reactivated for reporting
   user.updatedAt = moment.utc().toDate();
 
   // Update optional fields if provided

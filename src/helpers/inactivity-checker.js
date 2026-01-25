@@ -37,8 +37,9 @@ async function sendInactivityWarnings() {
     for (const user of inactiveUsers) {
       try {
         const loginUrl = `${APP_URL}/sign-in`;
+        const displayName = user.firstName || "User";
         const emailContent = inactivityWarningEmailTemplate(
-          user.firstName || "User",
+          displayName,
           loginUrl
         );
 
@@ -46,7 +47,7 @@ async function sendInactivityWarnings() {
           receiversEmails: [user.email],
           subject: "We miss you! Your AXS Map account needs attention",
           htmlContent: emailContent,
-          textContent: `Hi ${user.firstName}, we noticed you haven't logged into AXS Map in over a year. Please log in within 7 days to keep your account active.`,
+          textContent: `Hi ${displayName}, we noticed you haven't logged into AXS Map in over a year. Please log in within 7 days to keep your account active.`,
         });
 
         // Mark that we've sent the inactivity email
@@ -105,8 +106,9 @@ async function archiveInactiveUsers() {
 
         // Send archived notification email
         const reactivateUrl = `${APP_URL}/reactivate-account`;
+        const displayName = user.firstName || "User";
         const emailContent = accountArchivedEmailTemplate(
-          user.firstName || "User",
+          displayName,
           reactivateUrl
         );
 
@@ -114,7 +116,7 @@ async function archiveInactiveUsers() {
           receiversEmails: [user.email],
           subject: "Your AXS Map account has been archived",
           htmlContent: emailContent,
-          textContent: `Hi ${user.firstName}, your AXS Map account has been archived due to inactivity. You can reactivate it anytime by visiting ${reactivateUrl}`,
+          textContent: `Hi ${displayName}, your AXS Map account has been archived due to inactivity. You can reactivate it anytime by visiting ${reactivateUrl}`,
         });
 
         archivedUsers.push({
@@ -138,6 +140,7 @@ async function archiveInactiveUsers() {
 
 /**
  * Get count of users reactivated in the past week
+ * Uses reactivatedAt timestamp set during account reactivation
  */
 async function getReactivatedUsersCount() {
   const oneWeekAgo = moment.utc().subtract(7, "days").toDate();
@@ -145,9 +148,7 @@ async function getReactivatedUsersCount() {
   try {
     const count = await User.countDocuments({
       isArchived: false,
-      inactivityEmailSent: false,
-      lastLogin: { $gte: oneWeekAgo },
-      updatedAt: { $gte: oneWeekAgo },
+      reactivatedAt: { $gte: oneWeekAgo },
     });
     return count;
   } catch (err) {
