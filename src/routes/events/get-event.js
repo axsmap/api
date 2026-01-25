@@ -170,12 +170,12 @@ module.exports = async (req, res, next) => {
     return next(err);
   }
 
-  if (!event) {
+  if (!event || !event[0]) {
     return res.status(404).json({ general: 'Event not found' });
   }
 
   const dataResponse = Object.assign({}, event[0], {
-    ranking: event[0].ranking.length ? event[0].ranking[0].ranking + 1 : 1
+    ranking: event[0].ranking && event[0].ranking.length ? event[0].ranking[0].ranking + 1 : 1
   });
 
   if (dataResponse.donationId) {
