@@ -16,6 +16,7 @@ module.exports = async (req, res, next) => {
   // }
 
   let token = req?.body?.code;
+  const rememberMe = req.body.rememberMe || false;
   try {
     if (req.body.web) {
       const tokenResponse = await axios.get(
@@ -75,18 +76,23 @@ module.exports = async (req, res, next) => {
         await User.findByIdAndUpdate(user._id, { lastLogin: new Date() });
       }
 
+      // Set token expiration based on rememberMe
+      // If rememberMe is true: 90 days, otherwise: 7 days
+      const tokenExpirationDays = rememberMe ? 90 : 7;
+      const jwtExpiration = rememberMe ? '90d' : '7d';
+
       const userId = user._id;
       const today = moment.utc();
-      const expiresAt = today.add(30, "days").toDate();
+      const expiresAt = today.add(tokenExpirationDays, "days").toDate();
       const key = `${userId}${crypto.randomBytes(28).toString("hex")}`;
 
       let refreshToken = await RefreshToken.findOneAndUpdate(
         { userId },
-        { expiresAt, key, userId },
+        { expiresAt, key, userId, rememberMe },
         { new: true, setDefaultsOnInsert: true, upsert: true }
       );
       const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-        expiresIn: "30d",
+        expiresIn: jwtExpiration,
       });
 
       res.json({

@@ -16,6 +16,7 @@ module.exports = async (req, res, next) => {
 
   const email = req.body.email;
   const password = req.body.password;
+  const rememberMe = req.body.rememberMe || false;
 
   let user;
   try {
@@ -54,15 +55,20 @@ module.exports = async (req, res, next) => {
     // Continue with login even if lastLogin update fails
   }
 
+  // Set token expiration based on rememberMe
+  // If rememberMe is true: 90 days, otherwise: 7 days (short-lived session)
+  const tokenExpirationDays = rememberMe ? 90 : 7;
+  const jwtExpiration = rememberMe ? '90d' : '7d';
+
   const today = moment.utc();
-  const expiresAt = today.add(30, "days").toDate();
+  const expiresAt = today.add(tokenExpirationDays, "days").toDate();
   const key = `${userId}${crypto.randomBytes(28).toString("hex")}`;
 
   let refreshToken;
   try {
     refreshToken = await RefreshToken.findOneAndUpdate(
       { userId },
-      { expiresAt, key, userId },
+      { expiresAt, key, userId, rememberMe },
       { new: true, setDefaultsOnInsert: true, upsert: true }
     );
   } catch (err) {
@@ -73,7 +79,7 @@ module.exports = async (req, res, next) => {
   }
 console.log(process.env.JWT_SECRET)
   const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
-    expiresIn: '30d',
+    expiresIn: jwtExpiration,
   });
   return res.status(200).json({ refreshToken: refreshToken.key, token });
 };

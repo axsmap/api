@@ -16,6 +16,10 @@ module.exports = {
       errors.code = "Should be a string";
     }
 
+    if (data.rememberMe !== undefined && typeof data.rememberMe !== "boolean") {
+      errors.rememberMe = "Should be a boolean";
+    }
+
     return { errors, isValid: isEmpty(errors) };
   },
   validateAppleSignIn(data) {
@@ -62,6 +66,10 @@ module.exports = {
       errors.code = "Should be a string";
     }
 
+    if (data.rememberMe !== undefined && typeof data.rememberMe !== "boolean") {
+      errors.rememberMe = "Should be a boolean";
+    }
+
     return { errors, isValid: isEmpty(errors) };
   },
   validateResetPassword(data) {
@@ -98,6 +106,10 @@ module.exports = {
       errors.password = "Is required";
     } else if (typeof data.password !== "string") {
       errors.password = "Should be a string";
+    }
+
+    if (data.rememberMe !== undefined && typeof data.rememberMe !== "boolean") {
+      errors.rememberMe = "Should be a boolean";
     }
 
     return { errors, isValid: isEmpty(errors) };

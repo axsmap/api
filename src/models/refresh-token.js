@@ -16,6 +16,10 @@ const refreshTokenSchema = new mongoose.Schema(
       type: String,
       maxlength: [24, 'Should have less than 25 characters'],
       required: [true, 'Is required']
+    },
+    rememberMe: {
+      type: Boolean,
+      default: false
     }
   },
   { timestamps: true }
