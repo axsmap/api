@@ -5,6 +5,7 @@ const { Event } = require("../../models/event");
 const { Photo } = require("../../models/photo");
 const { Review } = require("../../models/review");
 const { Team } = require("../../models/team");
+const { User } = require("../../models/user");
 const { Venue } = require("../../models/venue");
 
 const { validateCreateEditReview } = require("./validations");
