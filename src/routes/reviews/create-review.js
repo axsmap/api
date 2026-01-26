@@ -206,18 +206,29 @@ module.exports = async (req, res, next) => {
 
   //subtracts out the 10 standard fields to determine
   var reviewedFieldsCount = Object.keys(review.toObject()).length - 10;
-  req.user.reviewFieldsAmount =
-    req.user.reviewFieldsAmount + reviewedFieldsCount;
-  req.user.reviewsAmount = req.user.reviewsAmount + 1;
-  req.user.updatedAt = moment.utc().toDate();
+  
+  // Fetch user document to update stats (req.user is a plain object after toObject())
+  let userDoc;
+  try {
+    userDoc = await User.findById(data.user);
+  } catch (err) {
+    console.log(`User ${data.user} failed to be found for stats update at create-review`);
+    return next(err);
+  }
+
+  if (!userDoc) {
+    return res.status(404).json({ user: "User not found" });
+  }
+
+  userDoc.reviewFieldsAmount = userDoc.reviewFieldsAmount + reviewedFieldsCount;
+  userDoc.reviewsAmount = userDoc.reviewsAmount + 1;
+  userDoc.updatedAt = moment.utc().toDate();
 
   try {
-    await req.user.save();
+    await userDoc.save();
   } catch (err) {
     console.log(
-      `User ${
-        req.user.id
-      } failed to be updated at create-review, after updated review count`
+      `User ${data.user} failed to be updated at create-review, after updated review count`
     );
     return next(err);
   }
@@ -598,8 +609,8 @@ module.exports = async (req, res, next) => {
     steps: review.steps,
     team: review.team,
     user: review.user,
-    userReviewFieldsAmount: req.user.reviewFieldsAmount,
-    userReviewsAmount: req.user.reviewsAmount,
+    userReviewFieldsAmount: userDoc.reviewFieldsAmount,
+    userReviewsAmount: userDoc.reviewsAmount,
     venue: review.venue,
   };
   return res.status(201).json(dataResponse);
