@@ -168,14 +168,8 @@ const voiceToReview = async (req, res) => {
         return res.status(500).json({ error: "Transcription failed. Please try again." });
       }
 
-      // Check if transcription is too short
-      if (!transcription || transcription.trim().length < 10) {
-        fs.unlinkSync(audioFilePath);
-        return res.status(400).json({ 
-          error: "Recording was too short or unclear. Please describe the accessibility features.",
-          transcription: transcription || ""
-        });
-      }
+      // Log transcription for debugging (removed strict length validation)
+      console.log("[Voice-to-Review] Transcription received:", transcription?.substring(0, 100));
 
       // Step 2: Extract structured review data using GPT-4
       console.log("[Voice-to-Review] Extracting review data...");
