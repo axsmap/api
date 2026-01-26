@@ -31,6 +31,7 @@ module.exports = async (req, res, next) => {
     "disability",
     "gender",
     "race",
+    "frontendUrl",
   ]);
   data.aboutMe = cleanSpaces(data.aboutMe ?? "");
   data.firstName = cleanSpaces(data.firstName);
@@ -143,8 +144,8 @@ module.exports = async (req, res, next) => {
   }
 
   const subject = "Activate Account";
-  // Use FRONTEND_URL environment variable for proper environment-specific links
-  const frontendUrl = process.env.FRONTEND_URL || 'https://axsmap.com';
+  // Use frontendUrl from request or fall back to production URL
+  const frontendUrl = data.frontendUrl || 'https://axsmap.com';
   const textContent = `
     Welcome to AXS Map!
     To activate your account use the link below:

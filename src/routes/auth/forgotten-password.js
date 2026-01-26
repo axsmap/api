@@ -15,6 +15,7 @@ module.exports = async (req, res, next) => {
   }
 
   const email = req.body.email;
+  const requestedFrontendUrl = req.body.frontendUrl;
 
   let user;
   try {
@@ -53,8 +54,8 @@ module.exports = async (req, res, next) => {
     return next(err);
   }
 
-  // Use FRONTEND_URL environment variable for proper environment-specific links
-  const frontendUrl = process.env.FRONTEND_URL || 'https://axsmap.com';
+  // Use frontendUrl from request or fall back to production URL
+  const frontendUrl = requestedFrontendUrl || 'https://axsmap.com';
   const htmlContent = `
     <h3>Hi from AXS Map!</h3>
     <p>To <strong>reset</strong> your password use the <strong>link</strong> below:</p>
