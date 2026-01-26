@@ -53,13 +53,14 @@ module.exports = async (req, res, next) => {
     return next(err);
   }
 
+  // Use FRONTEND_URL environment variable for proper environment-specific links
+  const frontendUrl = process.env.FRONTEND_URL || 'https://axsmap.com';
   const htmlContent = `
     <h3>Hi from AXS Map!</h3>
     <p>To <strong>reset</strong> your password use the <strong>link</strong> below:</p>
     <br/>
-    <a href="
-    https://axsmap.com/reset-password?key=${passwordTicket.key}">
-    https://axsmap.com/reset-password?key=${passwordTicket.key}
+    <a href="${frontendUrl}/reset-password?key=${passwordTicket.key}">
+    ${frontendUrl}/reset-password?key=${passwordTicket.key}
     </a>
     <br/><br/>
     <p>Stay awesome.</p>
@@ -69,7 +70,7 @@ module.exports = async (req, res, next) => {
   const textContent = `
     Hi from AXS Map!
     To reset your password use the link below:
-    ${process.env.APP_URL}/reset-password?key=${passwordTicket.key}
+    ${frontendUrl}/reset-password?key=${passwordTicket.key}
     Stay awesome.
   `;
 

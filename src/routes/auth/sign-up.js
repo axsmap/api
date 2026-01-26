@@ -143,15 +143,16 @@ module.exports = async (req, res, next) => {
   }
 
   const subject = "Activate Account";
-  // TODO change base URL for ACTIVATION
+  // Use FRONTEND_URL environment variable for proper environment-specific links
+  const frontendUrl = process.env.FRONTEND_URL || 'https://axsmap.com';
   const textContent = `
     Welcome to AXS Map!
     To activate your account use the link below:
-    ${process.env.API_URL}/auth/activate-account/${activationTicket.key}
+    ${frontendUrl}/auth/activate-account/${activationTicket.key}
     Stay awesome.
   `;
   const receiversEmails = [activationTicket.email];
-  const activationLink = `https://axsmap.com/auth/activate-account/${activationTicket.key}`;
+  const activationLink = `${frontendUrl}/auth/activate-account/${activationTicket.key}`;
   const name = `${activationTicket?.userData?.firstName ?? ""} ${activationTicket?.userData?.lastName ?? ""}`;
 
   sendEmail({

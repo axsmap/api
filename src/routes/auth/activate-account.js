@@ -136,7 +136,8 @@ module.exports = async (req, res, next) => {
     );
     return next(err);
   }
-  // TODO change base URL
 
-  return res.redirect(`https://axsmap.com/sign-in`);
+  // Use FRONTEND_URL environment variable for proper environment-specific redirects
+  const frontendUrl = process.env.FRONTEND_URL || 'https://axsmap.com';
+  return res.redirect(`${frontendUrl}/sign-in`);
 };
