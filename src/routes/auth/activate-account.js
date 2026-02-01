@@ -44,7 +44,7 @@ module.exports = async (req, res, next) => {
     password: activationTicket?.userData?.password,
     username: activationTicket?.userData?.username,
     aboutMe: activationTicket?.userData?.aboutMe || '',
-    dateOfBirth: activationTicket?.userData?.dateOfBirth || null,
+    birthday: activationTicket?.userData?.dateOfBirth ? new Date(activationTicket.userData.dateOfBirth) : null,
     disability: activationTicket?.userData?.disability || '',
     gender: activationTicket?.userData?.gender || 'not-to-say',
     race: activationTicket?.userData?.race || '',
