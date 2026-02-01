@@ -17,8 +17,8 @@ module.exports = async (req, res, next) => {
   }
 
   let sortBy = "-startDate";
-  let page = queryParams.page ? queryParams.page - 1 : 0;
-  const pageLimit = queryParams.pageLimit || 12;
+  let page = queryParams.page ? parseInt(queryParams.page, 10) - 1 : 0;
+  const pageLimit = parseInt(queryParams.pageLimit, 10) || 12;
 
   const currentDate = moment().utc().toDate();
   eventsQuery.endDate = { $lt: currentDate };

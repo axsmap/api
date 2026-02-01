@@ -19,8 +19,8 @@ module.exports = async (req, res, next) => {
   eventsQuery.isArchived = false;
 
   let sortBy = "-startDate";
-  let page = queryParams.page ? queryParams.page - 1 : 0;
-  const pageLimit = queryParams.pageLimit || 12;
+  let page = queryParams.page ? parseInt(queryParams.page, 10) - 1 : 0;
+  const pageLimit = parseInt(queryParams.pageLimit, 10) || 12;
   const currentDate = moment().startOf("day").utc().toDate();
 
   eventsQuery.startDate = { $gte: currentDate };
