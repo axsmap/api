@@ -143,4 +143,20 @@ module.exports = {
   toJSON(obj) {
     return JSON.parse(JSON.stringify(obj));
   },
+  /**
+   * Normalizes a date to noon UTC to avoid timezone issues.
+   * This ensures the date stays the same regardless of client timezone.
+   * Example: "2026-09-09T00:00:00.000Z" -> "2026-09-09T12:00:00.000Z"
+   * @param {string|Date} dateInput - The date to normalize
+   * @returns {Date|null} - Date at noon UTC or null if invalid
+   */
+  normalizeDateToNoonUTC(dateInput) {
+    if (!dateInput) return null;
+    const date = new Date(dateInput);
+    if (isNaN(date.getTime())) return null;
+    const year = date.getUTCFullYear();
+    const month = date.getUTCMonth();
+    const day = date.getUTCDate();
+    return new Date(Date.UTC(year, month, day, 12, 0, 0, 0));
+  },
 };

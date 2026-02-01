@@ -1,6 +1,6 @@
 const moment = require("moment");
 
-const { cleanSpaces } = require("../../helpers");
+const { cleanSpaces, normalizeDateToNoonUTC } = require("../../helpers");
 const { Photo } = require("../../models/photo");
 const { User } = require("../../models/user");
 
@@ -62,7 +62,7 @@ module.exports = async (req, res, next) => {
 
   user.disabilities = data.disabilities || user.disabilities;
   user.disability = data.disability || "";
-  user.birthday = data.birthday || user.birthday;
+  user.birthday = data.birthday ? normalizeDateToNoonUTC(data.birthday) : user.birthday;
   user.race = data.race || "";
   user.aboutMe = data.aboutMe || "";
 

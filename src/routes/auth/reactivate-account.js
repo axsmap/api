@@ -5,6 +5,7 @@ const moment = require("moment");
 
 const { RefreshToken } = require("../../models/refresh-token");
 const { User } = require("../../models/user");
+const { normalizeDateToNoonUTC } = require("../../helpers");
 
 // Valid race enum values from User model
 const VALID_RACE_VALUES = [
@@ -161,7 +162,7 @@ module.exports = async (req, res, next) => {
   if (showEmail !== undefined) user.showEmail = showEmail;
   if (showPhone !== undefined) user.showPhone = showPhone;
   if (aboutMe !== undefined) user.aboutMe = aboutMe;
-  if (birthday !== undefined) user.birthday = birthday;
+  if (birthday !== undefined) user.birthday = normalizeDateToNoonUTC(birthday);
   if (disability !== undefined) user.disability = disability;
 
   // Normalize race value - handle both new value and existing invalid value

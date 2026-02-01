@@ -8,6 +8,22 @@ const { ActivationTicket } = require("../../models/activation-ticket");
 const { RefreshToken } = require("../../models/refresh-token");
 const { User } = require("../../models/user");
 
+/**
+ * Normalizes a date to noon UTC to avoid timezone issues.
+ * This ensures the date stays the same regardless of client timezone.
+ * @param {string|Date} dateInput - The date to normalize
+ * @returns {Date|null} - Date at noon UTC or null if invalid
+ */
+const normalizeDateToNoonUTC = (dateInput) => {
+  if (!dateInput) return null;
+  const date = new Date(dateInput);
+  if (isNaN(date.getTime())) return null;
+  const year = date.getUTCFullYear();
+  const month = date.getUTCMonth();
+  const day = date.getUTCDate();
+  return new Date(Date.UTC(year, month, day, 12, 0, 0, 0));
+};
+
 module.exports = async (req, res, next) => {
   const key = req.params.key;
 
@@ -44,7 +60,7 @@ module.exports = async (req, res, next) => {
     password: activationTicket?.userData?.password,
     username: activationTicket?.userData?.username,
     aboutMe: activationTicket?.userData?.aboutMe || '',
-    birthday: activationTicket?.userData?.dateOfBirth ? new Date(activationTicket.userData.dateOfBirth) : null,
+    birthday: normalizeDateToNoonUTC(activationTicket?.userData?.dateOfBirth),
     disability: activationTicket?.userData?.disability || '',
     gender: activationTicket?.userData?.gender || 'not-to-say',
     race: activationTicket?.userData?.race || '',
