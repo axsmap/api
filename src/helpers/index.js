@@ -89,7 +89,7 @@ module.exports = {
         }
 
         // Remove sensitive fields before attaching to request
-        req.user = user.toObject();
+        req.user = user.toObject({ virtuals: true });
         delete req.user.__v;
         delete req.user.createdAt;
         delete req.user.isAdmin;
@@ -97,6 +97,7 @@ module.exports = {
         delete req.user.isBlocked;
         delete req.user.hashedPassword;
         delete req.user.updatedAt;
+        delete req.user._id; // Remove _id since we have id from virtuals
 
         return next();
       }
