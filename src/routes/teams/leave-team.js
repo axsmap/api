@@ -2,7 +2,6 @@ const moment = require('moment');
 
 const { Team } = require('../../models/team');
 const { User } = require('../../models/user');
-const { User } = require('../../models/user');
 
 module.exports = async (req, res, next) => {
   const teamId = req.params.teamId;

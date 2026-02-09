@@ -2,7 +2,6 @@ const { cleanSpaces } = require('../../helpers');
 const { Photo } = require('../../models/photo');
 const { Team } = require('../../models/team');
 const { User } = require('../../models/user');
-const { User } = require('../../models/user');
 
 const { validateCreateTeam } = require('./validations');
 

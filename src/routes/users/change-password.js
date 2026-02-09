@@ -2,7 +2,6 @@ const moment = require("moment");
 
 const { RefreshToken } = require("../../models/refresh-token");
 const { User } = require("../../models/user");
-const { User } = require("../../models/user");
 
 const { validateChangePassword } = require("./validations");
 

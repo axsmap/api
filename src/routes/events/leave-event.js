@@ -2,7 +2,6 @@ const moment = require('moment');
 
 const { Event } = require('../../models/event');
 const { User } = require('../../models/user');
-const { User } = require('../../models/user');
 
 module.exports = async (req, res, next) => {
   const eventId = req.params.eventId;
