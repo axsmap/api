@@ -1,6 +1,8 @@
 const moment = require("moment");
 
 const { RefreshToken } = require("../../models/refresh-token");
+const { User } = require("../../models/user");
+const { User } = require("../../models/user");
 
 const { validateChangePassword } = require("./validations");
 
@@ -17,7 +19,19 @@ module.exports = async (req, res, next) => {
   const oldPassword = req.body.oldPassword;
   const password = req.body.password;
 
-  const passwordMatches = req.user.comparePassword(oldPassword);
+  let currentUser;
+  try {
+    currentUser = await User.findById(req.user.id);
+  } catch (err) {
+    console.log(`User ${req.user.id} failed to be found at change-password`);
+    return next(err);
+  }
+
+  if (!currentUser) {
+    return res.status(404).json({ general: "User not found" });
+  }
+
+  const passwordMatches = currentUser.comparePassword(oldPassword);
 
   if (!passwordMatches) {
     return res.status(400).json({ oldPassword: "Wrong password" });
@@ -48,11 +62,11 @@ module.exports = async (req, res, next) => {
     }
   }
 
-  req.user.password = password;
-  req.user.updatedAt = moment.utc().toDate();
+  currentUser.password = password;
+  currentUser.updatedAt = moment.utc().toDate();
 
   try {
-    req.user.save();
+    await currentUser.save();
   } catch (err) {
     console.log(
       `User with Id ${req.user.id} failed to be updated at change-password.`

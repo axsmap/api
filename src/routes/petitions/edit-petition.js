@@ -202,11 +202,11 @@ module.exports = async (req, res, next) => {
             return next(err);
           }
 
-          req.user.events = [...req.user.events, event.id];
-          req.user.updatedAt = moment.utc().toDate();
-
           try {
-            await req.user.save();
+            await User.findByIdAndUpdate(req.user.id, {
+              $push: { events: event.id },
+              $set: { updatedAt: moment.utc().toDate() }
+            });
           } catch (err) {
             console.log(
               `User ${req.user.id} failed to be updated at edit-petition`
@@ -444,11 +444,11 @@ module.exports = async (req, res, next) => {
             return next(err);
           }
 
-          req.user.teams = [...req.user.teams, team.id];
-          req.user.updatedAt = moment.utc().toDate();
-
           try {
-            await req.user.save();
+            await User.findByIdAndUpdate(req.user.id, {
+              $push: { teams: team.id },
+              $set: { updatedAt: moment.utc().toDate() }
+            });
           } catch (err) {
             console.log(
               `User ${req.user.id} failed to be updated at edit-petition`

@@ -2,6 +2,8 @@ const moment = require("moment");
 
 const { Event } = require("../../models/event");
 const { Petition } = require("../../models/petition");
+const { User } = require("../../models/user");
+const { User } = require("../../models/user");
 
 module.exports = async (req, res, next) => {
   const eventId = req.params.eventId;
@@ -53,11 +55,11 @@ module.exports = async (req, res, next) => {
     return next(err);
   }
 
-  req.user.events = [...req.user.events, event.id];
-  req.user.updatedAt = moment.utc().toDate();
-
   try {
-    await req.user.save();
+    await User.findByIdAndUpdate(req.user.id, {
+      $push: { events: event.id },
+      $set: { updatedAt: moment.utc().toDate() }
+    });
   } catch (err) {
     console.log(`User ${req.user.id} failed to be updated at join-event`);
     return next(err);

@@ -6,6 +6,7 @@ const { Event } = require("../../models/event");
 const { cleanSpaces } = require("../../helpers");
 const { Photo } = require("../../models/photo");
 const { Team } = require("../../models/team");
+const { User } = require("../../models/user");
 
 const { validateCreateEvent } = require("./validations");
 const { sendError } = require("../../helpers/Error");
@@ -137,11 +138,11 @@ module.exports = async (req, res, next) => {
     return next(err);
   }
 
-  req.user.events = [...req.user.events, event.id];
-  req.user.updatedAt = moment.utc().toDate();
-
   try {
-    await req.user.save();
+    await User.findByIdAndUpdate(req.user.id, {
+      $push: { events: event.id },
+      $set: { updatedAt: moment.utc().toDate() }
+    });
   } catch (err) {
     console.log(`User ${req.user.id} failed to be updated at create-event`);
     return next(err);
@@ -158,7 +159,8 @@ module.exports = async (req, res, next) => {
     id: event.id,
     address: event.address,
     description: event.description,
-    endDate: event.description,
+    endDate: event.endDate,
+    startDate: event.startDate,
     isOpen: event.isOpen,
     location: eventLocation,
     managers: event.managers,

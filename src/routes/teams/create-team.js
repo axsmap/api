@@ -1,6 +1,8 @@
 const { cleanSpaces } = require('../../helpers');
 const { Photo } = require('../../models/photo');
 const { Team } = require('../../models/team');
+const { User } = require('../../models/user');
+const { User } = require('../../models/user');
 
 const { validateCreateTeam } = require('./validations');
 
@@ -66,10 +68,11 @@ module.exports = async (req, res, next) => {
     return next(err);
   }
 
-  req.user.teams = [...req.user.teams, team.id];
-
   try {
-    await req.user.save();
+    await User.findByIdAndUpdate(req.user.id, {
+      $push: { teams: team.id },
+      $set: { updatedAt: new Date() }
+    });
   } catch (err) {
     console.log(`User ${req.user.id} failed to be updated at create-team`);
     return next(err);

@@ -1,6 +1,8 @@
 const moment = require('moment');
 
 const { Event } = require('../../models/event');
+const { User } = require('../../models/user');
+const { User } = require('../../models/user');
 
 module.exports = async (req, res, next) => {
   const eventId = req.params.eventId;
@@ -55,11 +57,11 @@ module.exports = async (req, res, next) => {
     return next(err);
   }
 
-  req.user.events = req.user.events.filter((e) => e.toString() !== event.id);
-  req.user.updatedAt = today.toDate();
-
   try {
-    await req.user.save();
+    await User.findByIdAndUpdate(req.user.id, {
+      $pull: { events: event.id },
+      $set: { updatedAt: today.toDate() }
+    });
   } catch (err) {
     console.log(`User ${req.user.id} failed to be updated at leave-event`);
     return next(err);

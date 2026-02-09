@@ -1,6 +1,8 @@
 const moment = require('moment');
 
 const { Team } = require('../../models/team');
+const { User } = require('../../models/user');
+const { User } = require('../../models/user');
 
 module.exports = async (req, res, next) => {
   const teamId = req.params.teamId;
@@ -45,11 +47,11 @@ module.exports = async (req, res, next) => {
     return next(err);
   }
 
-  req.user.teams = req.user.teams.filter((t) => t.toString() !== team.id);
-  req.user.updatedAt = today.toDate();
-
   try {
-    await req.user.save();
+    await User.findByIdAndUpdate(req.user.id, {
+      $pull: { teams: team.id },
+      $set: { updatedAt: today.toDate() }
+    });
   } catch (err) {
     console.log(`User ${req.user.id} failed to be updated at leave-team`);
     return next(err);
