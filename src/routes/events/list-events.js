@@ -25,13 +25,16 @@ module.exports = async (req, res, next) => {
   const pageLimit = queryParams.pageLimit ? parseInt(queryParams.pageLimit, 10) : 12;
   const currentDate = moment().startOf("day").utc().toDate();
 
-  // Handle status filter for active/inactive mapathons
+  // Handle status filter for active/inactive/upcoming mapathons
   // status=active: currently running (startDate <= today AND endDate >= today)
+  // status=upcoming: future events (startDate > today)
   // status=inactive: past events (endDate < today)
   // status=all or no status: return all events (no date filter)
   if (queryParams.status === "active") {
     eventsQuery.startDate = { $lte: currentDate };
     eventsQuery.endDate = { $gte: currentDate };
+  } else if (queryParams.status === "upcoming") {
+    eventsQuery.startDate = { $gt: currentDate };
   } else if (queryParams.status === "inactive") {
     eventsQuery.endDate = { $lt: currentDate };
   }

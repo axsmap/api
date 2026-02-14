@@ -469,6 +469,14 @@ module.exports = {
       }
     }
 
+    // --- status validation ---
+    if (queryParams.status !== undefined) {
+      const validStatuses = ["active", "inactive", "upcoming", "all"];
+      if (!validStatuses.includes(queryParams.status)) {
+        errors.status = "Should be one of: active, inactive, upcoming, all";
+      }
+    }
+
     return { errors, isValid: isEmpty(errors) };
   },
 };
