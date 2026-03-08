@@ -1,4 +1,5 @@
 const moment = require("moment");
+const mongoose = require("mongoose");
 
 const { Event } = require("../../models/event");
 
@@ -44,7 +45,7 @@ module.exports = async (req, res, next) => {
       });
     }
     eventsQuery.status = "draft";
-    eventsQuery.managers = req.user.id;
+    eventsQuery.managers = new mongoose.Types.ObjectId(req.user.id);
   } else {
     // Exclude drafts from all public listings
     eventsQuery.status = { $ne: "draft" };
