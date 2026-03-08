@@ -109,6 +109,15 @@ const eventSchema = new mongoose.Schema(
       type: Date,
       required: [true, 'Is required']
     },
+    status: {
+      type: String,
+      enum: {
+        values: ['draft', 'active', 'closed'],
+        message: 'Should be draft, active, or closed'
+      },
+      default: 'active',
+      required: [true, 'Is required']
+    },
     teamManager: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Team'

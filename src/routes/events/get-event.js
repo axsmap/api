@@ -160,6 +160,7 @@ module.exports = async (req, res, next) => {
           reviewsAmount: 1,
           reviewsGoal: 1,
           startDate: 1,
+          status: 1,
           teamManager: 1,
           teams: 1
         }

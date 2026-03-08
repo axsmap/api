@@ -25,20 +25,40 @@ module.exports = async (req, res, next) => {
   const pageLimit = queryParams.pageLimit ? parseInt(queryParams.pageLimit, 10) : 12;
   const currentDate = moment().startOf("day").utc().toDate();
 
-  // Handle status filter for active/inactive/upcoming mapathons
+  // Handle status filter for active/inactive/upcoming/draft mapathons
+  // status=draft: only drafts created by the authenticated user
   // status=active: currently running (startDate <= today AND endDate >= today)
   // status=upcoming: future events (startDate > today)
   // status=inactive: past events (endDate < today)
-  // status=all or no status: return all events (no date filter)
-  if (queryParams.status === "active") {
-    eventsQuery.startDate = { $lte: currentDate };
-    eventsQuery.endDate = { $gte: currentDate };
-  } else if (queryParams.status === "upcoming") {
-    eventsQuery.startDate = { $gt: currentDate };
-  } else if (queryParams.status === "inactive") {
-    eventsQuery.endDate = { $lt: currentDate };
+  // status=all or no status: return all non-draft events (no date filter)
+  if (queryParams.status === "draft") {
+    if (!req.user) {
+      // Unauthenticated users cannot see drafts
+      return res.status(200).json({
+        page: 1,
+        lastPage: null,
+        pageLimit,
+        total: 0,
+        sortBy,
+        results: [],
+      });
+    }
+    eventsQuery.status = "draft";
+    eventsQuery.managers = req.user.id;
+  } else {
+    // Exclude drafts from all public listings
+    eventsQuery.status = { $ne: "draft" };
+
+    if (queryParams.status === "active") {
+      eventsQuery.startDate = { $lte: currentDate };
+      eventsQuery.endDate = { $gte: currentDate };
+    } else if (queryParams.status === "upcoming") {
+      eventsQuery.startDate = { $gt: currentDate };
+    } else if (queryParams.status === "inactive") {
+      eventsQuery.endDate = { $lt: currentDate };
+    }
+    // If status is "all" or not provided, no date filter is applied
   }
-  // If status is "all" or not provided, no date filter is applied
 
   const isTest =
     typeof queryParams.isTest === "boolean"
@@ -67,6 +87,7 @@ module.exports = async (req, res, next) => {
           reviewsAmount: 1,
           reviewsGoal: 1,
           startDate: 1,
+          status: 1,
           location: 1,
           description: 1,
           isOpen: 1,

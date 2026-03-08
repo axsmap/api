@@ -68,6 +68,14 @@ typings/
 
 # Documentation (local only)
 docs/*.md
+*.md
+!README.md
+
+# Backups
+backups/
+
+# Migration/utility scripts (local only)
+src/scripts/
 
 # AWS Lambda function (managed separately)
 src/AWSLambaFunction

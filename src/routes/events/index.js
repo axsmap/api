@@ -12,16 +12,22 @@ const listOldEvents = require("./list-old-events");
 const joinEvent = require("./join-event");
 const listUpcoimgEvents = require("./list-upcoimg-events");
 const JoinedEvents = require("./joined-events");
+const publishEvent = require("./publish-event");
 
 const router = new express.Router();
 
-router.get("", listEvents);
+router.get("", isAuthenticated({ isOptional: true }), listEvents);
 router.get("/joinedEvents", JoinedEvents);
 router.get("/old", isAuthenticated({ isOptional: false }), listOldEvents);
 router.get("/upComing", listUpcoimgEvents);
 router.post("", isAuthenticated({ isOptional: false }), createEvent);
 router.get("/:eventId", getEvent);
 router.put("/:eventId", isAuthenticated({ isOptional: false }), editEvent);
+router.put(
+  "/:eventId/publish",
+  isAuthenticated({ isOptional: false }),
+  publishEvent
+);
 router.delete("/:eventId", isAuthenticated({ isOptional: false }), deleteEvent);
 router.post(
   "/:eventId/join",

@@ -127,6 +127,13 @@ module.exports = {
       errors.poster = "Should be a string";
     }
 
+    if (typeof data.status !== "undefined") {
+      const validStatuses = ["draft", "active"];
+      if (!validStatuses.includes(data.status)) {
+        errors.status = 'Should be "draft" or "active"';
+      }
+    }
+
     if (typeof data.reviewsGoal === "undefined") {
       errors.reviewsGoal = "Is required";
     } else if (typeof data.reviewsGoal !== "number") {
@@ -471,9 +478,9 @@ module.exports = {
 
     // --- status validation ---
     if (queryParams.status !== undefined) {
-      const validStatuses = ["active", "inactive", "upcoming", "all"];
+      const validStatuses = ["active", "inactive", "upcoming", "draft", "all"];
       if (!validStatuses.includes(queryParams.status)) {
-        errors.status = "Should be one of: active, inactive, upcoming, all";
+        errors.status = "Should be one of: active, inactive, upcoming, draft, all";
       }
     }
 

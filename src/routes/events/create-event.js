@@ -26,6 +26,7 @@ module.exports = async (req, res, next) => {
     poster: req.body.poster,
     reviewsGoal: req.body.reviewsGoal,
     startDate: req.body.startDate,
+    status: req.body.status,
     teamManager: req.body.teamManager,
   };
 
@@ -168,6 +169,7 @@ module.exports = async (req, res, next) => {
     participantsGoal: event.participantsGoal,
     poster: event.poster,
     reviewsGoal: event.reviewsGoal,
+    status: event.status,
     teamManager: event.teamManager,
   };
 

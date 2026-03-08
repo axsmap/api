@@ -37,13 +37,10 @@ module.exports = async (req, res, next) => {
     return res.status(403).json({ general: "Forbidden action" });
   }
 
-  const endDate = moment(event.endDate).utc();
-  const today = moment.utc();
-
-  if (endDate.isBefore(today) && event.reviews > 0) {
-    return res.status(423).json({
-      general:
-        "It cannot be removed because it already ended and has one or more reviews",
+  // Only allow deletion if the event is a draft OR has no participants
+  if (event.status !== "draft" && event.participants && event.participants.length > 0) {
+    return res.status(400).json({
+      general: "This Mapathon can't be deleted because people have already participated.",
     });
   }
 
