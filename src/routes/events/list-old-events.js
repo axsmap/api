@@ -22,6 +22,7 @@ module.exports = async (req, res, next) => {
 
   const currentDate = moment().utc().toDate();
   eventsQuery.endDate = { $lt: currentDate };
+  eventsQuery.status = { $ne: "draft" };
   eventsQuery.$or = [
     { managers: req?.user?.id },
     { participants: req?.user?.id },
@@ -54,6 +55,7 @@ module.exports = async (req, res, next) => {
           reviewsAmount: 1,
           reviewsGoal: 1,
           startDate: 1,
+          status: 1,
           location: 1,
           description: 1,
         })

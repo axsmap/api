@@ -21,6 +21,10 @@ module.exports = async (req, res, next) => {
     return res.status(404).json({ general: "Event not found" });
   }
 
+  if (event.status === "draft") {
+    return res.status(400).json({ general: "Cannot join a draft mapathon" });
+  }
+
   const endDate = moment(event.endDate).utc();
   const today = moment.utc();
 

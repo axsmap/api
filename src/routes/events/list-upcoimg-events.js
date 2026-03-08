@@ -17,6 +17,7 @@ module.exports = async (req, res, next) => {
   }
 
   eventsQuery.isArchived = false;
+  eventsQuery.status = { $ne: "draft" };
 
   let sortBy = "-startDate";
   let page = queryParams.page ? parseInt(queryParams.page, 10) - 1 : 0;
@@ -52,6 +53,7 @@ module.exports = async (req, res, next) => {
           reviewsAmount: 1,
           reviewsGoal: 1,
           startDate: 1,
+          status: 1,
           location: 1,
           description: 1,
         })

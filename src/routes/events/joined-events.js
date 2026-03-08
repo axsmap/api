@@ -21,6 +21,7 @@ module.exports = async (req, res) => {
 
   eventsQuery.startDate = { $lte: currentDate };
   eventsQuery.endDate = { $gte: currentDate };
+  eventsQuery.status = { $ne: "draft" };
   eventsQuery.$or = [{ managers: userId }, { participants: userId }];
 
   const queryParams = req.query;
