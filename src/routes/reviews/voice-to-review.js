@@ -18,26 +18,19 @@ const storage = multer.diskStorage({
     cb(null, `voice-review-${uniqueSuffix}${path.extname(file.originalname)}`);
   },
 });
-
 const fileFilter = (req, file, cb) => {
-  const allowedMimes = [
-    "audio/webm",
-    "audio/mp3",
-    "audio/mpeg",
-    "audio/wav",
-    "audio/wave",
-    "audio/x-wav",
-    "audio/m4a",
-    "audio/mp4",
-    "audio/ogg",
-    "audio/flac",
-  ];
+  // DEBUG: Log every file upload attempt - if you don't see this, server has old code
+  console.log("=== [Voice-to-Review] FILE FILTER CALLED ===");
+  console.log(`[Voice-to-Review] File info:`, {
+    originalname: file.originalname,
+    mimetype: file.mimetype,
+    fieldname: file.fieldname,
+    encoding: file.encoding,
+  }); // Accept ALL files - let Whisper validate the actual audio content
+  // This avoids issues with browsers sending incorrect MIME types
 
-  if (allowedMimes.includes(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(new Error(`Invalid audio format: ${file.mimetype}`), false);
-  }
+  console.log(`[Voice-to-Review] Accepting file: ${file.originalname}`);
+  cb(null, true);
 };
 
 const upload = multer({
@@ -119,13 +112,23 @@ Return ONLY a valid JSON object with these exact fields:
  * Accepts audio file, transcribes it using Whisper, and extracts structured review data using GPT-4
  */
 const voiceToReview = async (req, res) => {
-  // Handle file upload
+  // DEBUG: Log when endpoint is hit - if you don't see this, route isn't reached
+  console.log("=== [Voice-to-Review] ENDPOINT HIT ===");
+  console.log(`[Voice-to-Review] Content-Type: ${req.headers["content-type"]}`); // Handle file upload
+
   upload(req, res, async (uploadErr) => {
+    console.log("=== [Voice-to-Review] MULTER CALLBACK ===");
+    console.log(`[Voice-to-Review] Upload error:`, uploadErr);
+    console.log(`[Voice-to-Review] File received:`, req.file ? "YES" : "NO");
     if (uploadErr) {
       if (uploadErr.code === "LIMIT_FILE_SIZE") {
-        return res.status(400).json({ error: "Audio file too large (max 25MB)" });
+        return res
+          .status(400)
+          .json({ error: "Audio file too large (max 25MB)" });
       }
-      return res.status(400).json({ error: uploadErr.message || "File upload failed" });
+      return res
+        .status(400)
+        .json({ error: uploadErr.message || "File upload failed" });
     }
 
     if (!req.file) {
@@ -143,13 +146,14 @@ const voiceToReview = async (req, res) => {
       }
 
       console.log(`[Voice-to-Review] Processing audio for place: ${placeId}`);
-      console.log(`[Voice-to-Review] Audio file: ${audioFilePath}, size: ${req.file.size} bytes`);
+      console.log(
+        `[Voice-to-Review] Audio file: ${audioFilePath}, size: ${req.file.size} bytes`,
+      );
 
       const openai = new OPENAI({
         apiKey: process.env.OPENAI_API_KEY,
-      });
+      }); // Step 1: Transcribe audio using Whisper
 
-      // Step 1: Transcribe audio using Whisper
       console.log("[Voice-to-Review] Starting transcription...");
       let transcription;
       try {
@@ -161,17 +165,25 @@ const voiceToReview = async (req, res) => {
           response_format: "text",
         });
         transcription = transcriptionResponse;
-        console.log(`[Voice-to-Review] Transcription complete: "${transcription.substring(0, 100)}..."`);
+        console.log(
+          `[Voice-to-Review] Transcription complete: "${transcription.substring(0, 100)}..."`,
+        );
       } catch (transcriptionError) {
-        console.error("[Voice-to-Review] Transcription failed:", transcriptionError.message);
+        console.error(
+          "[Voice-to-Review] Transcription failed:",
+          transcriptionError.message,
+        );
         fs.unlinkSync(audioFilePath);
-        return res.status(500).json({ error: "Transcription failed. Please try again." });
-      }
+        return res
+          .status(500)
+          .json({ error: "Transcription failed. Please try again." });
+      } // Log transcription for debugging (removed strict length validation)
 
-      // Log transcription for debugging (removed strict length validation)
-      console.log("[Voice-to-Review] Transcription received:", transcription?.substring(0, 100));
+      console.log(
+        "[Voice-to-Review] Transcription received:",
+        transcription?.substring(0, 100),
+      ); // Step 2: Extract structured review data using GPT-4
 
-      // Step 2: Extract structured review data using GPT-4
       console.log("[Voice-to-Review] Extracting review data...");
       let extractedReview;
       try {
@@ -191,9 +203,8 @@ const voiceToReview = async (req, res) => {
           max_tokens: 1000,
         });
 
-        const responseContent = extractionResponse.choices[0].message.content;
-        
-        // Parse JSON response
+        const responseContent = extractionResponse.choices[0].message.content; // Parse JSON response
+
         try {
           // Handle potential markdown code blocks
           let jsonStr = responseContent;
@@ -204,9 +215,11 @@ const voiceToReview = async (req, res) => {
           }
           extractedReview = JSON.parse(jsonStr.trim());
         } catch (parseError) {
-          console.error("[Voice-to-Review] JSON parse error:", parseError.message);
-          console.error("[Voice-to-Review] Raw response:", responseContent);
-          // Return partial result with just the transcription
+          console.error(
+            "[Voice-to-Review] JSON parse error:",
+            parseError.message,
+          );
+          console.error("[Voice-to-Review] Raw response:", responseContent); // Return partial result with just the transcription
           extractedReview = {
             steps: null,
             has1Step: null,
@@ -230,35 +243,52 @@ const voiceToReview = async (req, res) => {
 
         console.log("[Voice-to-Review] Extraction complete");
       } catch (extractionError) {
-        console.error("[Voice-to-Review] Extraction failed:", extractionError.message);
-        // Return just the transcription if extraction fails
+        console.error(
+          "[Voice-to-Review] Extraction failed:",
+          extractionError.message,
+        ); // Return just the transcription if extraction fails
         extractedReview = {
           comments: transcription,
         };
-      }
+      } // Clean up audio file
 
-      // Clean up audio file
-      fs.unlinkSync(audioFilePath);
+      fs.unlinkSync(audioFilePath); // Calculate confidence based on how many fields were extracted
 
-      // Calculate confidence based on how many fields were extracted
       const allFields = [
-        "steps", "has1Step", "has2Step", "hasPermanentRamp", "hasPortableRamp",
-        "hasWideEntrance", "hasSecondEntry", "hasParking", "hasWheelchairParking",
-        "multipleFloors", "hasAccessibleElevator", "hasWellLit", "brightLightTitle",
-        "hasWashroom", "hasSupportAroundToilet", "hasLoweredSinks"
+        "steps",
+        "has1Step",
+        "has2Step",
+        "hasPermanentRamp",
+        "hasPortableRamp",
+        "hasWideEntrance",
+        "hasSecondEntry",
+        "hasParking",
+        "hasWheelchairParking",
+        "multipleFloors",
+        "hasAccessibleElevator",
+        "hasWellLit",
+        "brightLightTitle",
+        "hasWashroom",
+        "hasSupportAroundToilet",
+        "hasLoweredSinks",
       ];
-      
+
       const extractedFields = allFields.filter(
-        field => extractedReview[field] !== null && extractedReview[field] !== undefined
+        (field) =>
+          extractedReview[field] !== null &&
+          extractedReview[field] !== undefined,
       );
 
       const confidence = {
-        overall: Math.round((extractedFields.length / allFields.length) * 100) / 100,
+        overall:
+          Math.round((extractedFields.length / allFields.length) * 100) / 100,
         fieldsExtracted: extractedFields.length,
         totalFields: allFields.length,
       };
 
-      console.log(`[Voice-to-Review] Success - ${extractedFields.length} fields extracted`);
+      console.log(
+        `[Voice-to-Review] Success - ${extractedFields.length} fields extracted`,
+      );
 
       return res.status(200).json({
         success: true,
@@ -266,17 +296,15 @@ const voiceToReview = async (req, res) => {
         extractedReview,
         confidence,
       });
-
     } catch (error) {
-      console.error("[Voice-to-Review] Unexpected error:", error);
-      
-      // Clean up audio file if it exists
+      console.error("[Voice-to-Review] Unexpected error:", error); // Clean up audio file if it exists
+
       if (fs.existsSync(audioFilePath)) {
         fs.unlinkSync(audioFilePath);
       }
 
-      return res.status(500).json({ 
-        error: "Failed to process voice review. Please try again." 
+      return res.status(500).json({
+        error: "Failed to process voice review. Please try again.",
       });
     }
   });
