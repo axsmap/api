@@ -1,0 +1,148 @@
+diff --git a/src/routes/reviews/create-review.js b/src/routes/reviews/create-review.js
+index 141f849..2b09dc4 100644
+--- a/src/routes/reviews/create-review.js
++++ b/src/routes/reviews/create-review.js
+@@ -8,9 +8,6 @@ const { Team } = require("../../models/team");
+ const { User } = require("../../models/user");
+ const { Venue } = require("../../models/venue");
+ 
+-const { validateCreateEditReview } = require("./validations");
+-const venueReviewSummary = require("../../helpers/venue-review-summary.js");
+-
+ module.exports = async (req, res, next) => {
+   // const { errors, isValid } = validateCreateEditReview(req.body);
+   // if (!isValid) return res.status(400).json(errors);
+@@ -33,7 +30,7 @@ module.exports = async (req, res, next) => {
+     hasPermanentRamp: req.body.hasPermanentRamp,
+     hasLoweredSinks: req.body.hasLoweredSinks,
+     hasPortableRamp: req.body.hasPortableRamp,
+-    hasWheelchairParking:req.body.hasWheelchairParking,
++    hasWheelchairParking: req.body.hasWheelchairParking,
+ 
+     // hasAccessibleTableHeight: req.body.hasAccessibleTableHeight,
+     // hasInteriorRamp: req.body.hasInteriorRamp,
+@@ -51,7 +48,6 @@ module.exports = async (req, res, next) => {
+     comments: req.body.comments,
+   };
+ 
+-
+   let event;
+   if (data.event) {
+     try {
+@@ -113,7 +109,7 @@ module.exports = async (req, res, next) => {
+     venue = await Venue.findOne({ placeId });
+   } catch (err) {
+     console.log(
+-      `Venue with placeId ${placeId} failed to be found at create-review`
++      `Venue with placeId ${placeId} failed to be found at create-review`,
+     );
+     return next(err);
+   }
+@@ -124,11 +120,11 @@ module.exports = async (req, res, next) => {
+       response = await axios.get(
+         `https://maps.googleapis.com/maps/api/place/details/json?placeid=${placeId}&key=${
+           process.env.PLACES_API_KEY
+-        }`
++        }`,
+       );
+     } catch (err) {
+       console.log(
+-        `Place ${placeId} failed to be found at create-review, after Google search`
++        `Place ${placeId} failed to be found at create-review, after Google search`,
+       );
+       return next(err);
+     }
+@@ -157,8 +153,8 @@ module.exports = async (req, res, next) => {
+     } catch (err) {
+       console.log(
+         `Venue failed to be created at create-review.\nData: ${JSON.stringify(
+-          venueData
+-        )}`
++          venueData,
++        )}`,
+       );
+       return next(err);
+     }
+@@ -181,8 +177,8 @@ module.exports = async (req, res, next) => {
+ 
+     console.log(
+       `Review failed to be created at create-review.\nData: ${JSON.stringify(
+-        data
+-      )}`
++        data,
++      )}`,
+     );
+     return next(err);
+   }
+@@ -207,13 +203,15 @@ module.exports = async (req, res, next) => {
+ 
+   //subtracts out the 10 standard fields to determine
+   var reviewedFieldsCount = Object.keys(review.toObject()).length - 10;
+-  
++
+   // Fetch user document to update stats (req.user is a plain object after toObject())
+   let userDoc;
+   try {
+     userDoc = await User.findById(data.user);
+   } catch (err) {
+-    console.log(`User ${data.user} failed to be found for stats update at create-review`);
++    console.log(
++      `User ${data.user} failed to be found for stats update at create-review`,
++    );
+     return next(err);
+   }
+ 
+@@ -229,7 +227,7 @@ module.exports = async (req, res, next) => {
+     await userDoc.save();
+   } catch (err) {
+     console.log(
+-      `User ${data.user} failed to be updated at create-review, after updated review count`
++      `User ${data.user} failed to be updated at create-review, after updated review count`,
+     );
+     return next(err);
+   }
+@@ -241,7 +239,7 @@ module.exports = async (req, res, next) => {
+       await event.save();
+     } catch (err) {
+       console.log(
+-        `Event ${event.id} failed to be updated at create-review, after event`
++        `Event ${event.id} failed to be updated at create-review, after event`,
+       );
+       return next(err);
+     }
+@@ -253,7 +251,7 @@ module.exports = async (req, res, next) => {
+       photo = await Photo.findOne({ url: req.body.photo });
+     } catch (err) {
+       console.log(
+-        `Photo ${req.body.photo} failed to be found at create-review`
++        `Photo ${req.body.photo} failed to be found at create-review`,
+       );
+       return next(err);
+     }
+@@ -268,7 +266,7 @@ module.exports = async (req, res, next) => {
+       await venue.save();
+     } catch (err) {
+       console.log(
+-        `Venue ${venue.id} failed to be updated at create-review, after photos`
++        `Venue ${venue.id} failed to be updated at create-review, after photos`,
+       );
+       return next(err);
+     }
+@@ -281,7 +279,7 @@ module.exports = async (req, res, next) => {
+       await team.save();
+     } catch (err) {
+       console.log(
+-        `Team ${team.id} failed to be updated at create-review, after team`
++        `Team ${team.id} failed to be updated at create-review, after team`,
+       );
+       return next(err);
+     }
+@@ -568,7 +566,7 @@ module.exports = async (req, res, next) => {
+     await venue.save();
+   } catch (err) {
+     console.log(
+-      `Venue ${venue.id} failed to be updated at create-review, at final step`
++      `Venue ${venue.id} failed to be updated at create-review, at final step`,
+     );
+     return next(err);
+   }

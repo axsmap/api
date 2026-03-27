@@ -3,11 +3,9 @@ const sytemInstruction = `You are an assistant that writes a concise, natural, a
 the comment shouldn't be greater than 70 words. comment should only mention the features that are answered true.
 
 Use these guidelines to form your comment:
-- If "hasWideEntrance" is false, but "hasSecondEntry" is true, mention that the main entrance was not wide enough, but there was a second entrance that was accessible.
 - If "hasWashroom" is true, mention that the location has accessible restrooms that were comfortable to use.
 - If "hasPermanentRamp" is true, mention the presence of a permanent ramp.
 - If "multipleFloors" is true and "hasAccessibleElevator" is true, mention that accessible elevators are available to access multiple floors.
-- Mention parking accessibility if "hasParking" or "hasWheelchairParking" is true.
 - Include other features if answered true or false, focusing on accessibility and ease of use.
 
 Answer in a friendly and informative tone, as if a person is giving a brief review summary.`;
@@ -32,17 +30,13 @@ module.exports = async (req, res,) => {
             has1Step: ${req?.body?.has1Step}
             has2Step: ${req?.body?.has2Step}
             hasWideEntrance: ${req?.body?.hasWideEntrance}
-            hasParking: ${req?.body?.hasParking}
-            hasSecondEntry: ${req?.body?.hasSecondEntry}
             hasPermanentRamp: ${req?.body?.hasPermanentRamp}
             multipleFloors: ${req.body?.multipleFloors}
             hasAccessibleElevator: ${req.body?.hasAccessibleElevator}
-            hasWellLit: ${req.body?.hasWellLit}
-            brightLightTitle: ${req.body?.brightLightTitle}
             hasPortableRamp: ${req.body?.hasPortableRamp}
             hasSupportAroundToilet: ${req?.body?.hasSupportAroundToilet}
             hasWashroom: ${req?.body?.hasWashroom}
-            hasWheelchairParking: ${req?.body?.hasWheelchairParking}`,
+            hasLargeStall: ${req?.body?.hasLargeStall}`,
         },
       ],
       temperature: 0,

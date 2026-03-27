@@ -70,20 +70,13 @@ INTERIOR:
 - "no elevator" → hasAccessibleElevator: false
 - "multiple floors" or "upstairs" or "second floor" → multipleFloors: true
 - "single floor" or "one level" → multipleFloors: false
-- "well lit" or "bright" or "good lighting" → hasWellLit: true
-- "dark" or "dim" or "poorly lit" → hasWellLit: false
-- "flashing lights" or "strobe" → brightLightTitle: true
 
 BATHROOM:
 - "bathroom accessible" or "accessible restroom" → hasWashroom: true
 - "no accessible bathroom" → hasWashroom: false
+- "wheelchair stall" or "accessible stall" → hasLargeStall: true
 - "grab bars" or "support bars" or "handles by toilet" → hasSupportAroundToilet: true
 - "lowered sinks" or "accessible sinks" → hasLoweredSinks: true
-
-PARKING:
-- "parking" or "parking lot" → hasParking: true
-- "no parking" → hasParking: false
-- "wheelchair parking" or "handicap parking" or "accessible parking" → hasWheelchairParking: true
 
 OUTPUT FORMAT:
 Return ONLY a valid JSON object with these exact fields:
@@ -94,14 +87,10 @@ Return ONLY a valid JSON object with these exact fields:
   "hasPermanentRamp": boolean or null,
   "hasPortableRamp": boolean or null,
   "hasWideEntrance": boolean or null,
-  "hasSecondEntry": boolean or null,
-  "hasParking": boolean or null,
-  "hasWheelchairParking": boolean or null,
   "multipleFloors": boolean or null,
   "hasAccessibleElevator": boolean or null,
-  "hasWellLit": boolean or null,
-  "brightLightTitle": boolean or null,
   "hasWashroom": boolean or null,
+  "hasLargeStall": boolean or null,
   "hasSupportAroundToilet": boolean or null,
   "hasLoweredSinks": boolean or null,
   "comments": "cleaned transcription text"
@@ -227,14 +216,10 @@ const voiceToReview = async (req, res) => {
             hasPermanentRamp: null,
             hasPortableRamp: null,
             hasWideEntrance: null,
-            hasSecondEntry: null,
-            hasParking: null,
-            hasWheelchairParking: null,
             multipleFloors: null,
             hasAccessibleElevator: null,
-            hasWellLit: null,
-            brightLightTitle: null,
             hasWashroom: null,
+            hasLargeStall: null,
             hasSupportAroundToilet: null,
             hasLoweredSinks: null,
             comments: transcription,
@@ -261,14 +246,10 @@ const voiceToReview = async (req, res) => {
         "hasPermanentRamp",
         "hasPortableRamp",
         "hasWideEntrance",
-        "hasSecondEntry",
-        "hasParking",
-        "hasWheelchairParking",
         "multipleFloors",
         "hasAccessibleElevator",
-        "hasWellLit",
-        "brightLightTitle",
         "hasWashroom",
+        "hasLargeStall",
         "hasSupportAroundToilet",
         "hasLoweredSinks",
       ];

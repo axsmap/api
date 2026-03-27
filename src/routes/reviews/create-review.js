@@ -8,32 +8,25 @@ const { Team } = require("../../models/team");
 const { User } = require("../../models/user");
 const { Venue } = require("../../models/venue");
 
-const { validateCreateEditReview } = require("./validations");
-const venueReviewSummary = require("../../helpers/venue-review-summary.js");
-
 module.exports = async (req, res, next) => {
   // const { errors, isValid } = validateCreateEditReview(req.body);
   // if (!isValid) return res.status(400).json(errors);
 
   const data = {
     // existing fields
-    hasParking: req.body.hasParking,
-    hasWellLit: req.body.hasWellLit,
     steps: req.body.steps,
     hasWideEntrance: req.body.hasWideEntrance,
     hasAccessibleElevator: req.body.hasAccessibleElevator,
     hasSupportAroundToilet: req.body.hasSupportAroundToilet,
+    hasLargeStall: req.body.hasLargeStall,
     // new added fields
     has2Step: req.body.has2Step,
     has1Step: req.body.has1Step,
     multipleFloors: req.body.multipleFloors,
     hasWashroom: req.body.hasWashroom,
-    brightLightTitle: req.body.brightLightTitle,
-    hasSecondEntry: req.body.hasSecondEntry,
     hasPermanentRamp: req.body.hasPermanentRamp,
     hasLoweredSinks: req.body.hasLoweredSinks,
     hasPortableRamp: req.body.hasPortableRamp,
-    hasWheelchairParking:req.body.hasWheelchairParking,
 
     // hasAccessibleTableHeight: req.body.hasAccessibleTableHeight,
     // hasInteriorRamp: req.body.hasInteriorRamp,
@@ -50,7 +43,6 @@ module.exports = async (req, res, next) => {
     user: req.user._id || req.user.id,
     comments: req.body.comments,
   };
-
 
   let event;
   if (data.event) {
@@ -113,7 +105,7 @@ module.exports = async (req, res, next) => {
     venue = await Venue.findOne({ placeId });
   } catch (err) {
     console.log(
-      `Venue with placeId ${placeId} failed to be found at create-review`
+      `Venue with placeId ${placeId} failed to be found at create-review`,
     );
     return next(err);
   }
@@ -124,11 +116,11 @@ module.exports = async (req, res, next) => {
       response = await axios.get(
         `https://maps.googleapis.com/maps/api/place/details/json?placeid=${placeId}&key=${
           process.env.PLACES_API_KEY
-        }`
+        }`,
       );
     } catch (err) {
       console.log(
-        `Place ${placeId} failed to be found at create-review, after Google search`
+        `Place ${placeId} failed to be found at create-review, after Google search`,
       );
       return next(err);
     }
@@ -157,8 +149,8 @@ module.exports = async (req, res, next) => {
     } catch (err) {
       console.log(
         `Venue failed to be created at create-review.\nData: ${JSON.stringify(
-          venueData
-        )}`
+          venueData,
+        )}`,
       );
       return next(err);
     }
@@ -181,8 +173,8 @@ module.exports = async (req, res, next) => {
 
     console.log(
       `Review failed to be created at create-review.\nData: ${JSON.stringify(
-        data
-      )}`
+        data,
+      )}`,
     );
     return next(err);
   }
@@ -207,13 +199,15 @@ module.exports = async (req, res, next) => {
 
   //subtracts out the 10 standard fields to determine
   var reviewedFieldsCount = Object.keys(review.toObject()).length - 10;
-  
+
   // Fetch user document to update stats (req.user is a plain object after toObject())
   let userDoc;
   try {
     userDoc = await User.findById(data.user);
   } catch (err) {
-    console.log(`User ${data.user} failed to be found for stats update at create-review`);
+    console.log(
+      `User ${data.user} failed to be found for stats update at create-review`,
+    );
     return next(err);
   }
 
@@ -229,7 +223,7 @@ module.exports = async (req, res, next) => {
     await userDoc.save();
   } catch (err) {
     console.log(
-      `User ${data.user} failed to be updated at create-review, after updated review count`
+      `User ${data.user} failed to be updated at create-review, after updated review count`,
     );
     return next(err);
   }
@@ -241,7 +235,7 @@ module.exports = async (req, res, next) => {
       await event.save();
     } catch (err) {
       console.log(
-        `Event ${event.id} failed to be updated at create-review, after event`
+        `Event ${event.id} failed to be updated at create-review, after event`,
       );
       return next(err);
     }
@@ -253,7 +247,7 @@ module.exports = async (req, res, next) => {
       photo = await Photo.findOne({ url: req.body.photo });
     } catch (err) {
       console.log(
-        `Photo ${req.body.photo} failed to be found at create-review`
+        `Photo ${req.body.photo} failed to be found at create-review`,
       );
       return next(err);
     }
@@ -268,7 +262,7 @@ module.exports = async (req, res, next) => {
       await venue.save();
     } catch (err) {
       console.log(
-        `Venue ${venue.id} failed to be updated at create-review, after photos`
+        `Venue ${venue.id} failed to be updated at create-review, after photos`,
       );
       return next(err);
     }
@@ -281,7 +275,7 @@ module.exports = async (req, res, next) => {
       await team.save();
     } catch (err) {
       console.log(
-        `Team ${team.id} failed to be updated at create-review, after team`
+        `Team ${team.id} failed to be updated at create-review, after team`,
       );
       return next(err);
     }
@@ -304,19 +298,15 @@ module.exports = async (req, res, next) => {
   // has1Step: req.body.has1Step,
 
   const keys = [
-    "hasParking",
-    "hasWellLit",
     "hasWideEntrance",
     "hasAccessibleElevator",
     "hasSupportAroundToilet",
     "multipleFloors",
     "hasWashroom",
-    "brightLightTitle",
-    "hasSecondEntry",
     "hasPermanentRamp",
     "hasLoweredSinks",
-    "hasWheelchairParking",
     "hasPortableRamp",
+    "hasLargeStall",
   ];
 
   keys.forEach((key) => {
@@ -568,7 +558,7 @@ module.exports = async (req, res, next) => {
     await venue.save();
   } catch (err) {
     console.log(
-      `Venue ${venue.id} failed to be updated at create-review, at final step`
+      `Venue ${venue.id} failed to be updated at create-review, at final step`,
     );
     return next(err);
   }
@@ -602,9 +592,6 @@ module.exports = async (req, res, next) => {
     comments: review.comments,
     //entryScore: review.entryScore,
     event: review.event,
-    hasParking: review.hasParking,
-    hasSecondEntry: review.hasSecondEntry,
-    hasWellLit: review.hasWellLit,
     isQuiet: review.isQuiet,
     isSpacious: review.isSpacious,
     steps: review.steps,

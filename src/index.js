@@ -1,7 +1,7 @@
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const express = require("express");
-const helmet = require("helmet");
+// const helmet = require("helmet");
 const ip = require("ip");
 const morgan = require("morgan");
 const raven = require("raven");
@@ -23,12 +23,12 @@ function connectedToDB() {
     })
     .install();
 
-  // Middlewares
+  // MiddlewaresSyntaxError
   app.use(raven.requestHandler());
   app.use(cors());
   app.use(morgan("dev"));
   app.use(bodyParser.json());
-  app.use(helmet());
+  // app.use(helmet());
 
   // Routes
   app.set("strict routing", true);
