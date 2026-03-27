@@ -27,6 +27,7 @@ module.exports = async (req, res, next) => {
     hasPermanentRamp: req.body.hasPermanentRamp,
     hasLoweredSinks: req.body.hasLoweredSinks,
     hasPortableRamp: req.body.hasPortableRamp,
+    hasWheelchairParking: req.body.hasWheelchairParking,
 
     // hasAccessibleTableHeight: req.body.hasAccessibleTableHeight,
     // hasInteriorRamp: req.body.hasInteriorRamp,
@@ -305,6 +306,7 @@ module.exports = async (req, res, next) => {
     "hasWashroom",
     "hasPermanentRamp",
     "hasLoweredSinks",
+    "hasWheelchairParking",
     "hasPortableRamp",
     "hasLargeStall",
   ];

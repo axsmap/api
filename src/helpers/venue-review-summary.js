@@ -210,49 +210,54 @@ module.exports = {
     };
   },
   calculateInteriorScore(venue) {
-    const multipleFloors = assignFromYesNo(venue.multipleFloors);
-    const hasAccessibleElevator = assignFromYesNo(venue.hasAccessibleElevator);
+    const multipleFloors = venue.multipleFloors?.yes === 1;
+    const hasAccessibleElevator = venue.hasAccessibleElevator?.yes === 1;
 
-    if (multipleFloors === 1 && hasAccessibleElevator === 0) return 1;
-    if (multipleFloors === 0) return 5;
-    if (multipleFloors === 1 && hasAccessibleElevator === 1) return 5;
-    if (hasAccessibleElevator === 1) return 5;
-    if (hasAccessibleElevator === 0) return 3;
+    const hasAnyGreen =
+      venue.multipleFloors?.no === 1 || hasAccessibleElevator;
 
-    return 3; // unknown/insufficient data defaults to caution
+    const isRed =
+      multipleFloors &&
+      venue.hasAccessibleElevator?.no === 1;
+
+    if (isRed) return 1;
+    if (hasAnyGreen) return 5;
+
+    return 3;
   },
   calculateEntranceScore(venue) {
-    const stepLevel = assignFromSteps(venue.steps || {});
-    const hasStep = stepLevel !== null ? stepLevel > 0 : null;
-    const hasPermanentRamp = assignFromYesNo(venue.hasPermanentRamp);
-    const hasPortableRamp = assignFromYesNo(venue.hasPortableRamp);
-    const hasWideEntrance = assignFromYesNo(venue.hasWideEntrance);
-    const hasRamp =
-      hasPermanentRamp === 1 || hasPortableRamp === 1
-        ? 1
-        : hasPermanentRamp === 0 && hasPortableRamp === 0
-          ? 0
-          : null;
+    const hasStep = venue.steps?.zero === 1;
+    const hasPermanentRamp = venue.hasPermanentRamp?.yes === 1;
+    const hasWideEntrance = venue.hasWideEntrance?.yes === 1;
 
-    if (hasStep === true && hasRamp === 0 && hasWideEntrance === 0) return 1;
-    if (hasStep === false) return 5;
-    if (hasRamp === 1 || hasWideEntrance === 1) return 5;
+    const hasAnyGreenCondition =
+      hasStep || hasWideEntrance || hasPermanentRamp;
 
-    return 3; // unknown/insufficient data defaults to caution
+    const isRedCondition =
+      hasStep && venue.hasPermanentRamp?.no === 1;
+
+    if (isRedCondition) return 1;
+    if (hasAnyGreenCondition) return 5;
+
+    return 3;
   },
   calculateBathroomScore(venue) {
-    const hasWashroom = assignFromYesNo(venue.hasWashroom);
-    const hasLargeStall = assignFromYesNo(venue.hasLargeStall);
-    const hasSupportAroundToilet = assignFromYesNo(venue.hasSupportAroundToilet);
+    const hasWashroom = venue.hasWashroom?.yes === 1;
+    const hasSupportAroundToilet = venue.hasSupportAroundToilet?.yes === 1;
 
-    if (hasWashroom === 0) return 1;
-    if (hasWashroom === 1 && hasLargeStall === 1 && hasSupportAroundToilet === 1)
-      return 5;
-    if (hasWashroom === 1 && hasLargeStall === 0 && hasSupportAroundToilet === 0)
+    if (venue.hasWashroom?.no === 1) {
       return 1;
-    if (hasLargeStall === 1 || hasSupportAroundToilet === 1) return 5;
+    }
+    if (
+      venue.hasSupportAroundToilet?.no === 1 &&
+      venue.hasLoweredSinks?.no === 1
+    ) {
+      return 3;
+    }
 
-    return 3; // unknown/partial data defaults to caution
+    if (hasWashroom || hasSupportAroundToilet) return 5;
+
+    return 3;
   },
   calculateMapIconScore() {
     const total = entranceScore + interiorScore + restroomScore;

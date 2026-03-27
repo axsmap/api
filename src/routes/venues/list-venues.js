@@ -63,19 +63,19 @@ module.exports = async (req, res, next) => {
     console.log("in address conditional, ", queryParams);
     queryParams.name = queryParams.address;
     const geocodeParams = `?key=${process.env.PLACES_API_KEY}&address=${slugify(
-      queryParams.address
+      queryParams.address,
     )}`;
 
     let geocodeResponse;
     try {
       geocodeResponse = await axios.get(
-        `https://maps.googleapis.com/maps/api/geocode/json${geocodeParams}`
+        `https://maps.googleapis.com/maps/api/geocode/json${geocodeParams}`,
       );
     } catch (err) {
       console.log(
         `Geocode failed to be found at list-venues.\nQuery Params: ${JSON.stringify(
-          queryParams
-        )}`
+          queryParams,
+        )}`,
       );
       return next(err);
     }
@@ -264,7 +264,7 @@ module.exports = async (req, res, next) => {
     try {
       [venues, total] = await Promise.all([
         Venue.find(
-          dbVenuesFilters
+          dbVenuesFilters,
           /*,'address allowsGuideDog hasParking hasSecondEntry hasWellLit isQuiet isSpacious location name photos placeId steps types'*/
         )
           .skip(page * pageLimit)
@@ -275,8 +275,8 @@ module.exports = async (req, res, next) => {
     } catch (err) {
       console.log(
         `Venues failed to be found or count at list-venues.\nvenuesQuery: ${JSON.stringify(
-          dbVenuesFilters
-        )}`
+          dbVenuesFilters,
+        )}`,
       );
       console.log(err);
       return next(err);
@@ -287,7 +287,7 @@ module.exports = async (req, res, next) => {
         id: venue._id,
         _id: undefined,
         location: venue.coordinates,
-      })
+      }),
     );
 
     //+ADDED
@@ -314,7 +314,7 @@ module.exports = async (req, res, next) => {
       venue.mapMarkerScore = venueReviewSummary.calculateMapMarkerScore(
         venue.entranceScore,
         venue.interiorScore,
-        venue.restroomScore
+        venue.restroomScore,
       );
 
       let passesValidation = true;
@@ -369,8 +369,6 @@ module.exports = async (req, res, next) => {
      * End legacy filter
      */
   } else {
-    console.log(">> Performing Google search");
-
     /*
      *  Perform Google search when there text entered or no filters selected
      */
@@ -414,15 +412,17 @@ module.exports = async (req, res, next) => {
 
     let placesResponse;
     try {
-      console.log(`https://maps.googleapis.com/maps/api/place/${searchType}/json${nearbyParams}&fields=photos,place_id`)
+      console.log(
+        `https://maps.googleapis.com/maps/api/place/${searchType}/json${nearbyParams}&fields=photos,place_id`,
+      );
       placesResponse = await axios.get(
-        `https://maps.googleapis.com/maps/api/place/${searchType}/json${nearbyParams}&fields=photos,place_id`
+        `https://maps.googleapis.com/maps/api/place/${searchType}/json${nearbyParams}&fields=photos,place_id`,
       );
     } catch (err) {
       console.log(
         `Places failed to be found at list-venues.\nQuery Params: ${JSON.stringify(
-          queryParams
-        )}`
+          queryParams,
+        )}`,
       );
       return next(err);
     }
@@ -443,7 +443,7 @@ module.exports = async (req, res, next) => {
       if (placesResponse.data.results[0].types[0] == "locality") {
         console.log(
           "Found a city only: ",
-          placesResponse.data.results[0].geometry.location
+          placesResponse.data.results[0].geometry.location,
         );
         //TODO: redo search with new coordinates and no query/name or change/add "places in " to the first part of the string
       }
@@ -453,7 +453,7 @@ module.exports = async (req, res, next) => {
     let places = [];
     const placesIds = [];
     placesResponse.data.results.forEach((place) => {
-      console.log(place?.photos)
+      console.log(place?.photos);
       let photo = "";
       if (place.photos) {
         photo = `https://maps.googleapis.com/maps/api/place/photo?key=${
@@ -473,9 +473,9 @@ module.exports = async (req, res, next) => {
             place.geometry.location.lat,
             place.geometry.location.lng,
             coordinates[0],
-            coordinates[1]
+            coordinates[1],
           ),
-          queryParams.language
+          queryParams.language,
         ),
         name: place.name,
         photo,
@@ -492,7 +492,7 @@ module.exports = async (req, res, next) => {
       venues = await Venue.find({ placeId: { $in: placesIds } });
     } catch (err) {
       console.log(
-        `Venues failed to be found at list-venues.\nPlaces ids: [${placesIds}]`
+        `Venues failed to be found at list-venues.\nPlaces ids: [${placesIds}]`,
       );
       return next(err);
     }
@@ -507,7 +507,7 @@ module.exports = async (req, res, next) => {
       const mapScore = venueReviewSummary.calculateMapMarkerScore(
         entrance,
         interior,
-        bathroomScore
+        bathroomScore,
       );
       venue.mapMarkerScore = mapScore;
     });
@@ -605,7 +605,7 @@ module.exports = async (req, res, next) => {
           entranceScore: venue.entranceScore,
           interiorScore: venue.interiorScore,
           mapMarkerScore: venue.mapMarkerScore,
-          isReviewed:true
+          isReviewed: true,
         });
       }
 
@@ -644,7 +644,7 @@ module.exports = async (req, res, next) => {
         interiorScore: 0,
         restroomScore: 0,
         mapMarkerScore: 0,
-        isReviewed:false
+        isReviewed: false,
       });
     });
 

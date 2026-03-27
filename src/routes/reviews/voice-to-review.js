@@ -59,7 +59,6 @@ ENTRANCE:
 - "portable ramp" or "removable ramp" → hasPortableRamp: true
 - "wide door/entrance" or "spacious entrance" → hasWideEntrance: true
 - "narrow entrance/door" → hasWideEntrance: false
-- "second entrance" or "side door" or "back entrance" → hasSecondEntry: true
 - "no steps" or "step-free" or "level entrance" → steps: 0
 - "one step" or "single step" → steps: 1, has1Step: true
 - "two steps" or "couple steps" → steps: 2, has2Step: true
@@ -78,6 +77,9 @@ BATHROOM:
 - "grab bars" or "support bars" or "handles by toilet" → hasSupportAroundToilet: true
 - "lowered sinks" or "accessible sinks" → hasLoweredSinks: true
 
+PARKING:
+- "wheelchair parking" or "handicap parking" or "accessible parking" → hasWheelchairParking: true
+
 OUTPUT FORMAT:
 Return ONLY a valid JSON object with these exact fields:
 {
@@ -87,6 +89,7 @@ Return ONLY a valid JSON object with these exact fields:
   "hasPermanentRamp": boolean or null,
   "hasPortableRamp": boolean or null,
   "hasWideEntrance": boolean or null,
+  "hasWheelchairParking": boolean or null,
   "multipleFloors": boolean or null,
   "hasAccessibleElevator": boolean or null,
   "hasWashroom": boolean or null,
@@ -216,6 +219,7 @@ const voiceToReview = async (req, res) => {
             hasPermanentRamp: null,
             hasPortableRamp: null,
             hasWideEntrance: null,
+            hasWheelchairParking: null,
             multipleFloors: null,
             hasAccessibleElevator: null,
             hasWashroom: null,
@@ -246,6 +250,7 @@ const voiceToReview = async (req, res) => {
         "hasPermanentRamp",
         "hasPortableRamp",
         "hasWideEntrance",
+        "hasWheelchairParking",
         "multipleFloors",
         "hasAccessibleElevator",
         "hasWashroom",
