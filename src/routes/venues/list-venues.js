@@ -23,7 +23,6 @@ const feetTranslations = {
 };
 
 function getDistanceFromLatLng(lat1, lng1, lat2, lng2) {
-  console.log(lat1, lng1, lat2, lng2);
   const R = 6371; // Earth’s radius in km
 
   const dLat = (lat2 - lat1) * (Math.PI / 180);
@@ -60,7 +59,6 @@ module.exports = async (req, res, next) => {
 
   //Legacy function from two-bar search, geocodes from string address
   if (queryParams.address && !queryParams.page) {
-    console.log("in address conditional, ", queryParams);
     queryParams.name = queryParams.address;
     const geocodeParams = `?key=${process.env.PLACES_API_KEY}&address=${slugify(
       queryParams.address,
@@ -215,7 +213,6 @@ module.exports = async (req, res, next) => {
    *  UPDATED 05/2020 TO SUPPORT FILTER ONLY SELF SEARCH
    */
   if (!isEmpty(venuesFilters) && isEmpty(queryParams.name)) {
-    console.log(">> Performing DB search");
     /*
     if (queryParams.name) {
       //performs literal name match against AXS Venue name
@@ -271,7 +268,6 @@ module.exports = async (req, res, next) => {
           .limit(pageLimit),
         (await Venue.find(dbVenuesFilters))?.length,
       ]);
-      console.log({ total });
     } catch (err) {
       console.log(
         `Venues failed to be found or count at list-venues.\nvenuesQuery: ${JSON.stringify(
@@ -292,9 +288,7 @@ module.exports = async (req, res, next) => {
 
     //+ADDED
     //Perform ratings logic on all returned venues
-    console.log("Raw venues count: " + venues.length);
     venues = venues.filter((venue) => {
-      //console.log('In scoring assignment');
       let scoring;
       //calculate entranceScore, glyphs
       scoring = venueReviewSummary.calculateRatingLevel("entrance", venue);
@@ -412,9 +406,6 @@ module.exports = async (req, res, next) => {
 
     let placesResponse;
     try {
-      console.log(
-        `https://maps.googleapis.com/maps/api/place/${searchType}/json${nearbyParams}&fields=photos,place_id`,
-      );
       placesResponse = await axios.get(
         `https://maps.googleapis.com/maps/api/place/${searchType}/json${nearbyParams}&fields=photos,place_id`,
       );
@@ -441,10 +432,6 @@ module.exports = async (req, res, next) => {
 
     if (placesResponse.data.results?.length == 1) {
       if (placesResponse.data.results[0].types[0] == "locality") {
-        console.log(
-          "Found a city only: ",
-          placesResponse.data.results[0].geometry.location,
-        );
         //TODO: redo search with new coordinates and no query/name or change/add "places in " to the first part of the string
       }
     }
@@ -453,7 +440,6 @@ module.exports = async (req, res, next) => {
     let places = [];
     const placesIds = [];
     placesResponse.data.results.forEach((place) => {
-      console.log(place?.photos);
       let photo = "";
       if (place.photos) {
         photo = `https://maps.googleapis.com/maps/api/place/photo?key=${
@@ -485,7 +471,6 @@ module.exports = async (req, res, next) => {
       placesIds.push(place.place_id);
     });
 
-    // console.log("calling venues");
     //Use array of Google Place IDs to find AXS Venues
     let venues;
     try {
@@ -518,7 +503,6 @@ module.exports = async (req, res, next) => {
       places = places.filter((place) => {
         const venue = find(venues, (venue) => venue.placeId === place.placeId);
         if (venue) {
-          //console.log('In verification of filters');
           let passesValidation = true;
           if (passesValidation && "allowsGuideDog" in venuesFilters) {
             if (

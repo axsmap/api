@@ -12,6 +12,8 @@ module.exports = async (req, res, next) => {
   // const { errors, isValid } = validateCreateEditReview(req.body);
   // if (!isValid) return res.status(400).json(errors);
 
+  console.log("REQ.BODYYYYYYYYYYYYY:", req.body);
+
   const data = {
     // existing fields
     steps: req.body.steps,
@@ -25,9 +27,9 @@ module.exports = async (req, res, next) => {
     multipleFloors: req.body.multipleFloors,
     hasWashroom: req.body.hasWashroom,
     hasPermanentRamp: req.body.hasPermanentRamp,
-    hasLoweredSinks: req.body.hasLoweredSinks,
-    hasPortableRamp: req.body.hasPortableRamp,
-    hasWheelchairParking: req.body.hasWheelchairParking,
+    // hasLoweredSinks: req.body.hasLoweredSinks,
+    // hasPortableRamp: req.body.hasPortableRamp,
+    // hasWheelchairParking: req.body.hasWheelchairParking,
 
     // hasAccessibleTableHeight: req.body.hasAccessibleTableHeight,
     // hasInteriorRamp: req.body.hasInteriorRamp,
@@ -39,8 +41,8 @@ module.exports = async (req, res, next) => {
     // isQuiet: req.body.isQuiet,
     // isSpacious: req.body.isSpacious,
     // extra fields
-    event: req.body.event,
-    team: req.body.team,
+    // event: req.body.event,
+    // team: req.body.team,
     user: req.user._id || req.user.id,
     comments: req.body.comments,
   };
