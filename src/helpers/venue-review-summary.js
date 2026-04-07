@@ -68,16 +68,16 @@ module.exports = {
     venueData.hasPortableRamp = assignFromYesNo(venueRawData.hasPortableRamp);
     venueData.hasWideEntrance = assignFromYesNo(venueRawData.hasWideEntrance);
     venueData.hasAccessibleTableHeight = assignFromYesNo(
-      venueRawData.hasAccessibleTableHeight
+      venueRawData.hasAccessibleTableHeight,
     );
     venueData.hasAccessibleElevator = assignFromYesNo(
-      venueRawData.hasAccessibleElevator
+      venueRawData.hasAccessibleElevator,
     );
     venueData.hasInteriorRamp = assignFromYesNo(venueRawData.hasInteriorRamp);
     venueData.hasSwingOutDoor = assignFromYesNo(venueRawData.hasSwingOutDoor);
     venueData.hasLargeStall = assignFromYesNo(venueRawData.hasLargeStall);
     venueData.hasSupportAroundToilet = assignFromYesNo(
-      venueRawData.hasSupportAroundToilet
+      venueRawData.hasSupportAroundToilet,
     );
     venueData.hasLoweredSinks = assignFromYesNo(venueRawData.hasLoweredSinks);
 
@@ -213,12 +213,9 @@ module.exports = {
     const multipleFloors = venue.multipleFloors?.yes === 1;
     const hasAccessibleElevator = venue.hasAccessibleElevator?.yes === 1;
 
-    const hasAnyGreen =
-      venue.multipleFloors?.no === 1 || hasAccessibleElevator;
+    const hasAnyGreen = venue.multipleFloors?.no === 1 || hasAccessibleElevator;
 
-    const isRed =
-      multipleFloors &&
-      venue.hasAccessibleElevator?.no === 1;
+    const isRed = multipleFloors && venue.hasAccessibleElevator?.no === 1;
 
     if (isRed) return 1;
     if (hasAnyGreen) return 5;
@@ -230,11 +227,9 @@ module.exports = {
     const hasPermanentRamp = venue.hasPermanentRamp?.yes === 1;
     const hasWideEntrance = venue.hasWideEntrance?.yes === 1;
 
-    const hasAnyGreenCondition =
-      hasStep || hasWideEntrance || hasPermanentRamp;
+    const hasAnyGreenCondition = hasStep || hasWideEntrance || hasPermanentRamp;
 
-    const isRedCondition =
-      hasStep && venue.hasPermanentRamp?.no === 1;
+    const isRedCondition = hasStep && venue.hasPermanentRamp?.no === 1;
 
     if (isRedCondition) return 1;
     if (hasAnyGreenCondition) return 5;
