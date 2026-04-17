@@ -6,6 +6,7 @@ const createEvent = require("./create-event");
 const deleteEvent = require("./delete-event");
 const editEvent = require("./edit-event");
 const getEvent = require("./get-event");
+const getParticipant = require("./get-participant");
 const leaveEvent = require("./leave-event");
 const listEvents = require("./list-events");
 const listOldEvents = require("./list-old-events");
@@ -13,6 +14,7 @@ const joinEvent = require("./join-event");
 const listUpcoimgEvents = require("./list-upcoimg-events");
 const JoinedEvents = require("./joined-events");
 const publishEvent = require("./publish-event");
+const updateParticipantMessage = require("./update-participant-message");
 
 const router = new express.Router();
 
@@ -38,6 +40,12 @@ router.put(
   "/:eventId/leave",
   isAuthenticated({ isOptional: false }),
   leaveEvent
+);
+router.get("/:eventId/participants/:userId", getParticipant);
+router.patch(
+  "/:eventId/participants/:userId/message",
+  isAuthenticated({ isOptional: false }),
+  updateParticipantMessage
 );
 
 module.exports = router;

@@ -1,6 +1,7 @@
 const moment = require('moment');
 
 const { Event } = require('../../models/event');
+const { EventParticipant } = require('../../models/event-participant');
 const { User } = require('../../models/user');
 
 module.exports = async (req, res, next) => {
@@ -63,6 +64,17 @@ module.exports = async (req, res, next) => {
     });
   } catch (err) {
     console.log(`User ${req.user.id} failed to be updated at leave-event`);
+    return next(err);
+  }
+
+  try {
+    await EventParticipant.findOneAndUpdate(
+      { event: event.id, user: req.user.id },
+      { $set: { personalMessage: '' } },
+      { new: true }
+    );
+  } catch (err) {
+    console.log(`EventParticipant failed to be cleared at leave-event for user ${req.user.id} event ${event.id}`);
     return next(err);
   }
 

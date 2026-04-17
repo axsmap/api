@@ -41,7 +41,7 @@ module.exports = async (req, res, next) => {
     // isQuiet: req.body.isQuiet,
     // isSpacious: req.body.isSpacious,
     // extra fields
-    // event: req.body.event,
+    event: req.body.event,
     // team: req.body.team,
     user: req.user._id || req.user.id,
     comments: req.body.comments,

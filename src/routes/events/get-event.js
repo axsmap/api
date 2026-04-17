@@ -55,12 +55,35 @@ module.exports = async (req, res, next) => {
               }
             },
             {
+              $lookup: {
+                from: 'reviews',
+                let: { userId: '$_id' },
+                pipeline: [
+                  {
+                    $match: {
+                      $expr: {
+                        $and: [
+                          { $eq: ['$user', '$$userId'] },
+                          { $eq: ['$event', eventId] }
+                        ]
+                      }
+                    }
+                  },
+                  { $count: 'count' }
+                ],
+                as: 'eventReviews'
+              }
+            },
+            {
               $project: {
                 _id: 0,
                 id: '$_id',
                 avatar: 1,
                 firstName: 1,
-                lastName: 1
+                lastName: 1,
+                reviewsAmount: {
+                  $ifNull: [{ $arrayElemAt: ['$eventReviews.count', 0] }, 0]
+                }
               }
             }
           ],

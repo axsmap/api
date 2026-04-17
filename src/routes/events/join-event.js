@@ -1,6 +1,7 @@
 const moment = require("moment");
 
 const { Event } = require("../../models/event");
+const { EventParticipant } = require("../../models/event-participant");
 const { Petition } = require("../../models/petition");
 const { User } = require("../../models/user");
 
@@ -65,6 +66,17 @@ module.exports = async (req, res, next) => {
     });
   } catch (err) {
     console.log(`User ${req.user.id} failed to be updated at join-event`);
+    return next(err);
+  }
+
+  try {
+    await EventParticipant.findOneAndUpdate(
+      { event: event.id, user: req.user.id },
+      { event: event.id, user: req.user.id },
+      { upsert: true, new: true }
+    );
+  } catch (err) {
+    console.log(`EventParticipant failed to be created at join-event for user ${req.user.id} event ${event.id}`);
     return next(err);
   }
 
