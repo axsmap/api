@@ -426,12 +426,18 @@ module.exports = async (req, res, next) => {
       console.log(
         `Google Places REQUEST_DENIED: ${statusMessage || 'no message'} at list-venues`,
       );
-      return next(new Error("Request denied with Google Places API"));
+      return res.status(502).json({
+        general: 'Google Places API denied the request',
+        details: statusMessage || 'Request denied'
+      });
     } else if (statusCode === "INVALID_REQUEST") {
       console.log(
         `Google Places INVALID_REQUEST: ${statusMessage || 'no message'} at list-venues`,
       );
-      return next(new Error("Invalid request with Google Places API"));
+      return res.status(400).json({
+        general: 'Invalid request to Google Places API',
+        details: statusMessage || 'Invalid request'
+      });
     } else if (statusCode === "UNKNOWN_ERROR") {
       return next(new Error("Unknown error with Google Places API"));
     }
