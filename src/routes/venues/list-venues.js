@@ -407,7 +407,7 @@ module.exports = async (req, res, next) => {
     let placesResponse;
     try {
       placesResponse = await axios.get(
-        `https://maps.googleapis.com/maps/api/place/${searchType}/json${nearbyParams}`,
+        `https://maps.googleapis.com/maps/api/place/${searchType}/json${nearbyParams}&fields=photos,place_id`,
       );
     } catch (err) {
       console.log(
