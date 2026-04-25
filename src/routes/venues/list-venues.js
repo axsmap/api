@@ -407,7 +407,7 @@ module.exports = async (req, res, next) => {
     let placesResponse;
     try {
       placesResponse = await axios.get(
-        `https://maps.googleapis.com/maps/api/place/${searchType}/json${nearbyParams}&fields=photos,place_id`,
+        `https://maps.googleapis.com/maps/api/place/${searchType}/json${nearbyParams}`,
       );
     } catch (err) {
       console.log(
@@ -419,11 +419,18 @@ module.exports = async (req, res, next) => {
     }
 
     const statusCode = placesResponse.data.status;
+    const statusMessage = placesResponse.data.error_message;
     if (statusCode === "OVER_QUERY_LIMIT") {
       return next(new Error("Over query limit with Google Places API"));
     } else if (statusCode === "REQUEST_DENIED") {
+      console.log(
+        `Google Places REQUEST_DENIED: ${statusMessage || 'no message'} at list-venues`,
+      );
       return next(new Error("Request denied with Google Places API"));
     } else if (statusCode === "INVALID_REQUEST") {
+      console.log(
+        `Google Places INVALID_REQUEST: ${statusMessage || 'no message'} at list-venues`,
+      );
       return next(new Error("Invalid request with Google Places API"));
     } else if (statusCode === "UNKNOWN_ERROR") {
       return next(new Error("Unknown error with Google Places API"));
