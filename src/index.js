@@ -41,7 +41,8 @@ function connectedToDB() {
   // Error handling
   app.use(raven.errorHandler());
   app.use((req, res) => res.status(404).json({ general: "Not found" }));
-  app.use((err, req, res) => {
+  app.use((err, req, res, _next) => {
+    void _next;
     if (err instanceof SyntaxError) {
       return res.status(400).json({ general: "Invalid JSON format" });
     }

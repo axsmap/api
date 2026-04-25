@@ -6,6 +6,10 @@ const { Event } = require('../../models/event');
 
 module.exports = async (req, res, next) => {
   let eventId = req.params.eventId;
+  const reservedEventPaths = ["joinedEvents", "old", "upComing"];
+  if (reservedEventPaths.includes(eventId)) {
+    return next();
+  }
   if (!isMongoId(eventId)) {
     return res.status(400).json({ general: 'Event not found' });
   }
