@@ -10,6 +10,7 @@ const deleteUser = require('./delete-user');
 const editUser = require('./edit-user');
 const getUser = require('./get-user');
 const getProfile = require('./get-profile');
+const leaderboard = require('./leaderboard');
 const listUsers = require('./list-users');
 const unblockUser = require('./unblock-user');
 const deactivateUser = require('./deactivate-user');
@@ -18,6 +19,7 @@ const reactivateAccount = require('../auth/reactivate-account');
 const router = new express.Router();
 
 router.get('/profile', isAuthenticated({ isOptional: false }), getProfile);
+router.get('/leaderboard', leaderboard);
 router.put('/password', isAuthenticated({ isOptional: false }), changePassword);
 router.get('', isAuthenticated({ isOptional: false }), listUsers);
 router.post('', isAuthenticated({ isOptional: false }), createUser);
