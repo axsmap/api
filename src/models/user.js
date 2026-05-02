@@ -113,6 +113,10 @@ const userSchema = new mongoose.Schema(
       default: false,
       required: [true, "Is required"],
     },
+    isSystemAccount: {
+      type: Boolean,
+      default: false,
+    },
     lastName: {
       type: String,
       maxlength: [36, "Should be less than 37 characters"],

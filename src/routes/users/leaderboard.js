@@ -43,7 +43,11 @@ function shapeUser(user) {
 }
 
 async function buildAllTime(limit) {
-  const users = await User.find({ isArchived: false, reviewsAmount: { $gt: 0 } })
+  const users = await User.find({
+    isArchived: false,
+    isSystemAccount: { $ne: true },
+    reviewsAmount: { $gt: 0 },
+  })
     .sort({ reviewsAmount: -1, createdAt: 1 })
     .limit(limit)
     .select("firstName lastName username avatar reviewsAmount")
@@ -80,7 +84,12 @@ async function buildMonth(limit) {
       },
     },
     { $unwind: "$user" },
-    { $match: { "user.isArchived": { $ne: true } } },
+    {
+      $match: {
+        "user.isArchived": { $ne: true },
+        "user.isSystemAccount": { $ne: true },
+      },
+    },
     { $limit: limit },
     {
       $project: {
