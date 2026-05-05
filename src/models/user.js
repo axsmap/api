@@ -224,7 +224,7 @@ const userSchema = new mongoose.Schema(
     disability: {
       type: String,
       default: "",
-      enum: ["yes", "No", "not-to-say", ""],
+      enum: ["yes", "no", "No", "not-to-say", ""],
       required: false,
     },
   },
