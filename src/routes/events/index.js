@@ -8,6 +8,7 @@ const editEvent = require("./edit-event");
 const getEvent = require("./get-event");
 const getParticipant = require("./get-participant");
 const leaveEvent = require("./leave-event");
+const listEventLeaderboard = require("./list-event-leaderboard");
 const listEvents = require("./list-events");
 const listOldEvents = require("./list-old-events");
 const joinEvent = require("./join-event");
@@ -23,6 +24,7 @@ router.get("/joinedEvents", JoinedEvents);
 router.get("/old", isAuthenticated({ isOptional: false }), listOldEvents);
 router.get("/upComing", listUpcoimgEvents);
 router.post("", isAuthenticated({ isOptional: false }), createEvent);
+router.get("/:eventId/leaderboard", listEventLeaderboard);
 router.get("/:eventId", getEvent);
 router.put("/:eventId", isAuthenticated({ isOptional: false }), editEvent);
 router.put(
