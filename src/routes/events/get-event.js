@@ -3,6 +3,101 @@ const mongoose = require('mongoose');
 const { isMongoId } = require('validator');
 
 const { Event } = require('../../models/event');
+const { Review } = require('../../models/review');
+const { User } = require('../../models/user');
+
+const getUsername = user => {
+  if (user.username) return user.username;
+
+  return (
+    [user.firstName, user.lastName].filter(Boolean).join(' ') || 'AXS Mapper'
+  );
+};
+
+const normalizeLeaderboardItem = mapathonId => (item, index) => ({
+  rank: index + 1,
+  username: getUsername(item),
+  placesMapped: item.placesMapped || item.reviewsAmount || 0,
+  userId: (item.userId || item.id).toString(),
+  mapathonId: mapathonId ? mapathonId.toString() : null
+});
+
+const getLeaderboards = async eventId =>
+  Promise.all([
+    User.aggregate([
+      {
+        $match: {
+          isArchived: false,
+          isBlocked: false,
+          reviewsAmount: { $gt: 0 }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          id: '$_id',
+          firstName: 1,
+          lastName: 1,
+          username: 1,
+          reviewsAmount: 1
+        }
+      },
+      {
+        $sort: {
+          reviewsAmount: -1,
+          username: 1,
+          firstName: 1,
+          lastName: 1
+        }
+      },
+      { $limit: 20 }
+    ]),
+    Review.aggregate([
+      {
+        $match: {
+          event: eventId,
+          isBanned: false
+        }
+      },
+      {
+        $group: {
+          _id: '$user',
+          placesMapped: { $sum: 1 }
+        }
+      },
+      {
+        $sort: {
+          placesMapped: -1,
+          _id: 1
+        }
+      },
+      { $limit: 5 },
+      {
+        $lookup: {
+          from: 'users',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'user'
+        }
+      },
+      {
+        $unwind: '$user'
+      },
+      {
+        $project: {
+          _id: 0,
+          userId: '$_id',
+          firstName: '$user.firstName',
+          lastName: '$user.lastName',
+          username: '$user.username',
+          placesMapped: 1
+        }
+      }
+    ])
+  ]).then(([overall, mapathon]) => ({
+    overall: overall.map(normalizeLeaderboardItem(null)),
+    mapathon: mapathon.map(normalizeLeaderboardItem(eventId))
+  }));
 
 module.exports = async (req, res, next) => {
   let eventId = req.params.eventId;
@@ -170,12 +265,23 @@ module.exports = async (req, res, next) => {
     return next(err);
   }
 
-  if (!event) {
+  if (!event.length) {
     return res.status(404).json({ general: 'Event not found' });
   }
 
+  let leaderboards;
+  try {
+    leaderboards = await getLeaderboards(eventId);
+  } catch (err) {
+    console.log(
+      `Leaderboards for event ${eventId} failed to be found at get-event`
+    );
+    return next(err);
+  }
+
   const dataResponse = Object.assign({}, event[0], {
-    ranking: event[0].ranking.length ? event[0].ranking[0].ranking + 1 : 1
+    ranking: event[0].ranking.length ? event[0].ranking[0].ranking + 1 : 1,
+    leaderboards
   });
 
   if (dataResponse.donationId) {
