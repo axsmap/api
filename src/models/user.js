@@ -243,25 +243,12 @@ userSchema.index(
 );
 
 function hashPassword(password) {
-  bcrypt.genSalt(10, (errorOnSaltGeneration, salt) => {
-    if (errorOnSaltGeneration) {
-      return false;
-    }
-
-    bcrypt.hash(
-      password,
-      salt,
-      null,
-      (errorOnHashingPassword, hashedPassword) => {
-        if (errorOnHashingPassword) {
-          return false;
-        }
-
-        this.hashedPassword = hashedPassword;
-        return true;
-      }
-    );
-  });
+  // Sync hash so the doc has `hashedPassword` set before mongoose validates / saves.
+  // The previous callback-based async hash returned immediately and let `User.create()` /
+  // `user.save()` race ahead — when Mongo's write won the race the user was persisted with
+  // no hashedPassword and could never sign in.
+  const salt = bcrypt.genSaltSync(10);
+  this.hashedPassword = bcrypt.hashSync(password, salt);
 }
 
 function comparePassword(password) {
