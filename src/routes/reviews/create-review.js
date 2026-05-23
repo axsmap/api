@@ -7,6 +7,7 @@ const { Review } = require("../../models/review");
 const { Team } = require("../../models/team");
 const { User } = require("../../models/user");
 const { Venue } = require("../../models/venue");
+const { evaluateBadges } = require("../../helpers/evaluate-badges");
 
 module.exports = async (req, res, next) => {
   // const { errors, isValid } = validateCreateEditReview(req.body);
@@ -605,5 +606,10 @@ module.exports = async (req, res, next) => {
     userReviewsAmount: userDoc.reviewsAmount,
     venue: review.venue,
   };
+
+  // Badge evaluator — never throws (errors logged inside). Awaited so the
+  // award is persisted before we return; result not surfaced in the response.
+  await evaluateBadges({ userId: review.user, eventId: review.event || null });
+
   return res.status(201).json(dataResponse);
 };

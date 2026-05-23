@@ -9,9 +9,11 @@ const createUser = require('./create-user');
 const deleteUser = require('./delete-user');
 const editUser = require('./edit-user');
 const getUser = require('./get-user');
+const getUserBadges = require('./get-user-badges');
 const getUserByUsername = require('./get-user-by-username');
 const getProfile = require('./get-profile');
 const leaderboard = require('./leaderboard');
+const suppressUserBadge = require('./suppress-user-badge');
 const listUsers = require('./list-users');
 const unblockUser = require('./unblock-user');
 const deactivateUser = require('./deactivate-user');
@@ -26,6 +28,16 @@ router.put('/password', isAuthenticated({ isOptional: false }), changePassword);
 router.get('', isAuthenticated({ isOptional: false }), listUsers);
 router.post('', isAuthenticated({ isOptional: false }), createUser);
 router.get('/:userId', getUser);
+router.get(
+  '/:userId/badges',
+  isAuthenticated({ isOptional: true }),
+  getUserBadges
+);
+router.post(
+  '/:userId/badges/:badgeId/suppress',
+  isAuthenticated({ isOptional: false }),
+  suppressUserBadge
+);
 router.put('/:userId', isAuthenticated({ isOptional: false }), editUser);
 router.delete(
   '/deactivate',
