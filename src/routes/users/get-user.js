@@ -61,6 +61,30 @@ async function getUserResponse(matchStage, collation) {
             },
           },
           {
+            // Per-event participation row carries personalGoal + hiddenFromProfile.
+            // May be absent for events the user joined before EventParticipant
+            // rows were created — $ifNull supplies defaults below.
+            $lookup: {
+              from: "eventparticipants",
+              let: { eventId: "$_id" },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $and: [
+                        { $eq: ["$event", "$$eventId"] },
+                        { $eq: ["$user", "$$userId"] },
+                      ],
+                    },
+                  },
+                },
+                { $project: { _id: 0, personalGoal: 1, hiddenFromProfile: 1 } },
+                { $limit: 1 },
+              ],
+              as: "_participation",
+            },
+          },
+          {
             $project: {
               _id: 0,
               id: "$_id",
@@ -75,6 +99,18 @@ async function getUserResponse(matchStage, collation) {
                 $cond: [{ $lt: ["$endDate", "$$NOW"] }, "completed", "active"],
               },
               team: { $arrayElemAt: ["$_userTeam", 0] },
+              personalGoal: {
+                $ifNull: [
+                  { $arrayElemAt: ["$_participation.personalGoal", 0] },
+                  15,
+                ],
+              },
+              hiddenFromProfile: {
+                $ifNull: [
+                  { $arrayElemAt: ["$_participation.hiddenFromProfile", 0] },
+                  false,
+                ],
+              },
             },
           },
         ],

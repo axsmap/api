@@ -15,7 +15,9 @@ const joinEvent = require("./join-event");
 const listUpcoimgEvents = require("./list-upcoimg-events");
 const JoinedEvents = require("./joined-events");
 const publishEvent = require("./publish-event");
+const updateParticipantGoal = require("./update-participant-goal");
 const updateParticipantMessage = require("./update-participant-message");
+const updateParticipantVisibility = require("./update-participant-visibility");
 
 const router = new express.Router();
 
@@ -48,6 +50,16 @@ router.patch(
   "/:eventId/participants/:userId/message",
   isAuthenticated({ isOptional: false }),
   updateParticipantMessage
+);
+router.patch(
+  "/:eventId/participants/:userId/goal",
+  isAuthenticated({ isOptional: false }),
+  updateParticipantGoal
+);
+router.patch(
+  "/:eventId/participants/:userId/visibility",
+  isAuthenticated({ isOptional: false }),
+  updateParticipantVisibility
 );
 
 module.exports = router;
