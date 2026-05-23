@@ -60,16 +60,21 @@ module.exports = async (req, res, next) => {
 
   const userId = user.id;
 
-  // Update lastLogin timestamp and reset inactivity tracking
+  // Real app-open event: set lastLogin, lastOpenedAt, and reset inactivity tracking.
+  // lastOpenedAt powers the new user-status pipeline (replacing lastActivityTime).
+  // ONLY set here in real auth flows — never from middleware/syncs/admin scripts.
+  const now = new Date();
   try {
-    await User.findByIdAndUpdate(userId, { 
-      lastLogin: new Date(),
+    await User.findByIdAndUpdate(userId, {
+      lastLogin: now,
+      lastOpenedAt: now,
       inactivityEmailSent: false,
       inactivityEmailSentAt: null
     });
+    console.log(`[app-open] sign-in: userId=${userId} lastOpenedAt=${now.toISOString()}`);
   } catch (updateErr) {
-    console.log(`Failed to update lastLogin for userId ${userId}: ${updateErr.message}`);
-    // Continue with login even if lastLogin update fails
+    console.log(`Failed to update lastLogin/lastOpenedAt for userId ${userId}: ${updateErr.message}`);
+    // Continue with login even if the update fails
   }
 
   // Set token expiration based on rememberMe

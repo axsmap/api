@@ -153,6 +153,15 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    // Tracks REAL app-open events only (sign-in, social sign-in, token refresh).
+    // Intentionally NOT touched by middleware/syncs/admin scripts — see ticket
+    // "Add Mongo lastOpenedAt Field and Prepare Salesforce User Status Migration".
+    // Salesforce User Status logic will eventually migrate from lastActivityTime
+    // to this field. Do NOT set this from background jobs.
+    lastOpenedAt: {
+      type: Date,
+      default: null,
+    },
     lastLocation: {
       type: {
         lat: {

@@ -49,6 +49,7 @@ module.exports = async (req, res, next) => {
       const email = fbUser.email;
 
       let user = await User.findOne({ email: fbUser.email });
+      const now = new Date();
 
       if (!user) {
         const [firstName, lastName] = fbUser.name.split(" ");
@@ -58,28 +59,32 @@ module.exports = async (req, res, next) => {
           firstName: firstName || "",
           lastName: lastName || "",
           avatar: fbUser.picture.data.url,
-          lastLogin: new Date(),
+          lastLogin: now,
+          lastOpenedAt: now,
         });
 
         await user.save();
+        console.log(`[app-open] facebook-sign-in (new): userId=${user._id} lastOpenedAt=${now.toISOString()}`);
       } else {
         // Check if user is archived - return userId for reactivation flow
         // For social login users, they'll need to contact support since they don't have a password
         if (user.isArchived) {
-          return res.status(403).json({ 
+          return res.status(403).json({
             general: "Account is archived due to inactivity",
             isArchived: true,
             requiresReactivation: true,
             userId: user.id
           });
         }
-        
-        // Update lastLogin for existing users and reset inactivity tracking
-        await User.findByIdAndUpdate(user._id, { 
-          lastLogin: new Date(),
+
+        // Real app-open: update lastLogin, lastOpenedAt, and reset inactivity tracking
+        await User.findByIdAndUpdate(user._id, {
+          lastLogin: now,
+          lastOpenedAt: now,
           inactivityEmailSent: false,
           inactivityEmailSentAt: null
         });
+        console.log(`[app-open] facebook-sign-in (existing): userId=${user._id} lastOpenedAt=${now.toISOString()}`);
       }
 
       // Set token expiration based on rememberMe
