@@ -12,9 +12,54 @@ async function getUserResponse(matchStage, collation) {
     {
       $lookup: {
         from: "events",
-        let: { events: "$events" },
+        // Pass user._id and user.teams into the sub-pipeline so each event can:
+        //   - count THIS user's reviews scoped to THIS event (reviewsAmount)
+        //   - find which of the user's teams (if any) is also on this event (team)
+        let: { userEvents: "$events", userId: "$_id", userTeams: "$teams" },
         pipeline: [
-          { $match: { $expr: { $in: ["$_id", "$$events"] } } },
+          { $match: { $expr: { $in: ["$_id", "$$userEvents"] } } },
+          {
+            $lookup: {
+              from: "reviews",
+              let: { eventId: "$_id" },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $and: [
+                        { $eq: ["$event", "$$eventId"] },
+                        { $eq: ["$user", "$$userId"] },
+                        { $ne: ["$isBanned", true] },
+                      ],
+                    },
+                  },
+                },
+                { $count: "n" },
+              ],
+              as: "_userReviewCount",
+            },
+          },
+          {
+            $lookup: {
+              from: "teams",
+              let: { eventTeams: "$teams" },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $and: [
+                        { $in: ["$_id", { $ifNull: ["$$eventTeams", []] }] },
+                        { $in: ["$_id", { $ifNull: ["$$userTeams", []] }] },
+                      ],
+                    },
+                  },
+                },
+                { $project: { _id: 0, id: "$_id", name: 1, avatar: 1 } },
+                { $limit: 1 },
+              ],
+              as: "_userTeam",
+            },
+          },
           {
             $project: {
               _id: 0,
@@ -23,6 +68,13 @@ async function getUserResponse(matchStage, collation) {
               name: 1,
               poster: 1,
               startDate: 1,
+              reviewsAmount: {
+                $ifNull: [{ $arrayElemAt: ["$_userReviewCount.n", 0] }, 0],
+              },
+              status: {
+                $cond: [{ $lt: ["$endDate", "$$NOW"] }, "completed", "active"],
+              },
+              team: { $arrayElemAt: ["$_userTeam", 0] },
             },
           },
         ],
@@ -79,6 +131,23 @@ async function getUserResponse(matchStage, collation) {
         teams: 1,
         username: 1,
         zip: 1,
+        aboutMe: { $ifNull: ["$aboutMe", ""] },
+        lastLocation: { $ifNull: ["$lastLocation", { lat: null, lng: null }] },
+        // Phase 2 fields — defaults applied here because aggregation pipelines
+        // don't apply mongoose schema defaults for absent fields. Existing
+        // 14k user docs don't have these set yet; new edits will persist them.
+        displayName: { $ifNull: ["$displayName", null] },
+        socials: {
+          $ifNull: [
+            "$socials",
+            { twitter: "", linkedin: "", instagram: "", website: "" },
+          ],
+        },
+        profilePublic: { $ifNull: ["$profilePublic", false] },
+        hideLocation: { $ifNull: ["$hideLocation", false] },
+        hideBadges: { $ifNull: ["$hideBadges", false] },
+        hideSupporters: { $ifNull: ["$hideSupporters", false] },
+        hideSocials: { $ifNull: ["$hideSocials", false] },
         isArchived: 1,
         isBlocked: 1,
       },

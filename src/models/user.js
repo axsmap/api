@@ -236,6 +236,29 @@ const userSchema = new mongoose.Schema(
       enum: ["yes", "no", "No", "not-to-say", ""],
       required: false,
     },
+    // Phase 2 user-profile fields. Frontend-only — not synced to Salesforce.
+    // When null, frontend falls back to `${firstName} ${lastName[0]}.`
+    displayName: {
+      type: String,
+      maxlength: [60, "Should be less than 61 characters"],
+      default: null,
+    },
+    socials: {
+      twitter: { type: String, maxlength: 100, default: "" },
+      linkedin: { type: String, maxlength: 200, default: "" },
+      instagram: { type: String, maxlength: 100, default: "" },
+      website: { type: String, maxlength: 300, default: "" },
+    },
+    // Visibility controls — default to private-first per spec.
+    profilePublic: {
+      type: Boolean,
+      default: false,
+      required: [true, "Is required"],
+    },
+    hideLocation: { type: Boolean, default: false },
+    hideBadges: { type: Boolean, default: false },
+    hideSupporters: { type: Boolean, default: false },
+    hideSocials: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

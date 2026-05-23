@@ -117,6 +117,30 @@ module.exports = async (req, res, next) => {
 
   user.zip = data.zip ? cleanSpaces(data.zip) : user.zip;
 
+  // Phase 2 user-profile fields
+  if (typeof data.displayName !== "undefined") {
+    user.displayName = data.displayName === null || data.displayName === ""
+      ? null
+      : cleanSpaces(data.displayName);
+  }
+
+  if (typeof data.socials !== "undefined" && data.socials !== null) {
+    user.socials = user.socials || {};
+    for (const key of ["twitter", "linkedin", "instagram", "website"]) {
+      if (typeof data.socials[key] !== "undefined") {
+        user.socials[key] = cleanSpaces(data.socials[key] || "");
+      }
+    }
+    // Ensure mongoose detects the nested change
+    user.markModified("socials");
+  }
+
+  for (const f of ["profilePublic", "hideLocation", "hideBadges", "hideSupporters", "hideSocials"]) {
+    if (typeof data[f] !== "undefined") {
+      user[f] = data[f];
+    }
+  }
+
   user.updatedAt = moment.utc().toDate();
 
   try {
@@ -163,7 +187,15 @@ module.exports = async (req, res, next) => {
     showPhone: user.showPhone,
     username: user.username,
     zip: user.zip,
-    aboutMe:user.aboutMe
+    aboutMe: user.aboutMe,
+    // Phase 2 fields
+    displayName: user.displayName ?? null,
+    socials: user.socials || { twitter: "", linkedin: "", instagram: "", website: "" },
+    profilePublic: user.profilePublic ?? false,
+    hideLocation: user.hideLocation ?? false,
+    hideBadges: user.hideBadges ?? false,
+    hideSupporters: user.hideSupporters ?? false,
+    hideSocials: user.hideSocials ?? false,
   };
   return res.status(200).json(dataResponse);
 };

@@ -237,6 +237,38 @@ module.exports = {
       errors.zip = 'Should be a string';
     }
 
+    // Phase 2 user-profile fields
+    if (typeof data.displayName !== 'undefined' && data.displayName !== null) {
+      if (typeof data.displayName !== 'string') {
+        errors.displayName = 'Should be a string';
+      } else if (cleanSpaces(data.displayName).length > 60) {
+        errors.displayName = 'Should have less than 61 characters';
+      }
+    }
+
+    if (typeof data.socials !== 'undefined') {
+      if (typeof data.socials !== 'object' || data.socials === null || Array.isArray(data.socials)) {
+        errors.socials = 'Should be an object';
+      } else {
+        const socialLimits = { twitter: 100, linkedin: 200, instagram: 100, website: 300 };
+        for (const [key, max] of Object.entries(socialLimits)) {
+          const v = data.socials[key];
+          if (typeof v === 'undefined') continue;
+          if (typeof v !== 'string') {
+            errors[`socials.${key}`] = 'Should be a string';
+          } else if (cleanSpaces(v).length > max) {
+            errors[`socials.${key}`] = `Should have less than ${max + 1} characters`;
+          }
+        }
+      }
+    }
+
+    for (const f of ['profilePublic', 'hideLocation', 'hideBadges', 'hideSupporters', 'hideSocials']) {
+      if (typeof data[f] !== 'undefined' && typeof data[f] !== 'boolean') {
+        errors[f] = 'Should be a boolean';
+      }
+    }
+
     return { errors, isValid: isEmpty(errors) };
   },
   validateListUsers(queryParams) {
