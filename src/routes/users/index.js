@@ -9,6 +9,7 @@ const createUser = require('./create-user');
 const deleteUser = require('./delete-user');
 const editUser = require('./edit-user');
 const getUser = require('./get-user');
+const getUserByUsername = require('./get-user-by-username');
 const getProfile = require('./get-profile');
 const leaderboard = require('./leaderboard');
 const listUsers = require('./list-users');
@@ -20,6 +21,7 @@ const router = new express.Router();
 
 router.get('/profile', isAuthenticated({ isOptional: false }), getProfile);
 router.get('/leaderboard', leaderboard);
+router.get('/by-username/:username', getUserByUsername);
 router.put('/password', isAuthenticated({ isOptional: false }), changePassword);
 router.get('', isAuthenticated({ isOptional: false }), listUsers);
 router.post('', isAuthenticated({ isOptional: false }), createUser);
