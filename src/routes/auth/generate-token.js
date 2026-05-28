@@ -3,6 +3,7 @@ const moment = require('moment');
 
 const { RefreshToken } = require('../../models/refresh-token');
 
+const { markUserOpened } = require('../../helpers/user-activity');
 const { validateGenerateToken } = require('./validations');
 
 module.exports = async (req, res, next) => {
@@ -42,6 +43,15 @@ module.exports = async (req, res, next) => {
     }
 
     return res.status(401).json({ general: 'Refresh Token expired' });
+  }
+
+  try {
+    await markUserOpened(refreshToken.userId);
+  } catch (err) {
+    console.log(
+      `User ${refreshToken.userId} failed to mark opened at generate-token.`
+    );
+    return next(err);
   }
 
   const token = jwt.sign(

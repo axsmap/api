@@ -8,11 +8,13 @@ const editReview = require('./edit-review');
 const flagReview = require('./flag-review');
 const listReviews = require('./list-reviews');
 const voteReview = require('./vote-review');
+const voiceToReview = require('./voice-to-review');
 
 const router = new express.Router();
 
 router.get('', isAuthenticated({ isOptional: false }), listReviews);
 router.post('', isAuthenticated({ isOptional: false }), createReview);
+router.post('/voice-to-review', voiceToReview);
 router.put('/:reviewId', isAuthenticated({ isOptional: false }), editReview);
 router.put(
   '/:reviewId/vote',

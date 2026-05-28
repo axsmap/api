@@ -1,291 +1,247 @@
 const axios = require('axios');
-const mongoose = require('mongoose');
+const { ObjectId } = require('mongodb');
 const { isMongoId } = require('validator');
 
-const { Event } = require('../../models/event');
-const { Review } = require('../../models/review');
-const { User } = require('../../models/user');
+const { getDb } = require('./leaderboard-helpers');
 
-const getUsername = user => {
-  if (user.username) return user.username;
-
-  return (
-    [user.firstName, user.lastName].filter(Boolean).join(' ') || 'AXS Mapper'
-  );
+const logTrace = (requestId, step, startedAt, extra = {}) => {
+  console.log('[events:get-event:trace]', {
+    requestId,
+    step,
+    elapsedMs: Date.now() - startedAt,
+    ...extra
+  });
 };
 
-const normalizeLeaderboardItem = mapathonId => (item, index) => ({
-  rank: index + 1,
-  username: getUsername(item),
-  placesMapped: item.placesMapped || item.reviewsAmount || 0,
-  userId: (item.userId || item.id).toString(),
-  mapathonId: mapathonId ? mapathonId.toString() : null
-});
+const timeStep = async (
+  requestId,
+  requestStartedAt,
+  step,
+  work,
+  extra = {}
+) => {
+  const stepStartedAt = Date.now();
 
-const getLeaderboards = async eventId =>
-  Promise.all([
-    User.aggregate([
-      {
-        $match: {
-          isArchived: false,
-          isBlocked: false,
-          reviewsAmount: { $gt: 0 }
-        }
-      },
-      {
-        $project: {
-          _id: 0,
-          id: '$_id',
-          firstName: 1,
-          lastName: 1,
-          username: 1,
-          reviewsAmount: 1
-        }
-      },
-      {
-        $sort: {
-          reviewsAmount: -1,
-          username: 1,
-          firstName: 1,
-          lastName: 1
-        }
-      },
-      { $limit: 20 }
-    ]),
-    Review.aggregate([
-      {
-        $match: {
-          event: eventId,
-          isBanned: false
-        }
-      },
-      {
-        $group: {
-          _id: '$user',
-          placesMapped: { $sum: 1 }
-        }
-      },
-      {
-        $sort: {
-          placesMapped: -1,
-          _id: 1
-        }
-      },
-      { $limit: 10 },
-      {
-        $lookup: {
-          from: 'users',
-          localField: '_id',
-          foreignField: '_id',
-          as: 'user'
-        }
-      },
-      {
-        $unwind: '$user'
-      },
-      {
-        $project: {
-          _id: 0,
-          userId: '$_id',
-          firstName: '$user.firstName',
-          lastName: '$user.lastName',
-          username: '$user.username',
-          placesMapped: 1
-        }
-      }
-    ])
-  ]).then(([overall, mapathon]) => ({
-    overall: overall.map(normalizeLeaderboardItem(null)),
-    mapathon: mapathon.map(normalizeLeaderboardItem(eventId))
-  }));
+  try {
+    const result = await work();
+    logTrace(requestId, step, requestStartedAt, {
+      durationMs: Date.now() - stepStartedAt,
+      ...extra
+    });
+    return result;
+  } catch (err) {
+    logTrace(requestId, `${step}:error`, requestStartedAt, {
+      durationMs: Date.now() - stepStartedAt,
+      message: err.message,
+      ...extra
+    });
+    throw err;
+  }
+};
+
+const getDeferredLeaderboards = (requestId, startedAt, eventId) => {
+  // Keep event details fast: leaderboard aggregation scans reviews and is
+  // served by /events/leaderboard/overall and /events/:eventId/leaderboard.
+  logTrace(
+    requestId,
+    'leaderboards.deferred-to-dedicated-endpoints',
+    startedAt,
+    {
+      eventId: eventId.toString()
+    }
+  );
+
+  return {
+    overall: [],
+    mapathon: []
+  };
+};
 
 module.exports = async (req, res, next) => {
-  let eventId = req.params.eventId;
-  if (!isMongoId(eventId)) {
+  const startedAt = Date.now();
+  const mapathonId = req.params.eventId;
+  const requestId = `${Date.now().toString(36)}-${Math.random()
+    .toString(36)
+    .slice(2, 8)}`;
+
+  logTrace(requestId, 'start', startedAt, {
+    eventId: mapathonId,
+    ip: req.ip,
+    userAgent: req.get('user-agent')
+  });
+
+  if (!isMongoId(mapathonId)) {
+    logTrace(requestId, 'invalid-id', startedAt, { eventId: mapathonId });
     return res.status(400).json({ general: 'Event not found' });
   }
-  eventId = mongoose.Types.ObjectId(eventId);
+
+  const eventId = new ObjectId(mapathonId);
 
   let event;
+  const leaderboards = getDeferredLeaderboards(requestId, startedAt, eventId);
   try {
-    event = await Event.aggregate([
-      {
-        $match: { _id: eventId }
-      },
-      {
-        $lookup: {
-          from: 'users',
-          let: { managers: '$managers' },
-          pipeline: [
+    const db = await timeStep(requestId, startedAt, 'mongodb.get-db', getDb);
+
+    event = await timeStep(
+      requestId,
+      startedAt,
+      'mongodb.event-detail-aggregate',
+      () =>
+        db
+          .collection('events')
+          .aggregate([
+            { $match: { _id: eventId } },
             {
-              $match: {
-                $expr: {
-                  $in: ['$_id', '$$managers']
-                }
+              $lookup: {
+                from: 'users',
+                localField: 'managers',
+                foreignField: '_id',
+                as: 'managers'
+              }
+            },
+            {
+              $lookup: {
+                from: 'users',
+                localField: 'participants',
+                foreignField: '_id',
+                as: 'participants'
+              }
+            },
+            {
+              $lookup: {
+                from: 'teams',
+                localField: 'teams',
+                foreignField: '_id',
+                as: 'teams'
+              }
+            },
+            {
+              $lookup: {
+                from: 'teams',
+                localField: 'teamManager',
+                foreignField: '_id',
+                as: 'teamManager'
+              }
+            },
+            {
+              $unwind: {
+                path: '$teamManager',
+                preserveNullAndEmptyArrays: true
               }
             },
             {
               $project: {
                 _id: 0,
                 id: '$_id',
-                avatar: 1,
-                firstName: 1,
-                lastName: 1
-              }
-            }
-          ],
-          as: 'managers'
-        }
-      },
-      {
-        $lookup: {
-          from: 'users',
-          let: { participants: '$participants' },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $in: ['$_id', '$$participants']
+                address: 1,
+                description: 1,
+                donationAmounts: 1,
+                donationEnabled: 1,
+                donationGoal: 1,
+                donationId: 1,
+                endDate: 1,
+                isOpen: 1,
+                location: 1,
+                name: 1,
+                participantsGoal: 1,
+                poster: 1,
+                reviewsAmount: 1,
+                reviewsGoal: 1,
+                startDate: 1,
+                status: 1,
+                managers: {
+                  $map: {
+                    input: '$managers',
+                    as: 'manager',
+                    in: {
+                      id: '$$manager._id',
+                      avatar: '$$manager.avatar',
+                      firstName: '$$manager.firstName',
+                      lastName: '$$manager.lastName',
+                      username: '$$manager.username'
+                    }
+                  }
+                },
+                participants: {
+                  $map: {
+                    input: '$participants',
+                    as: 'participant',
+                    in: {
+                      id: '$$participant._id',
+                      avatar: '$$participant.avatar',
+                      firstName: '$$participant.firstName',
+                      lastName: '$$participant.lastName',
+                      username: '$$participant.username',
+                      reviewsAmount: '$$participant.reviewsAmount'
+                    }
+                  }
+                },
+                teams: {
+                  $map: {
+                    input: '$teams',
+                    as: 'team',
+                    in: {
+                      id: '$$team._id',
+                      avatar: '$$team.avatar',
+                      name: '$$team.name'
+                    }
+                  }
+                },
+                teamManager: {
+                  id: '$teamManager._id',
+                  avatar: '$teamManager.avatar',
+                  name: '$teamManager.name'
                 }
               }
-            },
-            {
-              $project: {
-                _id: 0,
-                id: '$_id',
-                avatar: 1,
-                firstName: 1,
-                lastName: 1
-              }
             }
-          ],
-          as: 'participants'
-        }
-      },
-      {
-        $lookup: {
-          from: 'teams',
-          let: { teams: '$teams' },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $in: ['$_id', '$$teams']
-                }
-              }
-            },
-            {
-              $project: {
-                _id: 0,
-                id: '$_id',
-                avatar: 1,
-                name: 1
-              }
-            }
-          ],
-          as: 'teams'
-        }
-      },
-      {
-        $lookup: {
-          from: 'teams',
-          let: { teamManager: '$teamManager' },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $eq: ['$_id', '$$teamManager']
-                }
-              }
-            },
-            {
-              $project: {
-                _id: 0,
-                id: '$_id',
-                avatar: 1,
-                name: 1
-              }
-            }
-          ],
-          as: 'teamManager'
-        }
-      },
-      {
-        $unwind: {
-          path: '$teamManager',
-          preserveNullAndEmptyArrays: true
-        }
-      },
-      {
-        $lookup: {
-          from: 'events',
-          let: { reviewsAmount: '$reviewsAmount' },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $gt: ['$reviewsAmount', '$$reviewsAmount']
-                }
-              }
-            },
-            {
-              $count: 'ranking'
-            }
-          ],
-          as: 'ranking'
-        }
-      },
-      {
-        $project: {
-          _id: 0,
-          id: '$_id',
-          address: 1,
-          description: 1,
-          donationAmounts: 1,
-          donationId: 1,
-          endDate: 1,
-          isOpen: 1,
-          location: 1,
-          managers: 1,
-          name: 1,
-          participants: 1,
-          participantsGoal: 1,
-          poster: 1,
-          ranking: 1,
-          reviewsAmount: 1,
-          reviewsGoal: 1,
-          startDate: 1,
-          teamManager: 1,
-          teams: 1
-        }
-      }
-    ]);
+          ])
+          .next(),
+      { collection: 'events', eventId: eventId.toString() }
+    );
+    logTrace(requestId, 'event-ready', startedAt, {
+      foundEvent: Boolean(event)
+    });
+
+    if (event) {
+      event.ranking = await timeStep(
+        requestId,
+        startedAt,
+        'mongodb.ranking-count',
+        async () =>
+          (await db.collection('events').countDocuments({
+            isArchived: false,
+            reviewsAmount: { $gt: event.reviewsAmount || 0 },
+            _id: { $ne: eventId }
+          })) + 1,
+        { collection: 'events', reviewsAmount: event.reviewsAmount || 0 }
+      );
+    }
   } catch (err) {
     console.log(`Event ${eventId} failed to be found at get-event`);
     return next(err);
   }
 
-  if (!event.length) {
+  if (!event) {
+    logTrace(requestId, 'not-found', startedAt);
     return res.status(404).json({ general: 'Event not found' });
   }
 
-  let leaderboards;
-  try {
-    leaderboards = await getLeaderboards(eventId);
-  } catch (err) {
-    console.log(
-      `Leaderboards for event ${eventId} failed to be found at get-event`
-    );
-    return next(err);
-  }
-
-  const dataResponse = Object.assign({}, event[0], {
-    ranking: event[0].ranking.length ? event[0].ranking[0].ranking + 1 : 1,
-    leaderboards
-  });
+  const dataResponse = await timeStep(
+    requestId,
+    startedAt,
+    'backend.response-shape',
+    () => ({
+      ...event,
+      leaderboards
+    })
+  );
 
   if (dataResponse.donationId) {
-    let options = {
+    logTrace(requestId, 'donately-start', startedAt, {
+      donationId: dataResponse.donationId
+    });
+
+    const options = {
       method: 'GET',
       url: `https://${
         process.env.DONATELY_SUBDOMAIN
@@ -298,16 +254,27 @@ module.exports = async (req, res, next) => {
 
     let response;
     try {
-      response = await axios(options);
+      response = await timeStep(
+        requestId,
+        startedAt,
+        'external.donately-campaign',
+        () => axios(options),
+        { donationId: dataResponse.donationId }
+      );
+      dataResponse.donationAmountRaised = response.data.campaign.amount_raised;
+      dataResponse.donationDonorsCount = response.data.campaign.donors_count;
+      dataResponse.donationGoal = response.data.campaign.campaign_goal;
     } catch (err) {
       console.log('Donation campaign failed to be found at get-event.');
-      return next(err);
+      dataResponse.donationAmountRaised = 0;
+      dataResponse.donationDonorsCount = 0;
+      dataResponse.donationGoal = dataResponse.donationGoal || 0;
+      logTrace(requestId, 'donately-error', startedAt, {
+        message: err.message
+      });
     }
-
-    dataResponse.donationAmountRaised = response.data.campaign.amount_raised;
-    dataResponse.donationDonorsCount = response.data.campaign.donors_count;
-    dataResponse.donationGoal = response.data.campaign.campaign_goal;
   }
 
+  logTrace(requestId, 'response', startedAt, { status: 200 });
   return res.status(200).json(dataResponse);
 };

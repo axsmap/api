@@ -9,6 +9,7 @@ const slugify = require('speakingurl');
 const { RefreshToken } = require('../../models/refresh-token');
 const { User } = require('../../models/user');
 
+const { markUserOpened } = require('../../helpers/user-activity');
 const { validateFacebookSignIn } = require('./validations');
 
 module.exports = async (req, res, next) => {
@@ -195,6 +196,13 @@ module.exports = async (req, res, next) => {
     expiresIn: 3600
   });
   refreshToken = refreshToken.key;
+
+  try {
+    await markUserOpened(user.id);
+  } catch (err) {
+    console.log(`User ${user.id} failed to mark opened at facebook-sign-in.`);
+    return next(err);
+  }
 
   return res.status(200).json({ token, refreshToken });
 };

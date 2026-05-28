@@ -73,6 +73,11 @@ module.exports = async (req, res, next) => {
       ? data.isSubscribed
       : user.isSubscribed;
 
+  user.connectionPreference =
+    typeof data.connectionPreference !== 'undefined'
+      ? data.connectionPreference
+      : user.connectionPreference;
+
   user.language = data.language || user.language;
 
   user.lastName = data.lastName ? cleanSpaces(data.lastName) : user.lastName;

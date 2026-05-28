@@ -86,6 +86,22 @@ const userSchema = new mongoose.Schema(
       default: false,
       required: [true, 'Is required']
     },
+    connectionPreference: {
+      type: String,
+      default: 'mapathon',
+      enum: {
+        values: ['mapathon', 'mutual', 'none'],
+        general: 'Invalid connection preference'
+      },
+      required: [true, 'Is required']
+    },
+    blockedUsers: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+      }
+    ],
+    lastOpenedAt: Date,
     lastName: {
       type: String,
       maxlength: [36, 'Should be less than 37 characters'],
