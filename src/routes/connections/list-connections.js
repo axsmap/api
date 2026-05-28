@@ -4,10 +4,8 @@ const { connectionProjection, toObjectId } = require('./helpers');
 const userProjection = prefix => ({
   id: `$${prefix}._id`,
   avatar: `$${prefix}.avatar`,
-  city: `$${prefix}.zip`,
   firstName: `$${prefix}.firstName`,
-  lastName: `$${prefix}.lastName`,
-  username: `$${prefix}.username`
+  lastName: `$${prefix}.lastName`
 });
 
 module.exports = async (req, res, next) => {

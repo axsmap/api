@@ -1,8 +1,8 @@
 const moment = require('moment');
 const { isMongoId } = require('validator');
 
-const { Connection } = require('../../models/connection');
-const { canViewConnection } = require('./helpers');
+const { getDb } = require('../events/leaderboard-helpers');
+const { canViewConnection, toObjectId } = require('./helpers');
 
 module.exports = async (req, res, next) => {
   const connectionId = req.params.connectionId;
@@ -18,7 +18,10 @@ module.exports = async (req, res, next) => {
 
   let connection;
   try {
-    connection = await Connection.findOne({ _id: connectionId });
+    const db = await getDb();
+    connection = await db
+      .collection('connections')
+      .findOne({ _id: toObjectId(connectionId) });
   } catch (err) {
     console.log(`Connection ${connectionId} failed to be found`);
     return next(err);
@@ -38,18 +41,24 @@ module.exports = async (req, res, next) => {
     return res.status(403).json({ general: 'Only the recipient can respond' });
   }
 
-  connection.state = state;
-  connection.updatedAt = moment.utc().toDate();
-
   try {
-    await connection.save();
+    const db = await getDb();
+    await db.collection('connections').updateOne(
+      { _id: connection._id },
+      {
+        $set: {
+          state,
+          updatedAt: moment.utc().toDate()
+        }
+      }
+    );
   } catch (err) {
-    console.log(`Connection ${connection.id} failed to be updated`);
+    console.log(`Connection ${connection._id.toString()} failed to be updated`);
     return next(err);
   }
 
   return res.status(200).json({
-    id: connection.id,
-    state: connection.state
+    id: connection._id.toString(),
+    state
   });
 };

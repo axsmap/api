@@ -1,8 +1,8 @@
 const moment = require('moment');
 const { isMongoId } = require('validator');
 
-const { Connection } = require('../../models/connection');
-const { User } = require('../../models/user');
+const { getDb } = require('../events/leaderboard-helpers');
+const { toObjectId } = require('../connections/helpers');
 
 module.exports = async (req, res, next) => {
   const userId = req.params.userId;
@@ -16,18 +16,22 @@ module.exports = async (req, res, next) => {
   }
 
   try {
+    const db = await getDb();
+    const requester = toObjectId(req.user.id);
+    const target = toObjectId(userId);
+
     await Promise.all([
-      User.updateOne(
-        { _id: req.user.id },
+      db.collection('users').updateOne(
+        { _id: requester },
         {
-          $addToSet: { blockedUsers: userId },
+          $addToSet: { blockedUsers: target },
           $set: { updatedAt: moment.utc().toDate() }
         }
       ),
-      Connection.deleteMany({
+      db.collection('connections').deleteMany({
         $or: [
-          { requester: req.user.id, recipient: userId },
-          { requester: userId, recipient: req.user.id }
+          { requester, recipient: target },
+          { requester: target, recipient: requester }
         ]
       })
     ]);

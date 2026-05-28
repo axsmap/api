@@ -1,10 +1,8 @@
 const moment = require('moment');
-const mongoose = require('mongoose');
 const { isMongoId } = require('validator');
 
-const { Connection } = require('../../models/connection');
-const { Event } = require('../../models/event');
-const { User } = require('../../models/user');
+const { getDb } = require('../events/leaderboard-helpers');
+const { toObjectId } = require('./helpers');
 
 const sharesMapathon = (event, requesterId, recipientId) => {
   const participantIds = [
@@ -37,10 +35,17 @@ module.exports = async (req, res, next) => {
   let recipient;
   let event;
   let existingConnection;
+  const requester = toObjectId(req.user.id);
+  const recipientId = toObjectId(userId);
+  const sharedEventId = toObjectId(eventId);
+
   try {
+    const db = await getDb();
     [recipient, event] = await Promise.all([
-      User.findOne({ _id: userId, isArchived: false, isBlocked: false }),
-      Event.findOne({ _id: eventId, isArchived: false })
+      db
+        .collection('users')
+        .findOne({ _id: recipientId, isArchived: false, isBlocked: false }),
+      db.collection('events').findOne({ _id: sharedEventId, isArchived: false })
     ]);
   } catch (err) {
     console.log('Connection target user or event failed to be found');
@@ -73,26 +78,20 @@ module.exports = async (req, res, next) => {
   }
 
   if ((recipient.connectionPreference || 'mapathon') === 'mutual') {
-    return res
-      .status(403)
-      .json({
-        general: 'This user only accepts requests from mutual connections'
-      });
+    return res.status(403).json({
+      general: 'This user only accepts requests from mutual connections'
+    });
   }
 
   if (!sharesMapathon(event, req.user.id, userId)) {
-    return res
-      .status(403)
-      .json({
-        general: 'You can only connect with users from the same Mapathon'
-      });
+    return res.status(403).json({
+      general: 'You can only connect with users from the same Mapathon'
+    });
   }
 
-  const requester = mongoose.Types.ObjectId(req.user.id);
-  const recipientId = mongoose.Types.ObjectId(userId);
-
   try {
-    existingConnection = await Connection.findOne({
+    const db = await getDb();
+    existingConnection = await db.collection('connections').findOne({
       $or: [
         { requester, recipient: recipientId },
         { requester: recipientId, recipient: requester }
@@ -104,24 +103,30 @@ module.exports = async (req, res, next) => {
   }
 
   if (existingConnection) {
-    if (!existingConnection.sharedEvents.find(e => e.toString() === event.id)) {
-      existingConnection.sharedEvents = [
-        ...existingConnection.sharedEvents,
-        event.id
-      ];
-      existingConnection.updatedAt = moment.utc().toDate();
+    if (
+      !(existingConnection.sharedEvents || []).find(
+        e => e.toString() === event._id.toString()
+      )
+    ) {
       try {
-        await existingConnection.save();
+        const db = await getDb();
+        await db.collection('connections').updateOne(
+          { _id: existingConnection._id },
+          {
+            $addToSet: { sharedEvents: event._id },
+            $set: { updatedAt: moment.utc().toDate() }
+          }
+        );
       } catch (err) {
         console.log(
-          `Connection ${existingConnection.id} failed to update shared events`
+          `Connection ${existingConnection._id.toString()} failed to update shared events`
         );
         return next(err);
       }
     }
 
     return res.status(200).json({
-      id: existingConnection.id,
+      id: existingConnection._id.toString(),
       state: existingConnection.state,
       general: 'Connection already exists'
     });
@@ -129,10 +134,15 @@ module.exports = async (req, res, next) => {
 
   let connection;
   try {
-    connection = await Connection.create({
+    const db = await getDb();
+    const now = moment.utc().toDate();
+    connection = await db.collection('connections').insertOne({
       requester,
       recipient: recipientId,
-      sharedEvents: [event.id]
+      state: 'pending',
+      sharedEvents: [event._id],
+      createdAt: now,
+      updatedAt: now
     });
   } catch (err) {
     console.log('Connection request failed to be created');
@@ -140,8 +150,8 @@ module.exports = async (req, res, next) => {
   }
 
   return res.status(201).json({
-    id: connection.id,
-    state: connection.state,
+    id: connection.insertedId.toString(),
+    state: 'pending',
     general: 'Connection requested'
   });
 };

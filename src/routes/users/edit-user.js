@@ -2,7 +2,8 @@ const moment = require('moment');
 
 const { cleanSpaces } = require('../../helpers');
 const { Photo } = require('../../models/photo');
-const { User } = require('../../models/user');
+const { getDb } = require('../events/leaderboard-helpers');
+const { toObjectId } = require('../connections/helpers');
 
 const { validateEditUser } = require('./validations');
 
@@ -11,9 +12,14 @@ module.exports = async (req, res, next) => {
 
   let user;
   try {
-    user = await User.findOne({ _id: userId, isArchived: false });
+    user = await (await getDb())
+      .collection('users')
+      .findOne({ _id: toObjectId(userId), isArchived: false });
   } catch (err) {
-    if (err.name === 'CastError') {
+    if (
+      err.name === 'CastError' ||
+      (err.message && err.message.includes('ObjectId'))
+    ) {
       return res.status(404).json({ general: 'User not found' });
     }
 
@@ -25,7 +31,7 @@ module.exports = async (req, res, next) => {
     return res.status(404).json({ general: 'User not found' });
   }
 
-  if (user.id !== req.user.id && !req.user.isAdmin) {
+  if (user._id.toString() !== req.user.id && !req.user.isAdmin) {
     return res.status(403).json({ general: 'Forbidden action' });
   }
 
@@ -98,7 +104,7 @@ module.exports = async (req, res, next) => {
   if (data.username && data.username !== user.username) {
     let repeatedUser;
     try {
-      repeatedUser = await User.findOne({
+      repeatedUser = await (await getDb()).collection('users').findOne({
         username: data.username,
         isArchived: false
       });
@@ -121,7 +127,30 @@ module.exports = async (req, res, next) => {
   user.updatedAt = moment.utc().toDate();
 
   try {
-    await user.save();
+    const db = await getDb();
+    await db.collection('users').updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          avatar: user.avatar,
+          connectionPreference: user.connectionPreference,
+          description: user.description,
+          disabilities: user.disabilities,
+          firstName: user.firstName,
+          gender: user.gender,
+          isSubscribed: user.isSubscribed,
+          language: user.language,
+          lastName: user.lastName,
+          phone: user.phone,
+          showDisabilities: user.showDisabilities,
+          showEmail: user.showEmail,
+          showPhone: user.showPhone,
+          updatedAt: user.updatedAt,
+          username: user.username,
+          zip: user.zip
+        }
+      }
+    );
   } catch (err) {
     if (typeof err.errors === 'object') {
       const validationErrors = {};
@@ -146,8 +175,9 @@ module.exports = async (req, res, next) => {
   }
 
   const dataResponse = {
-    id: user.id,
+    id: user._id.toString(),
     avatar: user.avatar,
+    connectionPreference: user.connectionPreference,
     description: user.description,
     disabilities: user.disabilities,
     firstName: user.firstName,

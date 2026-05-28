@@ -2,9 +2,18 @@ const { pick } = require('lodash');
 const { isEmail } = require('validator');
 
 const { cleanSpaces, sendEmail } = require('../../helpers');
-const { Invite } = require('../../models/invite');
+const { getDb } = require('../events/leaderboard-helpers');
+const { toObjectId } = require('../connections/helpers');
 
 const normalizePhone = phone => phone.replace(/[^\d+]/g, '');
+
+const withTimeout = (promise, ms) =>
+  Promise.race([
+    promise,
+    new Promise((resolve, reject) =>
+      setTimeout(() => reject(new Error('Email delivery timed out')), ms)
+    )
+  ]);
 
 module.exports = async (req, res, next) => {
   const data = pick(req.body, ['channel', 'contact', 'inviteUrl']);
@@ -40,36 +49,44 @@ module.exports = async (req, res, next) => {
 
   if (data.channel === 'email') {
     try {
-      await sendEmail({
-        receiversEmails: [contact],
-        subject: `${req.user.firstName || 'A friend'} invited you to AXS Map`,
-        textContent: `Join me on AXS Map to review accessibility and help make places easier for everyone to navigate.\n\n${inviteUrl}`,
-        htmlContent: `<p>Join me on AXS Map to review accessibility and help make places easier for everyone to navigate.</p><p><a href="${inviteUrl}">Join AXS Map</a></p>`
-      });
+      await withTimeout(
+        sendEmail({
+          receiversEmails: [contact],
+          subject: `${req.user.firstName || 'A friend'} invited you to AXS Map`,
+          textContent: `Join me on AXS Map to review accessibility and help make places easier for everyone to navigate.\n\n${inviteUrl}`,
+          htmlContent: `<p>Join me on AXS Map to review accessibility and help make places easier for everyone to navigate.</p><p><a href="${inviteUrl}">Join AXS Map</a></p>`
+        }),
+        8000
+      );
     } catch (err) {
       deliveryState = 'failed';
       console.log(`Invite email to ${contact} failed to send`);
     }
   }
 
-  let invite;
+  let inviteId;
   try {
-    invite = await Invite.create({
+    const db = await getDb();
+    const now = new Date();
+    const result = await db.collection('invites').insertOne({
       channel: data.channel,
       contact,
       deliveryState,
       inviteUrl,
-      sender: req.user.id
+      sender: toObjectId(req.user.id),
+      createdAt: now,
+      updatedAt: now
     });
+    inviteId = result.insertedId.toString();
   } catch (err) {
     console.log(`Invite failed to be created.\nData: ${JSON.stringify(data)}`);
     return next(err);
   }
 
   return res.status(201).json({
-    id: invite.id,
-    channel: invite.channel,
-    deliveryState: invite.deliveryState,
+    id: inviteId,
+    channel: data.channel,
+    deliveryState,
     general:
       data.channel === 'phone'
         ? 'Invite recorded. SMS delivery is not configured yet.'

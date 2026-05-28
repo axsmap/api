@@ -1,7 +1,8 @@
 const moment = require('moment');
 const { isMongoId } = require('validator');
 
-const { User } = require('../../models/user');
+const { getDb } = require('../events/leaderboard-helpers');
+const { toObjectId } = require('../connections/helpers');
 
 module.exports = async (req, res, next) => {
   const userId = req.params.userId;
@@ -11,10 +12,11 @@ module.exports = async (req, res, next) => {
   }
 
   try {
-    await User.updateOne(
-      { _id: req.user.id },
+    const db = await getDb();
+    await db.collection('users').updateOne(
+      { _id: toObjectId(req.user.id) },
       {
-        $pull: { blockedUsers: userId },
+        $pull: { blockedUsers: toObjectId(userId) },
         $set: { updatedAt: moment.utc().toDate() }
       }
     );

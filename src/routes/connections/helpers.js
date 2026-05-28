@@ -18,10 +18,8 @@ const userPublicProjection = {
   _id: 0,
   id: '$_id',
   avatar: 1,
-  city: '$zip',
   firstName: 1,
-  lastName: 1,
-  username: 1
+  lastName: 1
 };
 
 const connectionProjection = {
