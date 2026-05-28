@@ -1,11 +1,13 @@
 const crypto = require('crypto');
 
+const bcrypt = require('bcrypt-nodejs');
 const jwt = require('jsonwebtoken');
 const moment = require('moment');
 
 const { RefreshToken } = require('../../models/refresh-token');
-const { User } = require('../../models/user');
 
+const { markUserOpened } = require('../../helpers/user-activity');
+const { getDb } = require('../events/leaderboard-helpers');
 const { validateSignIn } = require('./validations');
 
 module.exports = async (req, res, next) => {
@@ -19,7 +21,8 @@ module.exports = async (req, res, next) => {
 
   let user;
   try {
-    user = await User.findOne({ email, isArchived: false });
+    const db = await getDb();
+    user = await db.collection('users').findOne({ email, isArchived: false });
   } catch (err) {
     console.log(`User with email ${email} failed to be found at sign-in.`);
     return next(err);
@@ -37,28 +40,41 @@ module.exports = async (req, res, next) => {
     return res.status(400).json({ general: 'Email or password incorrect' });
   }
 
-  const passwordMatches = user.comparePassword(password);
+  const passwordMatches = bcrypt.compareSync(password, user.hashedPassword);
 
   if (!passwordMatches) {
     return res.status(400).json({ general: 'Email or password incorrect' });
   }
 
-  const userId = user.id;
+  const userId = user._id.toString();
   const today = moment.utc();
   const expiresAt = today.add(14, 'days').toDate();
   const key = `${userId}${crypto.randomBytes(28).toString('hex')}`;
 
   let refreshToken;
   try {
-    refreshToken = await RefreshToken.findOneAndUpdate(
-      { userId },
-      { expiresAt, key, userId },
-      { new: true, setDefaultsOnInsert: true, upsert: true }
-    );
+    const db = await getDb();
+    refreshToken = await db
+      .collection(RefreshToken.collection.name)
+      .findOneAndUpdate(
+        { userId },
+        {
+          $set: { expiresAt, key, userId, updatedAt: new Date() },
+          $setOnInsert: { createdAt: new Date() }
+        },
+        { returnDocument: 'after', upsert: true }
+      );
   } catch (err) {
     console.log(
       `Refresh Token for userId ${userId} failed to be created or updated at sign-in.`
     );
+    return next(err);
+  }
+
+  try {
+    await markUserOpened(userId);
+  } catch (err) {
+    console.log(`User ${userId} failed to mark opened at sign-in.`);
     return next(err);
   }
 

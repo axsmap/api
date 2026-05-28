@@ -1,9 +1,9 @@
-//const { ReviewLogic } = require('review-icon-logic-2.json');
+// const { ReviewLogic } = require('review-icon-logic-2.json');
 const reviewLogic = require('./review-icon-logic-2.json');
 
 function assignFromYesNo(venueField) {
-  //field may not exist for old data
-  //test if properties exist and both are not set to 0
+  // field may not exist for old data
+  // test if properties exist and both are not set to 0
   // At this point, venueField is a JS object, not subject to
   //  Mongoose hasOwnProperty test issues
   if (
@@ -13,16 +13,20 @@ function assignFromYesNo(venueField) {
     !(venueField.yes === 0 && venueField.no === 0)
   ) {
     if (venueField.yes >= venueField.no) {
-      return 1; //assume yes if non-zeo even split in reviews
+      return 1; // assume yes if non-zeo even split in reviews
     } else {
-      return 0; //sets to no
+      return 0; // sets to no
     }
   } else {
-    return null; //unknown or empty
+    return null; // unknown or empty
   }
 }
 
 function assignFromSteps(stepField) {
+  if (!stepField) {
+    return null;
+  }
+
   let moreThanTwo = stepField.hasOwnProperty('moreThanTwo')
     ? stepField.moreThanTwo
     : 0;
@@ -47,8 +51,8 @@ function assignFromSteps(stepField) {
 
 module.exports = {
   calculateMapMarkerScore(entrance, interior, accessible) {
-    //use three scores to calculate the map-marker score
-    //@TBD: migrate to review-summary logic file
+    // use three scores to calculate the map-marker score
+    // @TBD: migrate to review-summary logic file
     if (entrance === 1 || interior === 1 || accessible === 1) {
       return 1;
     } else if (entrance === 3 || interior === 3 || accessible === 3) {
@@ -57,11 +61,11 @@ module.exports = {
       return 5;
     }
 
-    return 0; //default
+    return 0; // default
   },
 
   calculateRatingLevel(sectionName, venueRawData) {
-    //console.log('in calculateRatingLevel', venueRawData);
+    // console.log('in calculateRatingLevel', venueRawData);
 
     let reviewSummaryLogic = reviewLogic.reviewSummaryLogic;
 
@@ -91,12 +95,12 @@ module.exports = {
     venueData.isSpacious = assignFromYesNo(venueRawData.isSpacious);
     venueData.steps = assignFromSteps(venueRawData.steps);
 
-    //console.log('in calculateRatingLevel, raw data: ', venueRawData);
-    //console.log('in calculateRatingLevel, select venue data: ', venueData);
+    // console.log('in calculateRatingLevel, raw data: ', venueRawData);
+    // console.log('in calculateRatingLevel, select venue data: ', venueData);
 
     let sectionLogic, ratingDefinition;
     if (reviewSummaryLogic.hasOwnProperty(sectionName)) {
-      //valid values: entrance, restroom, interior
+      // valid values: entrance, restroom, interior
       sectionLogic = reviewSummaryLogic[sectionName];
     } else {
       console.log('Error: Logic not found for sectionLogic: ' + sectionName);
@@ -108,13 +112,13 @@ module.exports = {
     let ratingLevel, ratingGlyphs;
     const ratingLevels = ['alert', 'caution', 'accessible'];
 
-    for (rl = 0; rl < ratingLevels.length; rl++) {
+    for (let rl = 0; rl < ratingLevels.length; rl++) {
       if (
         sectionLogic.hasOwnProperty(ratingLevels[rl]) &&
         sectionLogic[ratingLevels[rl]].length > 0
       ) {
-        //level loop
-        for (idx = 0; idx < sectionLogic[ratingLevels[rl]].length; idx++) {
+        // level loop
+        for (let idx = 0; idx < sectionLogic[ratingLevels[rl]].length; idx++) {
           ratingDefinition = sectionLogic[ratingLevels[rl]][idx];
           let ratingDefinitionMatch = false;
 
@@ -134,7 +138,7 @@ module.exports = {
             }
           } else if (ratingDefinition.hasOwnProperty('fields')) {
             let fieldMatchCount = 0;
-            for (field of ratingDefinition.fields) {
+            for (const field of ratingDefinition.fields) {
               if (
                 (ratingDefinition.hasOwnProperty('matchValue') &&
                   venueData[field] === ratingDefinition.matchValue) ||
@@ -154,15 +158,15 @@ module.exports = {
             ratingDefinitionMatch === true &&
             ratingDefinition.hasOwnProperty('and')
           ) {
-            //console.log('Evaluate AND condition in ' + sectionName);
+            // console.log('Evaluate AND condition in ' + sectionName);
             if (
               ratingDefinition.and.hasOwnProperty('field') &&
               venueData.hasOwnProperty(ratingDefinition.and.field)
             ) {
-              //evaluate 'and' condition depending on match or noMatch value
+              // evaluate 'and' condition depending on match or noMatch value
               if (ratingDefinition.and.hasOwnProperty('matchValue')) {
                 ratingDefinitionMatch =
-                  venueData[ratingDefinition.and.field] ==
+                  venueData[ratingDefinition.and.field] ===
                   ratingDefinition.and.matchValue;
               } else if (ratingDefinition.and.hasOwnProperty('notMatchValue')) {
                 ratingDefinitionMatch =
@@ -172,34 +176,34 @@ module.exports = {
             }
           }
 
-          //not handling "fields" array in the "and" portion
+          // not handling "fields" array in the "and" portion
 
-          //set rating level
+          // set rating level
           if (ratingDefinitionMatch === true) {
-            //console.log('Found rule match for ' + sectionName);
+            // console.log('Found rule match for ' + sectionName);
 
-            if (ratingLevels[rl] == 'alert') {
+            if (ratingLevels[rl] === 'alert') {
               ratingLevel = 1;
-            } else if (ratingLevels[rl] == 'caution') {
+            } else if (ratingLevels[rl] === 'caution') {
               ratingLevel = 3;
-            } else if (ratingLevels[rl] == 'accessible') {
+            } else if (ratingLevels[rl] === 'accessible') {
               ratingLevel = 5;
             }
 
             ratingGlyphs = ratingDefinition.showGlyph;
-            break; //breaks rating-definition loop for level
+            break; // breaks rating-definition loop for level
           }
-        } //rating-definition loop
+        } // rating-definition loop
 
         if (ratingLevel !== undefined) {
           break;
         }
-      } //if-condition test level exists in definition
-    } //specific-level loop
+      } // if-condition test level exists in definition
+    } // specific-level loop
 
-    //set defaults
+    // set defaults
     if (ratingLevel === undefined) {
-      //console.log('ratingLevel not set: ', sectionLogic);
+      // console.log('ratingLevel not set: ', sectionLogic);
       ratingLevel = 0;
       ratingGlyphs =
         sectionLogic.hasOwnProperty('default') &&

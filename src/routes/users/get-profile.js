@@ -1,11 +1,28 @@
-const { Event } = require('../../models/event');
-const { Team } = require('../../models/team');
+const { ObjectId } = require('mongodb');
+
+const { markUserOpened } = require('../../helpers/user-activity');
+const { getDb } = require('../events/leaderboard-helpers');
 
 module.exports = async (req, res, next) => {
-  const getUserTeams = req.user.teams.map(t => Team.findOne({ _id: t }));
+  try {
+    const openedAt = new Date();
+    await markUserOpened(req.user.id, openedAt);
+    req.user.lastOpenedAt = openedAt;
+  } catch (err) {
+    console.log(`User ${req.user.id} failed to mark opened at get-profile.`);
+    return next(err);
+  }
+
   let userTeams;
   try {
-    userTeams = await Promise.all(getUserTeams);
+    const db = await getDb();
+    const teamIds = (req.user.teams || []).map(t => new ObjectId(t));
+    userTeams = teamIds.length
+      ? await db
+          .collection('teams')
+          .find({ _id: { $in: teamIds } })
+          .toArray()
+      : [];
   } catch (err) {
     console.log('Teams failed to be found at get-profile');
     return next(err);
@@ -18,13 +35,13 @@ module.exports = async (req, res, next) => {
       const teamManagers = t.managers.map(m => m.toString());
       if (teamManagers.includes(req.user.id)) {
         managedTeams.push({
-          id: t.id.toString(),
+          id: t._id.toString(),
           avatar: t.avatar,
           name: t.name
         });
       } else {
         teams.push({
-          id: t.id.toString(),
+          id: t._id.toString(),
           avatar: t.avatar,
           name: t.name
         });
@@ -32,10 +49,16 @@ module.exports = async (req, res, next) => {
     }
   });
 
-  const getUserEvents = req.user.events.map(e => Event.findOne({ _id: e }));
   let userEvents;
   try {
-    userEvents = await Promise.all(getUserEvents);
+    const db = await getDb();
+    const eventIds = (req.user.events || []).map(e => new ObjectId(e));
+    userEvents = eventIds.length
+      ? await db
+          .collection('events')
+          .find({ _id: { $in: eventIds } })
+          .toArray()
+      : [];
   } catch (err) {
     console.log('Events failed to be found at get-profile');
     return next(err);
@@ -48,7 +71,7 @@ module.exports = async (req, res, next) => {
       const eventManagers = e.managers.map(m => m.toString());
       if (eventManagers.includes(req.user.id)) {
         managedEvents.push({
-          id: e.id.toString(),
+          id: e._id.toString(),
           endDate: e.endDate,
           name: e.name,
           poster: e.poster,
@@ -56,7 +79,7 @@ module.exports = async (req, res, next) => {
         });
       } else {
         events.push({
-          id: e.id.toString(),
+          id: e._id.toString(),
           endDate: e.endDate,
           name: e.name,
           poster: e.poster,
@@ -66,9 +89,46 @@ module.exports = async (req, res, next) => {
     }
   });
 
+  let blockedUsers = [];
+  try {
+    const db = await getDb();
+    const blockedUserIds = (req.user.blockedUsers || []).map(
+      u => new ObjectId(u)
+    );
+    blockedUsers = blockedUserIds.length
+      ? await db
+          .collection('users')
+          .find(
+            { _id: { $in: blockedUserIds }, isArchived: false },
+            {
+              projection: {
+                _id: 1,
+                avatar: 1,
+                firstName: 1,
+                lastName: 1,
+                username: 1
+              }
+            }
+          )
+          .toArray()
+      : [];
+    blockedUsers = blockedUsers.map(user => ({
+      id: user._id.toString(),
+      avatar: user.avatar,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      username: user.username
+    }));
+  } catch (err) {
+    console.log('Blocked users failed to be found at get-profile');
+    return next(err);
+  }
+
   const userData = {
     id: req.user.id,
     avatar: req.user.avatar,
+    blockedUsers,
+    connectionPreference: req.user.connectionPreference || 'mapathon',
     description: req.user.description,
     disabilities: req.user.disabilities,
     email: req.user.email,
@@ -76,6 +136,7 @@ module.exports = async (req, res, next) => {
     firstName: req.user.firstName,
     gender: req.user.gender,
     isSubscribed: req.user.isSubscribed,
+    lastOpenedAt: req.user.lastOpenedAt,
     lastName: req.user.lastName,
     managedEvents,
     managedTeams,

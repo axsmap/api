@@ -1,5 +1,6 @@
 const axios = require('axios');
 const moment = require('moment');
+const { ObjectId } = require('mongodb');
 
 const { Event } = require('../../models/event');
 const { Photo } = require('../../models/photo');
@@ -9,6 +10,32 @@ const { Venue } = require('../../models/venue');
 
 const { validateCreateEditReview } = require('./validations');
 const venueReviewSummary = require('../../helpers/venue-review-summary.js');
+const { getDb } = require('../events/leaderboard-helpers');
+
+const toObjectId = id => (id ? new ObjectId(id) : undefined);
+
+const ensureCounter = value => ({
+  yes: value && typeof value.yes === 'number' ? value.yes : 0,
+  no: value && typeof value.no === 'number' ? value.no : 0
+});
+
+const applyBooleanCounter = (venue, field, value) => {
+  if (typeof value === 'undefined') return;
+
+  const counter = ensureCounter(venue[field]);
+  venue[field] = {
+    yes: value ? counter.yes + 1 : counter.yes,
+    no: value ? counter.no : counter.no + 1
+  };
+};
+
+const ensureSteps = steps => ({
+  zero: steps && typeof steps.zero === 'number' ? steps.zero : 0,
+  one: steps && typeof steps.one === 'number' ? steps.one : 0,
+  two: steps && typeof steps.two === 'number' ? steps.two : 0,
+  moreThanTwo:
+    steps && typeof steps.moreThanTwo === 'number' ? steps.moreThanTwo : 0
+});
 
 module.exports = async (req, res, next) => {
   console.log('body: ', req.body);
@@ -45,6 +72,341 @@ module.exports = async (req, res, next) => {
     team: req.body.team,
     user: req.user.id
   };
+
+  {
+    const db = await getDb();
+    const now = moment.utc().toDate();
+    const userId = toObjectId(req.user.id);
+    const eventId = toObjectId(data.event);
+    const teamId = toObjectId(data.team);
+
+    let event;
+    if (eventId) {
+      try {
+        event = await db.collection('events').findOne({
+          _id: eventId,
+          isArchived: false
+        });
+      } catch (err) {
+        console.log(`Event ${data.event} failed to be found at create-review`);
+        return next(err);
+      }
+
+      if (!event) {
+        return res.status(404).json({ event: 'Event not found' });
+      }
+
+      const participantIds = (event.participants || []).map(p => p.toString());
+      const managerIds = (event.managers || []).map(m => m.toString());
+      if (
+        !participantIds.includes(req.user.id) &&
+        !managerIds.includes(req.user.id)
+      ) {
+        return res
+          .status(400)
+          .json({ event: 'You are not a participant of this event' });
+      }
+
+      const startDate = moment(event.startDate).utc();
+      const endDate = moment(event.endDate).utc();
+      const today = moment.utc();
+      if (startDate.isAfter(today)) {
+        return res.status(400).json({ event: 'Event has not started yet' });
+      }
+      if (endDate.isBefore(today)) {
+        return res.status(400).json({ event: 'Event has already finished' });
+      }
+    }
+
+    let team;
+    if (teamId) {
+      try {
+        team = await db.collection('teams').findOne({
+          _id: teamId,
+          isArchived: false
+        });
+      } catch (err) {
+        console.log(`Team ${data.team} failed to be found at create-review`);
+        return next(err);
+      }
+
+      if (!team) {
+        return res.status(404).json({ team: 'Team not found' });
+      }
+
+      const memberIds = (team.members || []).map(m => m.toString());
+      const managerIds = (team.managers || []).map(m => m.toString());
+      if (
+        !memberIds.includes(req.user.id) &&
+        !managerIds.includes(req.user.id)
+      ) {
+        return res
+          .status(400)
+          .json({ team: 'You are not a member of this team' });
+      }
+    }
+
+    const placeId = req.body.place;
+    let venue;
+    try {
+      venue = await db.collection('venues').findOne({ placeId });
+    } catch (err) {
+      console.log(
+        `Venue with placeId ${placeId} failed to be found at create-review`
+      );
+      return next(err);
+    }
+
+    if (!venue) {
+      let response;
+      try {
+        response = await axios.get(
+          `https://maps.googleapis.com/maps/api/place/details/json?placeid=${placeId}&key=${
+            process.env.PLACES_API_KEY
+          }`
+        );
+      } catch (err) {
+        console.log(
+          `Place ${placeId} failed to be found at create-review, after Google search`
+        );
+        return next(err);
+      }
+
+      const statusResponse = response.data.status;
+      if (statusResponse !== 'OK') {
+        return res.status(404).json({ general: 'Place not found' });
+      }
+
+      const placeData = response.data.result;
+      const venueData = {
+        address: placeData.formatted_address,
+        location: {
+          type: 'Point',
+          coordinates: [
+            placeData.geometry.location.lng,
+            placeData.geometry.location.lat
+          ]
+        },
+        name: placeData.name,
+        placeId,
+        types: placeData.types,
+        isArchived: false,
+        photos: [],
+        reviews: [],
+        createdAt: now,
+        updatedAt: now
+      };
+
+      try {
+        const result = await db.collection('venues').insertOne(venueData);
+        venue = { ...venueData, _id: result.insertedId };
+      } catch (err) {
+        console.log(
+          `Venue failed to be created at create-review.\nData: ${JSON.stringify(
+            venueData
+          )}`
+        );
+        return next(err);
+      }
+    }
+
+    const reviewData = {
+      ...data,
+      event: eventId,
+      team: teamId,
+      user: userId,
+      venue: venue._id,
+      isBanned: false,
+      complaints: [],
+      voters: [],
+      createdAt: now,
+      updatedAt: now
+    };
+
+    Object.keys(reviewData).forEach(key => {
+      if (typeof reviewData[key] === 'undefined') {
+        delete reviewData[key];
+      }
+    });
+
+    let review;
+    try {
+      const result = await db.collection('reviews').insertOne(reviewData);
+      review = {
+        ...reviewData,
+        _id: result.insertedId,
+        id: result.insertedId.toString()
+      };
+    } catch (err) {
+      console.log(
+        `Review failed to be created at create-review.\nData: ${JSON.stringify(
+          reviewData
+        )}`
+      );
+      return next(err);
+    }
+
+    const reviewedFieldsCount = Math.max(
+      Object.keys(reviewData).length - 10,
+      1
+    );
+    let updatedUser;
+    try {
+      const result = await db.collection('users').findOneAndUpdate(
+        { _id: userId },
+        {
+          $inc: {
+            reviewFieldsAmount: reviewedFieldsCount,
+            reviewsAmount: 1
+          },
+          $set: { updatedAt: now }
+        },
+        { returnDocument: 'after', returnOriginal: false }
+      );
+      updatedUser = result.value || result;
+    } catch (err) {
+      console.log(
+        `User ${
+          req.user.id
+        } failed to be updated at create-review, after updated review count`
+      );
+      return next(err);
+    }
+
+    if (eventId) {
+      try {
+        await db.collection('events').updateOne(
+          { _id: eventId },
+          {
+            $inc: { reviewsAmount: 1 },
+            $set: { updatedAt: now }
+          }
+        );
+      } catch (err) {
+        console.log(
+          `Event ${
+            data.event
+          } failed to be updated at create-review, after event`
+        );
+        return next(err);
+      }
+    }
+
+    if (teamId) {
+      try {
+        await db.collection('teams').updateOne(
+          { _id: teamId },
+          {
+            $inc: { reviewsAmount: 1 },
+            $set: { updatedAt: now }
+          }
+        );
+      } catch (err) {
+        console.log(
+          `Team ${data.team} failed to be updated at create-review, after team`
+        );
+        return next(err);
+      }
+    }
+
+    applyBooleanCounter(venue, 'hasPermanentRamp', review.hasPermanentRamp);
+    applyBooleanCounter(venue, 'hasPortableRamp', review.hasPortableRamp);
+    applyBooleanCounter(venue, 'hasWideEntrance', review.hasWideEntrance);
+    applyBooleanCounter(
+      venue,
+      'hasAccessibleTableHeight',
+      review.hasAccessibleTableHeight
+    );
+    applyBooleanCounter(
+      venue,
+      'hasAccessibleElevator',
+      review.hasAccessibleElevator
+    );
+    applyBooleanCounter(venue, 'hasInteriorRamp', review.hasInteriorRamp);
+    applyBooleanCounter(venue, 'hasSwingOutDoor', review.hasSwingOutDoor);
+    applyBooleanCounter(venue, 'hasLargeStall', review.hasLargeStall);
+    applyBooleanCounter(
+      venue,
+      'hasSupportAroundToilet',
+      review.hasSupportAroundToilet
+    );
+    applyBooleanCounter(venue, 'hasLoweredSinks', review.hasLoweredSinks);
+    applyBooleanCounter(venue, 'allowsGuideDog', review.allowsGuideDog);
+    applyBooleanCounter(venue, 'hasParking', review.hasParking);
+    applyBooleanCounter(venue, 'hasSecondEntry', review.hasSecondEntry);
+    applyBooleanCounter(venue, 'hasWellLit', review.hasWellLit);
+    applyBooleanCounter(venue, 'isQuiet', review.isQuiet);
+    applyBooleanCounter(venue, 'isSpacious', review.isSpacious);
+
+    venue.reviews = [...(venue.reviews || []), review._id];
+    if (typeof review.steps !== 'undefined') {
+      venue.steps = ensureSteps(venue.steps);
+      venue.steps = {
+        zero: review.steps === 0 ? venue.steps.zero + 1 : venue.steps.zero,
+        one: review.steps === 1 ? venue.steps.one + 1 : venue.steps.one,
+        two: review.steps === 2 ? venue.steps.two + 1 : venue.steps.two,
+        moreThanTwo:
+          review.steps === 3
+            ? venue.steps.moreThanTwo + 1
+            : venue.steps.moreThanTwo
+      };
+    }
+
+    let scoring = venueReviewSummary.calculateRatingLevel('entrance', venue);
+    venue.entranceScore = scoring.ratingLevel;
+    venue.entranceGlyphs = scoring.ratingGlyphs;
+    scoring = venueReviewSummary.calculateRatingLevel('interior', venue);
+    venue.interiorScore = scoring.ratingLevel;
+    venue.interiorGlyphs = scoring.ratingGlyphs;
+    scoring = venueReviewSummary.calculateRatingLevel('restroom', venue);
+    venue.restroomScore = scoring.ratingLevel;
+    venue.restroomGlyphs = scoring.ratingGlyphs;
+    venue.mapMarkerScore = venueReviewSummary.calculateMapMarkerScore(
+      venue.entranceScore,
+      venue.interiorScore,
+      venue.restroomScore
+    );
+    venue.updatedAt = now;
+
+    try {
+      await db.collection('venues').replaceOne({ _id: venue._id }, venue);
+    } catch (err) {
+      console.log(
+        `Venue ${
+          venue._id
+        } failed to be updated at create-review, at final step`
+      );
+      return next(err);
+    }
+
+    return res.status(201).json({
+      id: review._id.toString(),
+      hasPermanentRamp: review.hasPermanentRamp,
+      hasPortableRamp: review.hasPortableRamp,
+      hasWideEntrance: review.hasWideEntrance,
+      hasAccessibleTableHeight: review.hasAccessibleTableHeight,
+      hasAccessibleElevator: review.hasAccessibleElevator,
+      hasInteriorRamp: review.hasInteriorRamp,
+      hasSwingOutDoor: review.hasSwingOutDoor,
+      hasLargeStall: review.hasLargeStall,
+      hasSupportAroundToilet: review.hasSupportAroundToilet,
+      hasLoweredSinks: review.hasLoweredSinks,
+      allowsGuideDog: review.allowsGuideDog,
+      comments: review.comments,
+      event: review.event,
+      hasParking: review.hasParking,
+      hasSecondEntry: review.hasSecondEntry,
+      hasWellLit: review.hasWellLit,
+      isQuiet: review.isQuiet,
+      isSpacious: review.isSpacious,
+      steps: review.steps,
+      team: review.team,
+      user: review.user,
+      userReviewFieldsAmount: updatedUser.reviewFieldsAmount,
+      userReviewsAmount: updatedUser.reviewsAmount,
+      venue: review.venue
+    });
+  }
 
   let event;
   if (data.event) {

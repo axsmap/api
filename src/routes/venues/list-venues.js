@@ -6,7 +6,77 @@ const { isNumber } = require('../../helpers');
 const { Venue } = require('../../models/venue');
 
 const { validateListVenues } = require('./validations');
+const { getDb } = require('../events/leaderboard-helpers');
 const venueReviewSummary = require('../../helpers/venue-review-summary.js');
+
+const applyVenueScores = (venue, venuesFilters = {}) => {
+  let scoring;
+
+  scoring = venueReviewSummary.calculateRatingLevel('entrance', venue);
+  venue.entranceScore = scoring.ratingLevel;
+  venue.entranceGlyphs = scoring.ratingGlyphs;
+
+  scoring = venueReviewSummary.calculateRatingLevel('interior', venue);
+  venue.interiorScore = scoring.ratingLevel;
+  venue.interiorGlyphs = scoring.ratingGlyphs;
+
+  scoring = venueReviewSummary.calculateRatingLevel('restroom', venue);
+  venue.restroomScore = scoring.ratingLevel;
+  venue.restroomGlyphs = scoring.ratingGlyphs;
+
+  venue.mapMarkerScore = venueReviewSummary.calculateMapMarkerScore(
+    venue.entranceScore,
+    venue.interiorScore,
+    venue.restroomScore
+  );
+
+  let passesValidation = true;
+  if (venuesFilters.hasOwnProperty('entranceScore')) {
+    if (
+      !venue.entranceScore ||
+      venue.entranceScore < venuesFilters.entranceScore
+    ) {
+      passesValidation = false;
+    }
+  }
+
+  if (passesValidation && venuesFilters.hasOwnProperty('interiorScore')) {
+    if (
+      !venue.interiorScore ||
+      venue.interiorScore < venuesFilters.interiorScore
+    ) {
+      passesValidation = false;
+    }
+  }
+
+  if (passesValidation && venuesFilters.hasOwnProperty('restroomScore')) {
+    if (
+      !venue.restroomScore ||
+      venue.restroomScore < venuesFilters.restroomScore
+    ) {
+      passesValidation = false;
+    }
+  }
+
+  return passesValidation ? venue : undefined;
+};
+
+const mapDbVenue = venue => {
+  const venueObject = venue.toObject ? venue.toObject() : venue;
+  const coordinates =
+    venue.coordinates ||
+    (venue.location &&
+      venue.location.coordinates && {
+        lat: venue.location.coordinates[1],
+        lng: venue.location.coordinates[0]
+      });
+
+  return Object.assign({}, venueObject, {
+    id: venue._id,
+    _id: undefined,
+    location: coordinates
+  });
+};
 
 module.exports = async (req, res, next) => {
   const queryParams = req.query;
@@ -242,73 +312,12 @@ module.exports = async (req, res, next) => {
       return next(err);
     }
 
-    venues = venues.map(venue =>
-      Object.assign({}, venue.toObject(), {
-        id: venue._id,
-        _id: undefined,
-        location: venue.coordinates
-      })
-    );
+    venues = venues.map(mapDbVenue);
 
     //+ADDED
     //Perform ratings logic on all returned venues
     console.log('Raw venues count: ' + venues.length);
-    venues = venues.filter(venue => {
-      //console.log('In scoring assignment');
-      let scoring;
-      //calculate entranceScore, glyphs
-      scoring = venueReviewSummary.calculateRatingLevel('entrance', venue);
-      venue.entranceScore = scoring.ratingLevel;
-      venue.entranceGlyphs = scoring.ratingGlyphs;
-
-      //calculate interiorScore, glyphs
-      scoring = venueReviewSummary.calculateRatingLevel('interior', venue);
-      venue.interiorScore = scoring.ratingLevel;
-      venue.interiorGlyphs = scoring.ratingGlyphs;
-
-      //calculate restroomScore, glyphs
-      scoring = venueReviewSummary.calculateRatingLevel('restroom', venue);
-      venue.restroomScore = scoring.ratingLevel;
-      venue.restroomGlyphs = scoring.ratingGlyphs;
-
-      venue.mapMarkerScore = venueReviewSummary.calculateMapMarkerScore(
-        venue.entranceScore,
-        venue.interiorScore,
-        venue.restroomScore
-      );
-
-      let passesValidation = true;
-      if (venuesFilters.hasOwnProperty('entranceScore')) {
-        if (
-          !venue.entranceScore ||
-          venue.entranceScore < venuesFilters.entranceScore
-        ) {
-          passesValidation = false;
-        }
-      }
-
-      if (passesValidation && venuesFilters.hasOwnProperty('interiorScore')) {
-        if (
-          !venue.interiorScore ||
-          venue.interiorScore < venuesFilters.interiorScore
-        ) {
-          passesValidation = false;
-        }
-      }
-
-      if (passesValidation && venuesFilters.hasOwnProperty('restroomScore')) {
-        if (
-          !venue.restroomScore ||
-          venue.restroomScore < venuesFilters.restroomScore
-        ) {
-          passesValidation = false;
-        }
-      }
-
-      if (passesValidation) {
-        return venue;
-      }
-    });
+    venues = venues.filter(venue => applyVenueScores(venue, venuesFilters));
 
     const lastPage = Math.ceil(total / pageLimit);
     let nextPage;
@@ -395,7 +404,71 @@ module.exports = async (req, res, next) => {
     if (statusCode === 'OVER_QUERY_LIMIT') {
       return next(new Error('Over query limit with Google Places API'));
     } else if (statusCode === 'REQUEST_DENIED') {
-      return next(new Error('Request denied with Google Places API'));
+      console.log(
+        'Google Places request denied; falling back to AXS venue search'
+      );
+
+      const fallbackFilters = {
+        location: {
+          $near: {
+            $geometry: {
+              type: 'Point',
+              coordinates: [coordinates[1], coordinates[0]]
+            },
+            $maxDistance: 50000
+          }
+        },
+        isArchived: false
+      };
+
+      if (queryParams.type) {
+        fallbackFilters.types = queryParams.type;
+      }
+
+      let venues;
+      try {
+        const db = await getDb();
+        venues = await db
+          .collection('venues')
+          .aggregate([
+            {
+              $geoNear: {
+                near: {
+                  type: 'Point',
+                  coordinates: [Number(coordinates[1]), Number(coordinates[0])]
+                },
+                distanceField: 'distance',
+                maxDistance: 50000,
+                spherical: true,
+                query: Object.assign(
+                  { isArchived: false },
+                  queryParams.type ? { types: queryParams.type } : {}
+                )
+              }
+            },
+            {
+              $limit: 20
+            }
+          ])
+          .toArray();
+      } catch (err) {
+        console.log(
+          `Fallback venues failed to be found at list-venues.\nvenuesQuery: ${JSON.stringify(
+            fallbackFilters
+          )}`
+        );
+        return next(err);
+      }
+
+      dataResponse = {
+        nextPage: undefined,
+        results: venues
+          .map(mapDbVenue)
+          .map(venue => applyVenueScores(venue))
+          .filter(Boolean)
+      };
+
+      return res.status(200).json(dataResponse);
     } else if (statusCode === 'INVALID_REQUEST') {
       return next(new Error('Invalid request with Google Places API'));
     } else if (statusCode === 'UNKNOWN_ERROR') {

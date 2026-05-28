@@ -3,10 +3,30 @@ const { isMongoId } = require('validator');
 
 const { getDb, normalizeLeaderboardItem } = require('./leaderboard-helpers');
 
+const logTrace = (requestId, step, startedAt, extra = {}) => {
+  console.log('[events:mapathon-leaderboard:trace]', {
+    requestId,
+    step,
+    elapsedMs: Date.now() - startedAt,
+    ...extra
+  });
+};
+
 module.exports = async (req, res, next) => {
+  const startedAt = Date.now();
   const mapathonId = req.params.eventId;
+  const requestId = `${Date.now().toString(36)}-${Math.random()
+    .toString(36)
+    .slice(2, 8)}`;
+
+  logTrace(requestId, 'start', startedAt, {
+    eventId: mapathonId,
+    ip: req.ip,
+    userAgent: req.get('user-agent')
+  });
 
   if (!isMongoId(mapathonId)) {
+    logTrace(requestId, 'invalid-id', startedAt, { eventId: mapathonId });
     return res.status(400).json({ general: 'Event not found' });
   }
 
@@ -14,6 +34,7 @@ module.exports = async (req, res, next) => {
 
   try {
     const db = await getDb();
+    logTrace(requestId, 'db-ready', startedAt);
 
     contributors = await db
       .collection('reviews')
@@ -76,6 +97,9 @@ module.exports = async (req, res, next) => {
         { $limit: 10 }
       ])
       .toArray();
+    logTrace(requestId, 'contributors-ready', startedAt, {
+      contributorCount: contributors.length
+    });
   } catch (err) {
     console.log(
       'Mapathon leaderboard failed to be found at get-mapathon-leaderboard'
@@ -83,6 +107,7 @@ module.exports = async (req, res, next) => {
     return next(err);
   }
 
+  logTrace(requestId, 'response', startedAt, { status: 200 });
   return res.status(200).json({
     mapathon: contributors.map(normalizeLeaderboardItem(mapathonId))
   });
