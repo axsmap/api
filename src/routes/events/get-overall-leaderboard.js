@@ -28,7 +28,7 @@ module.exports = async (req, res, next) => {
       }
     };
 
-    if (req.query.period === 'monthly') {
+    if (req.query.period === 'monthly' || req.query.period === 'month') {
       const { start, end } = getMonthlyDateRange();
       match.createdAt = { $gte: start, $lt: end };
     }

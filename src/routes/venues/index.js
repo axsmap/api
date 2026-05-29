@@ -9,6 +9,7 @@ const listVenues = require('./list-venues');
 const router = new express.Router();
 
 router.get('', listVenues);
+router.get('/detail/:placeId', getVenue);
 router.get('/:placeId', getVenue);
 router.put(
   '/:venueId/archive',

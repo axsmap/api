@@ -29,6 +29,7 @@ const applyVenueScores = (venue, venuesFilters = {}) => {
     venue.interiorScore,
     venue.restroomScore
   );
+  venue.isReviewed = true;
 
   let passesValidation = true;
   if (venuesFilters.hasOwnProperty('entranceScore')) {
@@ -80,6 +81,10 @@ const mapDbVenue = venue => {
 
 module.exports = async (req, res, next) => {
   const queryParams = req.query;
+  const placesApiKey =
+    process.env.PLACES_SERVER_API_KEY ||
+    process.env.GOOGLE_MAPS_API_KEY ||
+    process.env.PLACES_API_KEY;
 
   const { errors, isValid } = validateListVenues(queryParams);
   if (!isValid) return res.status(400).json(errors);
@@ -90,7 +95,7 @@ module.exports = async (req, res, next) => {
   if (queryParams.address && !queryParams.page) {
     console.log('in address conditional, ', queryParams);
     queryParams.name = queryParams.address;
-    const geocodeParams = `?key=${process.env.PLACES_API_KEY}&address=${slugify(
+    const geocodeParams = `?key=${placesApiKey}&address=${slugify(
       queryParams.address
     )}`;
 
@@ -343,7 +348,7 @@ module.exports = async (req, res, next) => {
     /*
      *  Perform Google search when there text entered or no filters selected
      */
-    let nearbyParams = `?key=${process.env.PLACES_API_KEY}`;
+    let nearbyParams = `?key=${placesApiKey}`;
     let searchType = queryParams.name ? 'textsearch' : 'nearbysearch';
 
     if (!queryParams.page) {
@@ -492,9 +497,9 @@ module.exports = async (req, res, next) => {
     placesResponse.data.results.forEach(place => {
       let photo = '';
       if (place.photos) {
-        photo = `https://maps.googleapis.com/maps/api/place/photo?key=${
-          process.env.PLACES_API_KEY
-        }&maxwidth=300&photoreference=${place.photos[0].photo_reference}`;
+        photo = `https://maps.googleapis.com/maps/api/place/photo?key=${placesApiKey}&maxwidth=300&photoreference=${
+          place.photos[0].photo_reference
+        }`;
       }
 
       places.push({
@@ -515,7 +520,11 @@ module.exports = async (req, res, next) => {
     //Use array of Google Place IDs to find AXS Venues
     let venues;
     try {
-      venues = await Venue.find({ placeId: { $in: placesIds } });
+      const db = await getDb();
+      venues = await db
+        .collection('venues')
+        .find({ placeId: { $in: placesIds }, isArchived: false })
+        .toArray();
     } catch (err) {
       console.log(
         `Venues failed to be found at list-venues.\nPlaces ids: [${placesIds}]`
@@ -649,6 +658,7 @@ module.exports = async (req, res, next) => {
           restroomScore: venue.restroomScore,
           restroomGlyphs: venue.restroomGlyphs,
           mapMarkerScore: venue.mapMarkerScore,
+          isReviewed: true,
 
           //original fields
           allowsGuideDog: venue.allowsGuideDog,
@@ -684,6 +694,7 @@ module.exports = async (req, res, next) => {
         entranceScore: 0,
         entranceGlyphs: 'entrylg',
         mapMarkerScore: 0,
+        isReviewed: false,
 
         //original fields
         allowsGuideDog: { yes: 0, no: 0 },
