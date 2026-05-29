@@ -2,18 +2,20 @@ const axios = require('axios');
 const { isEqual } = require('lodash');
 const slugify = require('speakingurl');
 
-const { Venue } = require('../../models/venue');
+const { getDb } = require('../events/leaderboard-helpers');
 const venueReviewSummary = require('../../helpers/venue-review-summary.js');
 
 module.exports = async (req, res, next) => {
   const placeId = req.params.placeId;
+  const placesApiKey =
+    process.env.PLACES_SERVER_API_KEY ||
+    process.env.GOOGLE_MAPS_API_KEY ||
+    process.env.PLACES_API_KEY;
 
   let response;
   try {
     response = await axios.get(
-      `https://maps.googleapis.com/maps/api/place/details/json?placeid=${placeId}&key=${
-        process.env.PLACES_API_KEY
-      }`
+      `https://maps.googleapis.com/maps/api/place/details/json?placeid=${placeId}&key=${placesApiKey}`
     );
   } catch (err) {
     console.log(`Place ${placeId} failed to be found at get-venue.`);
@@ -22,12 +24,18 @@ module.exports = async (req, res, next) => {
 
   const statusResponse = response.data.status;
   if (statusResponse !== 'OK') {
+    console.log('Google Place Details failed at get-venue.', {
+      placeId,
+      status: statusResponse,
+      errorMessage: response.data.error_message
+    });
     return res.status(404).json({ general: 'Place not found' });
   }
 
   const placeData = response.data.result;
   const dataResponse = {};
   dataResponse.address = placeData.formatted_address;
+  dataResponse.formatted_address = placeData.formatted_address;
 
   let useStreetviewCover = false;
   let streetViewError = false;
@@ -36,7 +44,7 @@ module.exports = async (req, res, next) => {
     streetViewResponse = await axios.get(
       `https://maps.googleapis.com/maps/api/streetview/metadata?location=${slugify(
         dataResponse.address
-      )}&key=${process.env.PLACES_API_KEY}`
+      )}&key=${placesApiKey}`
     );
   } catch (err) {
     console.log(`Streetview for ${placeId} failed to be found at get-venue.`);
@@ -53,15 +61,15 @@ module.exports = async (req, res, next) => {
   }
 
   if (useStreetviewCover) {
-    dataResponse.coverPhoto = `https://maps.googleapis.com/maps/api/streetview?key=${
-      process.env.PLACES_API_KEY
-    }&size=800x400&fov=110&location=${slugify(dataResponse.address)}`;
+    dataResponse.coverPhoto = `https://maps.googleapis.com/maps/api/streetview?key=${placesApiKey}&size=800x400&fov=110&location=${slugify(
+      dataResponse.address
+    )}`;
     //}&size=800x400&fov=110&heading=0&pano=${streetViewPanoId}`;
     //seems like heading needs to be set when using pano id but not for the address
   } else if (placeData.photos && placeData.photos.length > 0) {
-    dataResponse.coverPhoto = `https://maps.googleapis.com/maps/api/place/photo?key=${
-      process.env.PLACES_API_KEY
-    }&maxwidth=500&photoreference=${placeData.photos[0].photo_reference}`;
+    dataResponse.coverPhoto = `https://maps.googleapis.com/maps/api/place/photo?key=${placesApiKey}&maxwidth=500&photoreference=${
+      placeData.photos[0].photo_reference
+    }`;
   }
 
   let coverPhotoLink =
@@ -72,14 +80,22 @@ module.exports = async (req, res, next) => {
   console.log('Cover photo link: ', coverPhotoLink);
 
   dataResponse.formattedPhone = placeData.formatted_phone_number;
+  dataResponse.formatted_phone_number = placeData.formatted_phone_number;
   dataResponse.googleRating = placeData.rating;
+  dataResponse.rating = placeData.rating;
   dataResponse.googleUrl = placeData.url;
   dataResponse.internationalPhone = placeData.international_phone_number;
+  dataResponse.international_phone_number =
+    placeData.international_phone_number;
+  dataResponse.opening_hours = placeData.opening_hours;
+  dataResponse.reviews = placeData.reviews || [];
+  dataResponse.user_ratings_total = placeData.user_ratings_total;
   dataResponse.location = {
     lat: placeData.geometry.location.lat,
     lng: placeData.geometry.location.lng
   };
   dataResponse.name = placeData.name;
+  dataResponse.photos = placeData.photos || [];
   dataResponse.placeId = placeId;
   dataResponse.types = placeData.types;
   dataResponse.website = placeData.website;
@@ -124,163 +140,181 @@ module.exports = async (req, res, next) => {
   let venue;
   let venueToSave;
   try {
+    const db = await getDb();
     [venue, venueToSave] = await Promise.all([
-      Venue.aggregate([
-        {
-          $match: { placeId, isArchived: false }
-        },
-        {
-          $lookup: {
-            from: 'reviews',
-            let: { reviews: '$reviews' },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $in: ['$_id', '$$reviews']
+      db
+        .collection('venues')
+        .aggregate([
+          {
+            $match: { placeId, isArchived: false }
+          },
+          {
+            $lookup: {
+              from: 'reviews',
+              let: { reviews: '$reviews' },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $in: ['$_id', '$$reviews']
+                    }
                   }
-                }
-              },
-              {
-                $lookup: {
-                  from: 'users',
-                  let: { user: '$user' },
-                  pipeline: [
-                    {
-                      $match: {
-                        $expr: {
-                          $eq: ['$_id', '$$user']
+                },
+                {
+                  $lookup: {
+                    from: 'users',
+                    let: { user: '$user' },
+                    pipeline: [
+                      {
+                        $match: {
+                          $expr: {
+                            $eq: ['$_id', '$$user']
+                          }
+                        }
+                      },
+                      {
+                        $project: {
+                          _id: 0,
+                          id: '$_id',
+                          avatar: 1,
+                          firstName: 1,
+                          lastName: 1
                         }
                       }
+                    ],
+                    as: 'user'
+                  }
+                },
+                {
+                  $project: {
+                    _id: 0,
+                    id: '$_id',
+                    avatar: {
+                      $arrayElemAt: ['$user.avatar', 0]
                     },
-                    {
-                      $project: {
-                        _id: 0,
-                        id: '$_id',
-                        avatar: 1,
-                        firstName: 1,
-                        lastName: 1
-                      }
-                    }
-                  ],
-                  as: 'user'
-                }
-              },
-              {
-                $project: {
-                  _id: 0,
-                  id: '$_id',
-                  //bathroomScore: 1,
-                  comments: 1,
-                  createdAt: 1,
-                  //entryScore: 1,
-                  user: 1,
-                  voters: 1
-                }
-              }
-            ],
-            as: 'reviews'
-          }
-        },
-        {
-          $lookup: {
-            from: 'photos',
-            let: { photos: { $ifNull: ['$photos', []] } },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $in: ['$_id', '$$photos']
+                    //bathroomScore: 1,
+                    comments: 1,
+                    createdAt: 1,
+                    //entryScore: 1,
+                    firstName: {
+                      $arrayElemAt: ['$user.firstName', 0]
+                    },
+                    lastName: {
+                      $arrayElemAt: ['$user.lastName', 0]
+                    },
+                    user: 1,
+                    voters: 1
                   }
                 }
-              },
-              {
-                $project: {
-                  _id: 0,
-                  id: '$_id',
-                  url: 1
+              ],
+              as: 'reviews'
+            }
+          },
+          {
+            $lookup: {
+              from: 'photos',
+              let: { photos: { $ifNull: ['$photos', []] } },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $in: ['$_id', '$$photos']
+                    }
+                  }
+                },
+                {
+                  $project: {
+                    _id: 0,
+                    id: '$_id',
+                    url: 1
+                  }
                 }
-              }
-            ],
-            as: 'photos'
+              ],
+              as: 'photos'
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              id: '$_id',
+              address: 1,
+              description: 1,
+              allowsGuideDog: 1,
+              //bathroomReviews: 1,
+              //bathroomScore: 1,
+              //entryReviews: 1,
+              //entryScore: 1,
+              hasParking: 1,
+              hasSecondEntry: 1,
+              hasWellLit: 1,
+              isQuiet: 1,
+              isSpacious: 1,
+              location: 1,
+              name: 1,
+              photos: 1,
+              placeId: 1,
+              steps: 1,
+              types: 1,
+              reviews: 1,
+              hasPermanentRamp: 1,
+              hasPortableRamp: 1,
+              hasWideEntrance: 1,
+              hasAccessibleTableHeight: 1,
+              hasAccessibleElevator: 1,
+              hasInteriorRamp: 1,
+              hasSwingOutDoor: 1,
+              hasLargeStall: 1,
+              hasSupportAroundToilet: 1,
+              hasLoweredSinks: 1
+            }
           }
-        },
-        {
-          $project: {
-            _id: 0,
-            id: '$_id',
-            address: 1,
-            description: 1,
-            allowsGuideDog: 1,
-            //bathroomReviews: 1,
-            //bathroomScore: 1,
-            //entryReviews: 1,
-            //entryScore: 1,
-            hasParking: 1,
-            hasSecondEntry: 1,
-            hasWellLit: 1,
-            isQuiet: 1,
-            isSpacious: 1,
-            location: 1,
-            name: 1,
-            photos: 1,
-            placeId: 1,
-            steps: 1,
-            types: 1,
-            reviews: 1,
-            hasPermanentRamp: 1,
-            hasPortableRamp: 1,
-            hasWideEntrance: 1,
-            hasAccessibleTableHeight: 1,
-            hasAccessibleElevator: 1,
-            hasInteriorRamp: 1,
-            hasSwingOutDoor: 1,
-            hasLargeStall: 1,
-            hasSupportAroundToilet: 1,
-            hasLoweredSinks: 1
-          }
-        }
-      ]),
-      Venue.findOne({ placeId, isArchived: false })
+        ])
+        .toArray(),
+      db.collection('venues').findOne({ placeId, isArchived: false })
     ]);
   } catch (err) {
     console.log(
       `Venue with placeId ${placeId} failed to be found at get-venue`
     );
-    return next(err);
+    console.log(err);
+    return res.status(200).json(dataResponse);
   }
 
   if (venue && venue[0]) {
     let venueHasUpdates = false;
+    const venueUpdates = {};
     if (venueToSave.address !== dataResponse.address) {
-      venueToSave.address = dataResponse.address;
+      venueUpdates.address = dataResponse.address;
       venueHasUpdates = true;
     }
     if (
       venueToSave.location.coordinates[0] !== dataResponse.location.lng ||
       venueToSave.location.coordinates[1] !== dataResponse.location.lat
     ) {
-      venueToSave.location.coordinates = [
+      venueUpdates['location.coordinates'] = [
         dataResponse.location.lng,
         dataResponse.location.lat
       ];
       venueHasUpdates = true;
     }
     if (venueToSave.name !== dataResponse.name) {
-      venueToSave.name = dataResponse.name;
+      venueUpdates.name = dataResponse.name;
       venueHasUpdates = true;
     }
     if (!isEqual(venueToSave.types, dataResponse.types)) {
-      venueToSave.types = dataResponse.types;
+      venueUpdates.types = dataResponse.types;
       venueHasUpdates = true;
     }
 
     if (venueHasUpdates) {
       try {
-        await venueToSave.save();
+        const db = await getDb();
+        await db
+          .collection('venues')
+          .updateOne({ _id: venueToSave._id }, { $set: venueUpdates });
       } catch (err) {
         console.log(
-          `Venue with id ${venueToSave.id} failed to be updated at get-venue.`
+          `Venue with id ${venueToSave._id} failed to be updated at get-venue.`
         );
         return next(err);
       }
@@ -326,7 +360,9 @@ module.exports = async (req, res, next) => {
     dataResponse.hasWellLit = venue[0].hasWellLit;
     dataResponse.isQuiet = venue[0].isQuiet;
     dataResponse.isSpacious = venue[0].isSpacious;
-    dataResponse.photos = venue[0].photos;
+    if (venue[0].photos && venue[0].photos.length > 0) {
+      dataResponse.photos = venue[0].photos;
+    }
     dataResponse.steps = venue[0].steps;
     //new expanded fields
     dataResponse.hasPermanentRamp = venue[0].hasPermanentRamp;
@@ -340,7 +376,7 @@ module.exports = async (req, res, next) => {
     dataResponse.hasSupportAroundToilet = venue[0].hasSupportAroundToilet;
     dataResponse.hasLoweredSinks = venue[0].hasLoweredSinks;
 
-    dataResponse.reviews = venue[0].reviews;
+    dataResponse.axsReviews = venue[0].reviews;
   }
 
   return res.status(200).json(dataResponse);
