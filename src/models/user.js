@@ -80,7 +80,17 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
       required: [true, "Is required"],
+      index: true,
     },
+    // Users this user has blocked from connecting / appearing in their
+    // participant lists. See PR #205 spec section 4.4 for cascade behavior.
+    blockedConnectionUserIds: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        index: true,
+      },
+    ],
     isArchived: {
       type: Boolean,
       default: false,

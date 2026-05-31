@@ -4,6 +4,7 @@ const { isMongoId } = require('validator');
 const { Event } = require('../../models/event');
 const { EventParticipant } = require('../../models/event-participant');
 const { Review } = require('../../models/review');
+const { User } = require('../../models/user');
 
 module.exports = async (req, res, next) => {
   const { eventId, userId } = req.params;
@@ -32,6 +33,41 @@ module.exports = async (req, res, next) => {
 
   if (!isParticipant && !isManager) {
     return res.status(404).json({ general: 'Participant not found in this event' });
+  }
+
+  // Spec section 4.4: blocked relationships must hide the target from the
+  // viewer's participant lookup, both directions. If the viewer is signed in,
+  // mask the participant out of the response. Anonymous viewers see the
+  // participant normally — block is a viewer-side privacy primitive, not a
+  // universal hide.
+  if (req.user && req.user.id && req.user.id !== userId) {
+    let viewer;
+    try {
+      viewer = await User.findById(req.user.id)
+        .select('blockedConnectionUserIds')
+        .lean();
+    } catch (err) {
+      console.log(`Viewer block lookup failed at get-participant: ${err.message}`);
+      viewer = null;
+    }
+    const viewerBlocked = (viewer && viewer.blockedConnectionUserIds ? viewer.blockedConnectionUserIds : [])
+      .some((id) => id.toString() === userId);
+
+    let target;
+    try {
+      target = await User.findById(userOid)
+        .select('blockedConnectionUserIds')
+        .lean();
+    } catch (err) {
+      console.log(`Target block lookup failed at get-participant: ${err.message}`);
+      target = null;
+    }
+    const targetBlockedViewer = (target && target.blockedConnectionUserIds ? target.blockedConnectionUserIds : [])
+      .some((id) => id.toString() === req.user.id);
+
+    if (viewerBlocked || targetBlockedViewer) {
+      return res.status(404).json({ general: 'Participant not found in this event' });
+    }
   }
 
   // Lookup user info

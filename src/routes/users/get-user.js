@@ -184,6 +184,7 @@ async function getUserResponse(matchStage, collation) {
         hideBadges: { $ifNull: ["$hideBadges", false] },
         hideSupporters: { $ifNull: ["$hideSupporters", false] },
         hideSocials: { $ifNull: ["$hideSocials", false] },
+        isAdmin: { $ifNull: ["$isAdmin", false] },
         isArchived: 1,
         isBlocked: 1,
       },

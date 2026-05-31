@@ -100,7 +100,20 @@ module.exports = async (req, res, next) => {
     birthday: req.user?.birthday,
     disability: req.user.disability,
     ranking,
-    aboutMe:req.user.aboutMe,
+    aboutMe: req.user.aboutMe,
+    isAdmin: req.user.isAdmin === true,
+    // Phase 2 profile fields (defaults applied here because req.user is a
+    // mongoose doc; absent fields come through as undefined).
+    displayName: req.user.displayName ?? null,
+    socials: req.user.socials || { twitter: "", linkedin: "", instagram: "", website: "" },
+    profilePublic: req.user.profilePublic ?? false,
+    hideLocation: req.user.hideLocation ?? false,
+    hideBadges: req.user.hideBadges ?? false,
+    hideSupporters: req.user.hideSupporters ?? false,
+    hideSocials: req.user.hideSocials ?? false,
+    blockedConnectionUserIds: (req.user.blockedConnectionUserIds || []).map(
+      (id) => id.toString()
+    ),
   };
   return res.status(200).json(userData);
 };

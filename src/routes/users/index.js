@@ -3,6 +3,7 @@ const express = require('express');
 const { isAuthenticated } = require('../../helpers');
 
 const archiveUser = require('./archive-user');
+const blockConnection = require('./block-connection');
 const blockUser = require('./block-user');
 const changePassword = require('./change-password');
 const createUser = require('./create-user');
@@ -15,6 +16,7 @@ const getProfile = require('./get-profile');
 const leaderboard = require('./leaderboard');
 const suppressUserBadge = require('./suppress-user-badge');
 const listUsers = require('./list-users');
+const unblockConnection = require('./unblock-connection');
 const unblockUser = require('./unblock-user');
 const deactivateUser = require('./deactivate-user');
 const reactivateAccount = require('../auth/reactivate-account');
@@ -55,6 +57,16 @@ router.put(
   '/:userId/unblock',
   isAuthenticated({ isOptional: false }),
   unblockUser
+);
+router.put(
+  '/:id/block-connection',
+  isAuthenticated({ isOptional: false }),
+  blockConnection
+);
+router.put(
+  '/:id/unblock-connection',
+  isAuthenticated({ isOptional: false }),
+  unblockConnection
 );
 
 // Legacy route for frontend compatibility - redirects to /auth/reactivate-account

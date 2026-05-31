@@ -45,7 +45,11 @@ router.put(
   isAuthenticated({ isOptional: false }),
   leaveEvent
 );
-router.get("/:eventId/participants/:userId", getParticipant);
+router.get(
+  "/:eventId/participants/:userId",
+  isAuthenticated({ isOptional: true }),
+  getParticipant
+);
 router.patch(
   "/:eventId/participants/:userId/message",
   isAuthenticated({ isOptional: false }),
