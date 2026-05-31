@@ -88,11 +88,12 @@ module.exports = {
           // Continue anyway - activity tracking failure shouldn't block the request
         }
 
-        // Remove sensitive fields before attaching to request
+        // Remove sensitive fields before attaching to request. NB: isAdmin
+        // is intentionally kept — get-profile surfaces it, and the
+        // /reports/users admin gate reads it from req.user.
         req.user = user.toObject({ virtuals: true });
         delete req.user.__v;
         delete req.user.createdAt;
-        delete req.user.isAdmin;
         delete req.user.isArchived;
         delete req.user.isBlocked;
         delete req.user.hashedPassword;
