@@ -3,6 +3,18 @@ const { isMongoId } = require('validator');
 
 const { getDb, normalizeLeaderboardItem } = require('./leaderboard-helpers');
 
+const MAPATHON_LEADERBOARD_LIMIT = 10;
+
+const getLeaderboardLimit = query => {
+  const requestedLimit = parseInt(query.limit, 10);
+
+  if (!requestedLimit || requestedLimit < 1) {
+    return MAPATHON_LEADERBOARD_LIMIT;
+  }
+
+  return Math.min(requestedLimit, MAPATHON_LEADERBOARD_LIMIT);
+};
+
 const logTrace = (requestId, step, startedAt, extra = {}) => {
   console.log('[events:mapathon-leaderboard:trace]', {
     requestId,
@@ -15,12 +27,14 @@ const logTrace = (requestId, step, startedAt, extra = {}) => {
 module.exports = async (req, res, next) => {
   const startedAt = Date.now();
   const mapathonId = req.params.eventId;
+  const leaderboardLimit = getLeaderboardLimit(req.query);
   const requestId = `${Date.now().toString(36)}-${Math.random()
     .toString(36)
     .slice(2, 8)}`;
 
   logTrace(requestId, 'start', startedAt, {
     eventId: mapathonId,
+    limit: leaderboardLimit,
     ip: req.ip,
     userAgent: req.get('user-agent')
   });
@@ -94,7 +108,7 @@ module.exports = async (req, res, next) => {
             lastName: 1
           }
         },
-        { $limit: 10 }
+        { $limit: leaderboardLimit }
       ])
       .toArray();
     logTrace(requestId, 'contributors-ready', startedAt, {
