@@ -3,6 +3,8 @@ const { isMongoId } = require('validator');
 
 const { getDb, normalizeLeaderboardItem } = require('./leaderboard-helpers');
 
+const LEADERBOARD_LIMIT = 20;
+
 const logTrace = (requestId, step, startedAt, extra = {}) => {
   console.log('[events:mapathon-leaderboard:trace]', {
     requestId,
@@ -19,8 +21,14 @@ module.exports = async (req, res, next) => {
     .toString(36)
     .slice(2, 8)}`;
 
+  const requestedLimit = parseInt(req.query.limit || req.query.pageLimit, 10);
+  const limit = Number.isFinite(requestedLimit)
+    ? Math.min(Math.max(requestedLimit, 1), LEADERBOARD_LIMIT)
+    : LEADERBOARD_LIMIT;
+
   logTrace(requestId, 'start', startedAt, {
     eventId: mapathonId,
+    limit,
     ip: req.ip,
     userAgent: req.get('user-agent')
   });
@@ -94,7 +102,7 @@ module.exports = async (req, res, next) => {
             lastName: 1
           }
         },
-        { $limit: 10 }
+        { $limit: limit }
       ])
       .toArray();
     logTrace(requestId, 'contributors-ready', startedAt, {
