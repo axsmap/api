@@ -15,6 +15,42 @@ const { getDb } = require('../events/leaderboard-helpers');
 const AXS_MAP_IOS_CLIENT_ID =
   '485795629207-h1fdogfm67h5lmrfi727f1stl1glmhtc.apps.googleusercontent.com';
 
+const getTokenDebugPayload = idToken => {
+  try {
+    const decoded = jwt.decode(idToken, { complete: true });
+    const payload = decoded && decoded.payload ? decoded.payload : {};
+
+    return {
+      aud: payload.aud,
+      iss: payload.iss
+    };
+  } catch (err) {
+    return {
+      decodeError: err.message
+    };
+  }
+};
+
+const logGoogleIdTokenDebug = (label, idToken, audiences, err) => {
+  const tokenDebug = getTokenDebugPayload(idToken);
+
+  console.log(
+    `[google-sign-in] ${label}: ${JSON.stringify({
+      token: tokenDebug,
+      verifyAudiences: audiences,
+      verifyClientId: process.env.GOOGLE_CLIENT_ID,
+      verifyIosClientId: process.env.GOOGLE_IOS_CLIENT_ID,
+      fallbackIosClientId: AXS_MAP_IOS_CLIENT_ID,
+      error: err
+        ? {
+            name: err.name,
+            message: err.message
+          }
+        : undefined
+    })}`
+  );
+};
+
 module.exports = async (req, res, next) => {
   const { errors, isValid } = validateGoogleSignIn(req.body);
   if (!isValid) {
@@ -228,8 +264,16 @@ module.exports = async (req, res, next) => {
   };
 
   if (isIdToken) {
+    logGoogleIdTokenDebug('verifying request id token', code, audiences);
+
     return client.verifyIdToken(code, audiences, async (err, login) => {
       if (err) {
+        logGoogleIdTokenDebug(
+          'request id token verification failed',
+          code,
+          audiences,
+          err
+        );
         return res.status(400).json({ general: 'Invalid token id' });
       }
 
@@ -258,8 +302,16 @@ module.exports = async (req, res, next) => {
   }
 
   const idToken = getTokenResponse.data.id_token;
+  logGoogleIdTokenDebug('verifying exchanged id token', idToken, audiences);
+
   client.verifyIdToken(idToken, audiences, async (err, login) => {
     if (err) {
+      logGoogleIdTokenDebug(
+        'exchanged id token verification failed',
+        idToken,
+        audiences,
+        err
+      );
       return res.status(400).json({ general: 'Invalid token id' });
     }
 
