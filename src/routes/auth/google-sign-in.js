@@ -14,6 +14,8 @@ const { getDb } = require('../events/leaderboard-helpers');
 
 const AXS_MAP_IOS_CLIENT_ID =
   '485795629207-h1fdogfm67h5lmrfi727f1stl1glmhtc.apps.googleusercontent.com';
+const AXS_MAP_WEB_CLIENT_ID =
+  '485795629207-280qihk5o5nv2oi0n1p5hhpe56nqb591.apps.googleusercontent.com';
 const AXS_MAP_ANDROID_CLIENT_ID =
   '485795629207-dn8kf2q8menjchini17tq49k9r5fg1bs.apps.googleusercontent.com';
 
@@ -26,11 +28,13 @@ module.exports = async (req, res, next) => {
   const code = req.body.code;
   const isAndroid = req.body.source === 'android';
   const auth = new GoogleAuth();
-  const client = new auth.OAuth2(process.env.GOOGLE_CLIENT_ID, '', '');
+  const webClientId = process.env.GOOGLE_CLIENT_ID || AXS_MAP_WEB_CLIENT_ID;
+  const client = new auth.OAuth2(webClientId, '', '');
   const audiences = [
-    process.env.GOOGLE_CLIENT_ID,
+    webClientId,
     process.env.GOOGLE_IOS_CLIENT_ID,
     process.env.GOOGLE_ANDROID_CLIENT_ID,
+    AXS_MAP_WEB_CLIENT_ID,
     AXS_MAP_IOS_CLIENT_ID,
     AXS_MAP_ANDROID_CLIENT_ID
   ].filter(Boolean);
