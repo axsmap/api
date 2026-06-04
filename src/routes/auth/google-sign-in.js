@@ -14,6 +14,8 @@ const { getDb } = require('../events/leaderboard-helpers');
 
 const AXS_MAP_IOS_CLIENT_ID =
   '485795629207-h1fdogfm67h5lmrfi727f1stl1glmhtc.apps.googleusercontent.com';
+const AXS_MAP_ANDROID_CLIENT_ID =
+  '485795629207-dn8kf2q8menjchini17tq49k9r5fg1bs.apps.googleusercontent.com';
 
 module.exports = async (req, res, next) => {
   const { errors, isValid } = validateGoogleSignIn(req.body);
@@ -28,7 +30,9 @@ module.exports = async (req, res, next) => {
   const audiences = [
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_IOS_CLIENT_ID,
-    AXS_MAP_IOS_CLIENT_ID
+    process.env.GOOGLE_ANDROID_CLIENT_ID,
+    AXS_MAP_IOS_CLIENT_ID,
+    AXS_MAP_ANDROID_CLIENT_ID
   ].filter(Boolean);
   const isIdToken = code.split('.').length === 3;
 

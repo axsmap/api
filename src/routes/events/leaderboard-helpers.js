@@ -25,6 +25,13 @@ const getDb = async () => {
 };
 
 const getUsername = user => {
+  const firstName = (user.firstName || '').trim();
+  const lastName = (user.lastName || '').trim();
+
+  if (firstName) {
+    return lastName ? `${firstName} ${lastName.charAt(0)}` : firstName;
+  }
+
   if (user.username) return user.username;
 
   return (
