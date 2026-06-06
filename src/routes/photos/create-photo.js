@@ -77,7 +77,11 @@ module.exports = async (req, res, next) => {
     return next(err);
   }
 
-  fs.unlink(req.file.path);
+  fs.unlink(req.file.path, err => {
+    if (err) {
+      console.log('Photo temp file cleanup failed at create-photo', err);
+    }
+  });
 
   const photoData = {
     fileName: photoFileName,
