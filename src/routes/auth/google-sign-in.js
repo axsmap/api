@@ -2,15 +2,15 @@ const crypto = require('crypto');
 const querystring = require('querystring');
 
 const axios = require('axios');
-const GoogleAuth = require('google-auth-library');
+const { OAuth2Client } = require('google-auth-library');
 const jwt = require('jsonwebtoken');
 const moment = require('moment');
 const randomstring = require('randomstring');
 const slugify = require('speakingurl');
 
 const { markUserOpened } = require('../../helpers/user-activity');
-const { validateGoogleSignIn } = require('./validations');
 const { getDb } = require('../events/leaderboard-helpers');
+const { validateGoogleSignIn } = require('./validations');
 
 const AXS_MAP_IOS_CLIENT_ID =
   '485795629207-h1fdogfm67h5lmrfi727f1stl1glmhtc.apps.googleusercontent.com';
@@ -27,9 +27,8 @@ module.exports = async (req, res, next) => {
 
   const code = req.body.code;
   const isAndroid = req.body.source === 'android';
-  const auth = new GoogleAuth();
   const webClientId = process.env.GOOGLE_CLIENT_ID || AXS_MAP_WEB_CLIENT_ID;
-  const client = new auth.OAuth2(webClientId, '', '');
+  const client = new OAuth2Client(webClientId);
   const audiences = [
     webClientId,
     process.env.GOOGLE_IOS_CLIENT_ID,
@@ -39,6 +38,25 @@ module.exports = async (req, res, next) => {
     AXS_MAP_ANDROID_CLIENT_ID
   ].filter(Boolean);
   const isIdToken = code.split('.').length === 3;
+
+  const verifyGoogleIdToken = async idToken => {
+    try {
+      return await client.verifyIdToken({
+        idToken,
+        audience: audiences
+      });
+    } catch (err) {
+      const decodedToken = jwt.decode(idToken) || {};
+      console.error('Google ID token verification failed.', {
+        audience: decodedToken.aud,
+        issuer: decodedToken.iss,
+        source: req.body.source,
+        tokenType: req.body.tokenType,
+        error: err.message
+      });
+      return null;
+    }
+  };
 
   const handleGoogleLogin = async login => {
     const payload = login.getPayload();
@@ -236,13 +254,12 @@ module.exports = async (req, res, next) => {
   };
 
   if (isIdToken) {
-    return client.verifyIdToken(code, audiences, async (err, login) => {
-      if (err) {
-        return res.status(400).json({ general: 'Invalid token id' });
-      }
+    const login = await verifyGoogleIdToken(code);
+    if (!login) {
+      return res.status(400).json({ general: 'Invalid token id' });
+    }
 
-      return handleGoogleLogin(login);
-    });
+    return handleGoogleLogin(login);
   }
 
   const getTokenUrl = 'https://www.googleapis.com/oauth2/v4/token';
@@ -266,11 +283,10 @@ module.exports = async (req, res, next) => {
   }
 
   const idToken = getTokenResponse.data.id_token;
-  client.verifyIdToken(idToken, audiences, async (err, login) => {
-    if (err) {
-      return res.status(400).json({ general: 'Invalid token id' });
-    }
+  const login = await verifyGoogleIdToken(idToken);
+  if (!login) {
+    return res.status(400).json({ general: 'Invalid token id' });
+  }
 
-    return handleGoogleLogin(login);
-  });
+  return handleGoogleLogin(login);
 };
