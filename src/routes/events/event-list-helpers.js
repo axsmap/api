@@ -53,6 +53,7 @@ const eventListPipeline = ({ eventsQuery, sortBy, page, pageLimit }) => [
       _id: 0,
       id: '$_id',
       address: 1,
+      createdAt: 1,
       description: 1,
       endDate: 1,
       isOpen: 1,

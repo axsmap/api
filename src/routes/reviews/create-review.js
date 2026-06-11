@@ -42,6 +42,11 @@ module.exports = async (req, res, next) => {
   const { errors, isValid } = validateCreateEditReview(req.body);
   if (!isValid) return res.status(400).json(errors);
 
+  const placesApiKey =
+    process.env.PLACES_SERVER_API_KEY ||
+    process.env.GOOGLE_MAPS_API_KEY ||
+    process.env.PLACES_API_KEY;
+
   const data = {
     //new expanded fields
     hasPermanentRamp: req.body.hasPermanentRamp,
@@ -161,9 +166,7 @@ module.exports = async (req, res, next) => {
       let response;
       try {
         response = await axios.get(
-          `https://maps.googleapis.com/maps/api/place/details/json?placeid=${placeId}&key=${
-            process.env.PLACES_API_KEY
-          }`
+          `https://maps.googleapis.com/maps/api/place/details/json?placeid=${placeId}&key=${placesApiKey}`
         );
       } catch (err) {
         console.log(
@@ -480,9 +483,7 @@ module.exports = async (req, res, next) => {
     let response;
     try {
       response = await axios.get(
-        `https://maps.googleapis.com/maps/api/place/details/json?placeid=${placeId}&key=${
-          process.env.PLACES_API_KEY
-        }`
+        `https://maps.googleapis.com/maps/api/place/details/json?placeid=${placeId}&key=${placesApiKey}`
       );
     } catch (err) {
       console.log(

@@ -461,7 +461,9 @@ module.exports = {
       'reviewsAmount',
       '-reviewsAmount',
       'startDate',
-      '-startDate'
+      '-startDate',
+      'createdAt',
+      '-createdAt'
     ];
     if (queryParams.sortBy && !sortOptions.includes(queryParams.sortBy)) {
       errors.sortBy = 'Should be a valid sort';
