@@ -175,7 +175,7 @@ module.exports = async (req, res, next) => {
     id: event.id,
     address: event.address,
     description: event.description,
-    endDate: event.description,
+    endDate: event.endDate,
     isOpen: event.isOpen,
     location: eventLocation,
     managers: event.managers,
