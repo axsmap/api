@@ -43,7 +43,7 @@ function shapeUser(user) {
   };
 }
 
-async function buildAllTime(limit) {
+async function buildAllTime(limit, opts = {}) {
   const users = await User.find({
     isArchived: false,
     isSystemAccount: { $ne: true },
@@ -57,13 +57,14 @@ async function buildAllTime(limit) {
   const rows = users.map((u) =>
     maskLeaderboardRow(
       { ...shapeUser(u), reviewsAmount: u.reviewsAmount || 0 },
-      u.showNameOnLeaderboard
+      u.showNameOnLeaderboard,
+      opts
     )
   );
   return assignDenseRanking(rows);
 }
 
-async function buildMonth(limit) {
+async function buildMonth(limit, opts = {}) {
   const startOfMonth = moment.utc().startOf("month").toDate();
 
   const aggregation = await Review.aggregate([
@@ -110,7 +111,7 @@ async function buildMonth(limit) {
 
   const masked = aggregation.map((row) => {
     const { showNameOnLeaderboard, ...rest } = row;
-    return maskLeaderboardRow(rest, showNameOnLeaderboard);
+    return maskLeaderboardRow(rest, showNameOnLeaderboard, opts);
   });
   return assignDenseRanking(masked);
 }
@@ -125,17 +126,25 @@ module.exports = async (req, res, next) => {
   if (!Number.isFinite(limit)) limit = 20;
   limit = Math.max(1, Math.min(100, limit));
 
-  const cacheKey = `${period}:${limit}`;
+  // Admins see the unmasked leaderboard (real names + an `anonymous: true`
+  // flag for opted-out users). Cache the admin and public variants separately
+  // — admin views are rare so this only adds one extra cache entry per
+  // (period, limit) pair, and we never risk handing the unmasked payload
+  // to a non-admin viewer who happened to hit a warm cache.
+  const viewerIsAdmin = req.user?.isAdmin === true;
+  const cacheKey = `${period}:${limit}:${viewerIsAdmin ? "admin" : "public"}`;
   const cached = cacheGet(cacheKey);
   if (cached) {
-    res.set("Cache-Control", "public, max-age=60");
+    res.set("Cache-Control", "private, max-age=60");
     return res.status(200).json(cached);
   }
 
   let results;
   try {
     results =
-      period === "allTime" ? await buildAllTime(limit) : await buildMonth(limit);
+      period === "allTime"
+        ? await buildAllTime(limit, { viewerIsAdmin })
+        : await buildMonth(limit, { viewerIsAdmin });
   } catch (err) {
     console.log(`Leaderboard aggregation failed for period=${period}`);
     return next(err);
@@ -144,6 +153,8 @@ module.exports = async (req, res, next) => {
   const payload = { period, results };
   cacheSet(cacheKey, payload);
 
-  res.set("Cache-Control", "public, max-age=60");
+  // `private` (not `public`) because the admin variant must never be stored
+  // by a shared HTTP cache. Both variants are personalized in that sense.
+  res.set("Cache-Control", "private, max-age=60");
   return res.status(200).json(payload);
 };

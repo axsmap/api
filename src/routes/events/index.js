@@ -26,7 +26,11 @@ router.get("/joinedEvents", JoinedEvents);
 router.get("/old", isAuthenticated({ isOptional: false }), listOldEvents);
 router.get("/upComing", listUpcoimgEvents);
 router.post("", isAuthenticated({ isOptional: false }), createEvent);
-router.get("/:eventId/leaderboard", listEventLeaderboard);
+router.get(
+  "/:eventId/leaderboard",
+  isAuthenticated({ isOptional: true }),
+  listEventLeaderboard
+);
 router.get("/:eventId", getEvent);
 router.put("/:eventId", isAuthenticated({ isOptional: false }), editEvent);
 router.put(

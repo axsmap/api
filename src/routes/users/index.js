@@ -24,7 +24,7 @@ const reactivateAccount = require('../auth/reactivate-account');
 const router = new express.Router();
 
 router.get('/profile', isAuthenticated({ isOptional: false }), getProfile);
-router.get('/leaderboard', leaderboard);
+router.get('/leaderboard', isAuthenticated({ isOptional: true }), leaderboard);
 router.get(
   '/by-username/:username',
   isAuthenticated({ isOptional: true }),

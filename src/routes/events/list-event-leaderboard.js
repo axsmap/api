@@ -47,10 +47,12 @@ module.exports = async (req, res, next) => {
     ? parseInt(queryParams.limit, 10)
     : MAX_LEADERBOARD_USERS;
 
-  const cacheKey = `${eventId}:${pageLimit}`;
+  // Admins see real names; everyone else sees masked rows for opted-out users.
+  const viewerIsAdmin = req.user?.isAdmin === true;
+  const cacheKey = `${eventId}:${pageLimit}:${viewerIsAdmin ? "admin" : "public"}`;
   const cached = cacheGet(cacheKey);
   if (cached) {
-    res.set("Cache-Control", "public, max-age=60");
+    res.set("Cache-Control", "private, max-age=60");
     return res.status(200).json(cached);
   }
 
@@ -143,7 +145,7 @@ module.exports = async (req, res, next) => {
   const results = users.map((user, index) => {
     const { showNameOnLeaderboard, ...rest } = user;
     return {
-      ...maskLeaderboardRow(rest, showNameOnLeaderboard),
+      ...maskLeaderboardRow(rest, showNameOnLeaderboard, { viewerIsAdmin }),
       ranking: index + 1,
     };
   });
@@ -157,6 +159,6 @@ module.exports = async (req, res, next) => {
   };
 
   cacheSet(cacheKey, payload);
-  res.set("Cache-Control", "public, max-age=60");
+  res.set("Cache-Control", "private, max-age=60");
   return res.status(200).json(payload);
 };

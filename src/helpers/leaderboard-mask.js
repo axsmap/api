@@ -45,22 +45,31 @@ function buildAggregationMask(opts = {}) {
 }
 
 /**
- * JS-side masking for the public leaderboard endpoints, which have no viewer
- * identity (anonymous + cached). Masks identity fields in-place on a shaped
- * row when the user opted out. `showNameOnLeaderboard` is the raw field value
- * off the user doc (undefined/true → visible, false → masked).
+ * JS-side masking for the leaderboard endpoint. Returns the row with an
+ * `anonymous` boolean flag added (true when the user opted out — useful to
+ * the client even when fields are NOT masked, e.g. admin view rendering a
+ * subtle badge). Identity fields are masked only when:
+ *   - the user opted out (`showNameOnLeaderboard === false`), AND
+ *   - the viewer is not an admin.
+ * Legacy docs without the field default to visible (undefined → true).
+ *
+ * @param {object} row              shaped row (id, firstName, lastName, username, avatar, reviewsAmount)
+ * @param {boolean|undefined} showNameOnLeaderboard  raw field off the user doc
+ * @param {{ viewerIsAdmin?: boolean }} [opts]
  */
-function maskLeaderboardRow(row, showNameOnLeaderboard) {
-  if (showNameOnLeaderboard === false) {
+function maskLeaderboardRow(row, showNameOnLeaderboard, opts = {}) {
+  const anonymous = showNameOnLeaderboard === false;
+  if (anonymous && opts.viewerIsAdmin !== true) {
     return {
       ...row,
       firstName: MASKED.firstName,
       lastName: MASKED.lastName,
       username: MASKED.username,
       avatar: MASKED.avatar,
+      anonymous: true,
     };
   }
-  return row;
+  return { ...row, anonymous };
 }
 
 module.exports = { MASKED, buildAggregationMask, maskLeaderboardRow };
