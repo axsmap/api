@@ -94,6 +94,15 @@ module.exports = async (req, res, next) => {
   user.showPhone =
     typeof data.showPhone !== "undefined" ? data.showPhone : user.showPhone;
 
+  // Defensive: never assign undefined (the field is required:true). Legacy
+  // docs predating the field resolve to true (visible); an explicit opt-out is
+  // preserved. Avoids a save() validation failure when a legacy user edits any
+  // other field without sending showNameOnLeaderboard.
+  user.showNameOnLeaderboard =
+    typeof data.showNameOnLeaderboard !== "undefined"
+      ? data.showNameOnLeaderboard
+      : user.showNameOnLeaderboard !== false;
+
   if (data.username && data.username !== user.username) {
     let repeatedUser;
     try {
@@ -185,6 +194,7 @@ module.exports = async (req, res, next) => {
     showDisabilities: user.showDisabilities,
     showEmail: user.showEmail,
     showPhone: user.showPhone,
+    showNameOnLeaderboard: user.showNameOnLeaderboard !== false,
     username: user.username,
     zip: user.zip,
     aboutMe: user.aboutMe,

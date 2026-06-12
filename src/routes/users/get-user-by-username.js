@@ -1,3 +1,4 @@
+const { resolveOptionalViewer } = require("../../helpers");
 const { getUserResponse, shapeResponse } = require("./get-user");
 
 module.exports = async (req, res, next) => {
@@ -10,7 +11,8 @@ module.exports = async (req, res, next) => {
   let user;
   try {
     // Case-insensitive match via Mongo collation strength 2.
-    user = await getUserResponse({ username }, { locale: "en", strength: 2 });
+    const viewer = await resolveOptionalViewer(req);
+    user = await getUserResponse({ username }, { locale: "en", strength: 2 }, viewer);
   } catch (err) {
     console.log(`User ${username} failed to be found at get-user-by-username`);
     return next(err);

@@ -1,5 +1,6 @@
 const { User } = require('../../models/user');
 
+const { buildAggregationMask } = require('../../helpers/leaderboard-mask');
 const { validateListUsers } = require('./validations');
 
 module.exports = async (req, res, next) => {
@@ -7,6 +8,13 @@ module.exports = async (req, res, next) => {
   if (!isValid) return res.status(400).json(errors);
 
   const queryParams = req.query;
+
+  // Mask identity for users who opted out of appearing by name. Owner/admin
+  // viewers always see real identity (this route requires auth).
+  const mask = buildAggregationMask({
+    viewerId: req.user && req.user.id,
+    viewerIsAdmin: !!(req.user && req.user.isAdmin === true),
+  });
 
   const usersQuery = { isArchived: false };
   usersQuery.$text = { $search: queryParams.keywords || '' };
@@ -28,12 +36,12 @@ module.exports = async (req, res, next) => {
         .project({
           _id: 0,
           id: '$_id',
-          avatar: 1,
-          email: 1,
-          firstName: 1,
-          lastName: 1,
+          avatar: mask.field('avatar', 'avatar'),
+          email: mask.field('email', 'email'),
+          firstName: mask.field('firstName', 'firstName'),
+          lastName: mask.field('lastName', 'lastName'),
           score: { $meta: 'textScore' },
-          username: 1
+          username: mask.field('username', 'username')
         })
         .match({ score: { $gt: 1 } })
         .sort(sort)

@@ -92,6 +92,7 @@ module.exports = async (req, res, next) => {
     showDisabilities: req.user.showDisabilities,
     showEmail: req.user.showEmail,
     showPhone: req.user.showPhone,
+    showNameOnLeaderboard: req.user.showNameOnLeaderboard !== false,
     teams,
     username: req.user.username,
     zip: req.user.zip,

@@ -2,6 +2,7 @@ const moment = require("moment");
 
 const { User } = require("../../models/user");
 const { Review } = require("../../models/review");
+const { maskLeaderboardRow } = require("../../helpers/leaderboard-mask");
 
 const CACHE_TTL_MS = 60 * 1000;
 const cache = new Map();
@@ -50,13 +51,15 @@ async function buildAllTime(limit) {
   })
     .sort({ reviewsAmount: -1, createdAt: 1 })
     .limit(limit)
-    .select("firstName lastName username avatar reviewsAmount")
+    .select("firstName lastName username avatar reviewsAmount showNameOnLeaderboard")
     .lean();
 
-  const rows = users.map((u) => ({
-    ...shapeUser(u),
-    reviewsAmount: u.reviewsAmount || 0,
-  }));
+  const rows = users.map((u) =>
+    maskLeaderboardRow(
+      { ...shapeUser(u), reviewsAmount: u.reviewsAmount || 0 },
+      u.showNameOnLeaderboard
+    )
+  );
   return assignDenseRanking(rows);
 }
 
@@ -100,11 +103,16 @@ async function buildMonth(limit) {
         username: { $ifNull: ["$user.username", ""] },
         avatar: { $ifNull: ["$user.avatar", ""] },
         reviewsAmount: 1,
+        showNameOnLeaderboard: { $ifNull: ["$user.showNameOnLeaderboard", true] },
       },
     },
   ]);
 
-  return assignDenseRanking(aggregation);
+  const masked = aggregation.map((row) => {
+    const { showNameOnLeaderboard, ...rest } = row;
+    return maskLeaderboardRow(rest, showNameOnLeaderboard);
+  });
+  return assignDenseRanking(masked);
 }
 
 module.exports = async (req, res, next) => {

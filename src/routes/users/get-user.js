@@ -1,12 +1,19 @@
 const mongoose = require("mongoose");
 
 const { User } = require("../../models/user");
+const { resolveOptionalViewer } = require("../../helpers");
+const { buildAggregationMask } = require("../../helpers/leaderboard-mask");
 
 /**
  * Run the user-profile aggregation against an arbitrary $match stage.
  * Returns the shaped response object, or null when no user matches.
+ *
+ * viewerOpts { viewerId, viewerIsAdmin } controls identity masking: a user who
+ * set showNameOnLeaderboard=false is returned as "Anonymous" / null unless the
+ * viewer is the user themselves or an admin.
  */
-async function getUserResponse(matchStage, collation) {
+async function getUserResponse(matchStage, collation, viewerOpts = {}) {
+  const mask = buildAggregationMask(viewerOpts);
   const cursor = User.aggregate([
     { $match: matchStage },
     {
@@ -145,16 +152,16 @@ async function getUserResponse(matchStage, collation) {
       $project: {
         _id: 0,
         id: "$_id",
-        avatar: 1,
+        avatar: mask.field("avatar", "avatar"),
         description: 1,
         disabilities: 1,
-        email: 1,
+        email: mask.field("email", "email"),
         events: 1,
-        firstName: 1,
+        firstName: mask.field("firstName", "firstName"),
         gender: 1,
         isSubscribed: 1,
         language: 1,
-        lastName: 1,
+        lastName: mask.field("lastName", "lastName"),
         phone: 1,
         race: 1,
         birthday: 1,
@@ -164,8 +171,9 @@ async function getUserResponse(matchStage, collation) {
         showDisabilities: 1,
         showEmail: 1,
         showPhone: 1,
+        showNameOnLeaderboard: { $ifNull: ["$showNameOnLeaderboard", true] },
         teams: 1,
-        username: 1,
+        username: mask.field("username", "username"),
         zip: 1,
         aboutMe: { $ifNull: ["$aboutMe", ""] },
         lastLocation: { $ifNull: ["$lastLocation", { lat: null, lng: null }] },
@@ -208,7 +216,8 @@ module.exports = async (req, res, next) => {
   let user;
   try {
     const userIdObj = new mongoose.Types.ObjectId(userId);
-    user = await getUserResponse({ _id: userIdObj });
+    const viewer = await resolveOptionalViewer(req);
+    user = await getUserResponse({ _id: userIdObj }, undefined, viewer);
   } catch (err) {
     if (err.name === "CastError" || err.name === "BSONError") {
       return res.status(404).json({ general: "User not found" });

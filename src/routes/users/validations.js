@@ -219,6 +219,13 @@ module.exports = {
       errors.showPhone = 'Should be a boolean';
     }
 
+    if (
+      typeof data.showNameOnLeaderboard !== 'undefined' &&
+      typeof data.showNameOnLeaderboard !== 'boolean'
+    ) {
+      errors.showNameOnLeaderboard = 'Should be a boolean';
+    }
+
     if (typeof data.username !== 'undefined') {
       if (typeof data.username !== 'string') {
         errors.username = 'Should be a string';

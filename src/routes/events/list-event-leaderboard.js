@@ -3,6 +3,7 @@ const { isInt, isMongoId } = require("validator");
 
 const { Event } = require("../../models/event");
 const { Review } = require("../../models/review");
+const { maskLeaderboardRow } = require("../../helpers/leaderboard-mask");
 
 const MAX_LEADERBOARD_USERS = 5;
 const CACHE_TTL_MS = 60 * 1000;
@@ -120,6 +121,9 @@ module.exports = async (req, res, next) => {
                 lastName: { $ifNull: ["$user.lastName", ""] },
                 username: { $ifNull: ["$user.username", ""] },
                 reviewsAmount: 1,
+                showNameOnLeaderboard: {
+                  $ifNull: ["$user.showNameOnLeaderboard", true],
+                },
               },
             },
           ],
@@ -136,10 +140,13 @@ module.exports = async (req, res, next) => {
     return next(err);
   }
 
-  const results = users.map((user, index) => ({
-    ...user,
-    ranking: index + 1,
-  }));
+  const results = users.map((user, index) => {
+    const { showNameOnLeaderboard, ...rest } = user;
+    return {
+      ...maskLeaderboardRow(rest, showNameOnLeaderboard),
+      ranking: index + 1,
+    };
+  });
 
   const payload = {
     page: results.length ? 1 : null,
