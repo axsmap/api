@@ -2,6 +2,7 @@ const jwt = require("jsonwebtoken");
 const moment = require("moment");
 
 const { RefreshToken } = require("../../models/refresh-token");
+const { User } = require("../../models/user");
 
 const { validateGenerateToken } = require("./validations");
 
@@ -51,5 +52,18 @@ module.exports = async (req, res, next) => {
       expiresIn: '30d',
     }
   );
+
+  // Token refresh = the AXS Map app is being reopened (the user's previous
+  // JWT expired and the client is exchanging the long-lived refresh token).
+  // That's a real app-open event — set lastOpenedAt.
+  try {
+    const now = new Date();
+    await User.findByIdAndUpdate(refreshToken.userId, { lastOpenedAt: now });
+    console.log(`[app-open] token-refresh: userId=${refreshToken.userId} lastOpenedAt=${now.toISOString()}`);
+  } catch (err) {
+    console.log(`Failed to update lastOpenedAt on token refresh for userId ${refreshToken.userId}: ${err.message}`);
+    // Don't fail the token-refresh if the activity update fails
+  }
+
   return res.status(200).json({ token });
 };

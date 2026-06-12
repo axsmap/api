@@ -52,28 +52,32 @@ module.exports = async (req, res) => {
     const [firstName, lastName] = name.split(" ");
 
     let user = await User.findOne({ email });
+    const now = new Date();
     if (!user) {
       user = new User({
         email: email,
         firstName: firstName || name,
         lastName: lastName || "",
-        createdAt: new Date(),
+        createdAt: now,
         avatar: picture,
-        lastLogin: new Date(),
+        lastLogin: now,
+        lastOpenedAt: now,
       });
       await user.save();
+      console.log(`[app-open] google-sign-in (new): userId=${user._id} lastOpenedAt=${now.toISOString()}`);
     } else {
       // Check if user is archived
       if (user.isArchived) {
-        return res.status(403).json({ 
+        return res.status(403).json({
           error: "Account archived",
           isArchived: true,
           userId: user._id.toString()
         });
       }
-      
-      // Update lastLogin for existing users
-      await User.findByIdAndUpdate(user._id, { lastLogin: new Date() });
+
+      // Real app-open: update both lastLogin and lastOpenedAt for existing users
+      await User.findByIdAndUpdate(user._id, { lastLogin: now, lastOpenedAt: now });
+      console.log(`[app-open] google-sign-in (existing): userId=${user._id} lastOpenedAt=${now.toISOString()}`);
     }
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {

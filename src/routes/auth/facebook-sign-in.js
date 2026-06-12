@@ -48,6 +48,7 @@ module.exports = async (req, res, next) => {
       const email = fbUser.email;
 
       let user = await User.findOne({ email: fbUser.email });
+      const now = new Date();
 
       if (!user) {
         const [firstName, lastName] = fbUser.name.split(" ");
@@ -57,22 +58,25 @@ module.exports = async (req, res, next) => {
           firstName: firstName || "",
           lastName: lastName || "",
           avatar: fbUser.picture.data.url,
-          lastLogin: new Date(),
+          lastLogin: now,
+          lastOpenedAt: now,
         });
 
         await user.save();
+        console.log(`[app-open] facebook-sign-in (new): userId=${user._id} lastOpenedAt=${now.toISOString()}`);
       } else {
         // Check if user is archived
         if (user.isArchived) {
-          return res.status(403).json({ 
+          return res.status(403).json({
             error: "Account archived",
             isArchived: true,
             userId: user._id.toString()
           });
         }
-        
-        // Update lastLogin for existing users
-        await User.findByIdAndUpdate(user._id, { lastLogin: new Date() });
+
+        // Real app-open: update both lastLogin and lastOpenedAt for existing users
+        await User.findByIdAndUpdate(user._id, { lastLogin: now, lastOpenedAt: now });
+        console.log(`[app-open] facebook-sign-in (existing): userId=${user._id} lastOpenedAt=${now.toISOString()}`);
       }
 
       const userId = user._id;
