@@ -25,11 +25,15 @@ const router = new express.Router();
 
 router.get('/profile', isAuthenticated({ isOptional: false }), getProfile);
 router.get('/leaderboard', leaderboard);
-router.get('/by-username/:username', getUserByUsername);
+router.get(
+  '/by-username/:username',
+  isAuthenticated({ isOptional: true }),
+  getUserByUsername
+);
 router.put('/password', isAuthenticated({ isOptional: false }), changePassword);
 router.get('', isAuthenticated({ isOptional: false }), listUsers);
 router.post('', isAuthenticated({ isOptional: false }), createUser);
-router.get('/:userId', getUser);
+router.get('/:userId', isAuthenticated({ isOptional: true }), getUser);
 router.get(
   '/:userId/badges',
   isAuthenticated({ isOptional: true }),

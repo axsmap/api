@@ -32,6 +32,15 @@ module.exports = {
         try {
           decoded = await jwt.verify(token, process.env.JWT_SECRET);
         } catch (err) {
+          if (isOptional) {
+            // Stale/invalid token on a route that allows anonymous access →
+            // proceed without req.user instead of 401. Important for mobile
+            // clients holding long-cached JWTs that hit public read endpoints
+            // (leaderboard click-through, public profile, badges, participant
+            // page). The handler treats a missing req.user as an anonymous
+            // viewer.
+            return next();
+          }
           console.log(err);
           return res.status(401).json({ general: "Failed to authenticate" });
         }
@@ -109,36 +118,6 @@ module.exports = {
 
       return res.status(401).json({ general: "No token provided" });
     },
-  // Best-effort viewer resolution for PUBLIC routes that personalize their
-  // output (e.g. identity masking) but must never 401. Unlike isAuthenticated,
-  // a missing / expired / invalid token simply yields an anonymous viewer
-  // instead of rejecting the request. Returns { viewerId, viewerIsAdmin }.
-  async resolveOptionalViewer(req) {
-    const anon = { viewerId: null, viewerIsAdmin: false };
-    const header = req.headers.authorization;
-    if (!header) return anon;
-    const token = header.split(" ")[1];
-    if (!token) return anon;
-
-    let decoded;
-    try {
-      decoded = await jwt.verify(token, process.env.JWT_SECRET);
-    } catch {
-      return anon;
-    }
-
-    let user;
-    try {
-      user = await User.findOne({ _id: decoded.userId })
-        .select("isAdmin")
-        .lean();
-    } catch {
-      return anon;
-    }
-    if (!user) return anon;
-
-    return { viewerId: decoded.userId, viewerIsAdmin: user.isAdmin === true };
-  },
   isNumber(number) {
     return !isNaN(parseFloat(number)) && isFinite(number);
   },

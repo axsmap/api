@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
 
 const { User } = require("../../models/user");
-const { resolveOptionalViewer } = require("../../helpers");
 const { buildAggregationMask } = require("../../helpers/leaderboard-mask");
 
 /**
@@ -216,8 +215,13 @@ module.exports = async (req, res, next) => {
   let user;
   try {
     const userIdObj = new mongoose.Types.ObjectId(userId);
-    const viewer = await resolveOptionalViewer(req);
-    user = await getUserResponse({ _id: userIdObj }, undefined, viewer);
+    // Optional-auth route: req.user is set only when a valid token is present.
+    // Owner viewing self and admins see the real identity; everyone else sees
+    // the masked identity for users who opted out.
+    user = await getUserResponse({ _id: userIdObj }, undefined, {
+      viewerId: req.user && req.user.id,
+      viewerIsAdmin: !!(req.user && req.user.isAdmin === true),
+    });
   } catch (err) {
     if (err.name === "CastError" || err.name === "BSONError") {
       return res.status(404).json({ general: "User not found" });
