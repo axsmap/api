@@ -6,6 +6,17 @@ const slugify = require('speakingurl');
 const { cleanSpaces } = require('../../helpers');
 const { User } = require('../../models/user');
 
+// Mirrors the frontend pre-flight in PR #224. A social value is valid when it
+// is empty, OR a bare handle (letters/digits/._-/@), OR an http(s) URL. Reject
+// whitespace, angle brackets, quotes, backslashes, and any non-http(s) scheme.
+const SAFE_HANDLE = /^[a-zA-Z0-9._\-/@]+$/;
+function isValidSocial(v) {
+  if (!v) return true;
+  if (/[\s<>"\\]/.test(v)) return false;
+  if (/^[a-z]+:/i.test(v)) return /^https?:\/\//i.test(v);
+  return SAFE_HANDLE.test(v);
+}
+
 module.exports = {
   validateChangePassword(data) {
     const errors = {};
@@ -272,6 +283,8 @@ module.exports = {
             errors[`socials.${key}`] = 'Should be a string';
           } else if (cleanSpaces(v).length > max) {
             errors[`socials.${key}`] = `Should have less than ${max + 1} characters`;
+          } else if (!isValidSocial(v)) {
+            errors[`socials.${key}`] = 'Should be a valid handle or http(s) URL';
           }
         }
       }
@@ -280,6 +293,14 @@ module.exports = {
     for (const f of ['profilePublic', 'hideLocation', 'hideBadges', 'hideSupporters', 'hideSocials']) {
       if (typeof data[f] !== 'undefined' && typeof data[f] !== 'boolean') {
         errors[f] = 'Should be a boolean';
+      }
+    }
+
+    if (typeof data.aboutMe !== 'undefined' && data.aboutMe !== null) {
+      if (typeof data.aboutMe !== 'string') {
+        errors.aboutMe = 'Should be a string';
+      } else if (data.aboutMe.length > 500) {
+        errors.aboutMe = 'Should be 500 characters or fewer';
       }
     }
 

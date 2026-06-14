@@ -268,6 +268,13 @@ module.exports = async (req, res, next) => {
     return res.status(404).json({ general: "User not found" });
   }
 
+  // Hard-hide moderation-removed / deactivated accounts, matching
+  // get-user-by-username. isBlocked = admin moderation; isArchived =
+  // self/inactivity deactivation. Neither should be fetchable by id.
+  if (user.isArchived === true || user.isBlocked === true) {
+    return res.status(404).json({ general: "User not found" });
+  }
+
   return res
     .status(200)
     .json(applyProfilePrivacyGate(shapeResponse(user), req.user));

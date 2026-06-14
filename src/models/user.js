@@ -240,6 +240,7 @@ const userSchema = new mongoose.Schema(
     },
     aboutMe: {
       type: String,
+      maxlength: [500, "Should be 500 characters or fewer"],
     },
     birthday: {
       type: Date,
