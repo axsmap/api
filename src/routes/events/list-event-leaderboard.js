@@ -98,8 +98,12 @@ module.exports = async (req, res, next) => {
       },
       { $unwind: "$user" },
       {
+        // NOTE: do NOT exclude admins here. Admins (e.g. the founder) are real
+        // contributors and appear on the global leaderboard; excluding them from
+        // per-mapathon leaderboards is inconsistent and renders an empty board
+        // for any Mapathon whose reviewers happen to be admins. Only brand/bot
+        // (isSystemAccount), archived, and blocked accounts are excluded.
         $match: {
-          "user.isAdmin": { $ne: true },
           "user.isArchived": { $ne: true },
           "user.isBlocked": { $ne: true },
           "user.isSystemAccount": { $ne: true },
