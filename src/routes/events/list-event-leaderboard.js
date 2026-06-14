@@ -130,7 +130,7 @@ module.exports = async (req, res, next) => {
                 showNameOnLeaderboard: {
                   $ifNull: ["$user.showNameOnLeaderboard", true],
                 },
-                profilePublic: { $ifNull: ["$user.profilePublic", false] },
+                profilePublic: { $ifNull: ["$user.profilePublic", true] },
               },
             },
           ],

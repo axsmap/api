@@ -108,7 +108,7 @@ module.exports = async (req, res, next) => {
     // mongoose doc; absent fields come through as undefined).
     displayName: req.user.displayName ?? null,
     socials: req.user.socials || { twitter: "", linkedin: "", instagram: "", facebook: "", website: "" },
-    profilePublic: req.user.profilePublic ?? false,
+    profilePublic: req.user.profilePublic !== false,
     hideLocation: req.user.hideLocation ?? false,
     hideBadges: req.user.hideBadges ?? false,
     hideSupporters: req.user.hideSupporters ?? false,

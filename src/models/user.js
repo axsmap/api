@@ -284,10 +284,12 @@ const userSchema = new mongoose.Schema(
       facebook: { type: String, maxlength: 200, default: "" },
       website: { type: String, maxlength: 300, default: "" },
     },
-    // Visibility controls — default to private-first per spec.
+    // Profiles are public by default; users opt OUT via the edit-account
+    // privacy toggle (sets this false). The profile-privacy gate in
+    // get-user.js only masks when this is explicitly false.
     profilePublic: {
       type: Boolean,
-      default: false,
+      default: true,
       required: [true, "Is required"],
     },
     hideLocation: { type: Boolean, default: false },

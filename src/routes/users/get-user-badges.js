@@ -37,7 +37,8 @@ module.exports = async (req, res, next) => {
   const isOwner = requester && requester.id === userId;
   const isAdmin = requester && requester.isAdmin;
   if (!isOwner && !isAdmin) {
-    if (!user.profilePublic) {
+    // Public by default — only an explicit opt-out (false) is private.
+    if (user.profilePublic === false) {
       return res.status(403).json({ general: "Profile is private" });
     }
     if (user.hideBadges) {

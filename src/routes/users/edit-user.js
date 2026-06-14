@@ -209,7 +209,7 @@ module.exports = async (req, res, next) => {
     // Phase 2 fields
     displayName: user.displayName ?? null,
     socials: user.socials || { twitter: "", linkedin: "", instagram: "", facebook: "", website: "" },
-    profilePublic: user.profilePublic ?? false,
+    profilePublic: user.profilePublic !== false,
     hideLocation: user.hideLocation ?? false,
     hideBadges: user.hideBadges ?? false,
     hideSupporters: user.hideSupporters ?? false,

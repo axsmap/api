@@ -42,7 +42,7 @@ module.exports = async (req, res, next) => {
                 lastName: 1,
                 username: 1,
                 // Frontend only links to a profile when it's public.
-                profilePublic: { $ifNull: ['$profilePublic', false] }
+                profilePublic: { $ifNull: ['$profilePublic', true] }
               }
             }
           ],
@@ -90,7 +90,7 @@ module.exports = async (req, res, next) => {
                 lastName: 1,
                 username: 1,
                 // Frontend only links to a profile when it's public.
-                profilePublic: { $ifNull: ['$profilePublic', false] },
+                profilePublic: { $ifNull: ['$profilePublic', true] },
                 reviewsAmount: {
                   $ifNull: [{ $arrayElemAt: ['$eventReviews.count', 0] }, 0]
                 }

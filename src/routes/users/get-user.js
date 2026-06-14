@@ -187,7 +187,7 @@ async function getUserResponse(matchStage, collation, viewerOpts = {}) {
             { twitter: "", linkedin: "", instagram: "", facebook: "", website: "" },
           ],
         },
-        profilePublic: { $ifNull: ["$profilePublic", false] },
+        profilePublic: { $ifNull: ["$profilePublic", true] },
         hideLocation: { $ifNull: ["$hideLocation", false] },
         hideBadges: { $ifNull: ["$hideBadges", false] },
         hideSupporters: { $ifNull: ["$hideSupporters", false] },

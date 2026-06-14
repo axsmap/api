@@ -41,7 +41,8 @@ function shapeUser(user) {
     username: user.username || "",
     avatar: user.avatar || "",
     // Frontend disables the row link when false (private profile not clickable).
-    profilePublic: user.profilePublic === true,
+    // Public by default — only an explicit false is private.
+    profilePublic: user.profilePublic !== false,
   };
 }
 
@@ -107,7 +108,7 @@ async function buildMonth(limit, opts = {}) {
         avatar: { $ifNull: ["$user.avatar", ""] },
         reviewsAmount: 1,
         showNameOnLeaderboard: { $ifNull: ["$user.showNameOnLeaderboard", true] },
-        profilePublic: { $ifNull: ["$user.profilePublic", false] },
+        profilePublic: { $ifNull: ["$user.profilePublic", true] },
       },
     },
   ]);
