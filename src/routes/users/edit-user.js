@@ -142,7 +142,7 @@ module.exports = async (req, res, next) => {
 
   if (typeof data.socials !== "undefined" && data.socials !== null) {
     user.socials = user.socials || {};
-    for (const key of ["twitter", "linkedin", "instagram", "website"]) {
+    for (const key of ["twitter", "linkedin", "instagram", "facebook", "website"]) {
       if (typeof data.socials[key] !== "undefined") {
         user.socials[key] = cleanSpaces(data.socials[key] || "");
       }
@@ -208,7 +208,7 @@ module.exports = async (req, res, next) => {
     aboutMe: user.aboutMe,
     // Phase 2 fields
     displayName: user.displayName ?? null,
-    socials: user.socials || { twitter: "", linkedin: "", instagram: "", website: "" },
+    socials: user.socials || { twitter: "", linkedin: "", instagram: "", facebook: "", website: "" },
     profilePublic: user.profilePublic ?? false,
     hideLocation: user.hideLocation ?? false,
     hideBadges: user.hideBadges ?? false,

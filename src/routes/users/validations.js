@@ -264,7 +264,7 @@ module.exports = {
       if (typeof data.socials !== 'object' || data.socials === null || Array.isArray(data.socials)) {
         errors.socials = 'Should be an object';
       } else {
-        const socialLimits = { twitter: 100, linkedin: 200, instagram: 100, website: 300 };
+        const socialLimits = { twitter: 100, linkedin: 200, instagram: 100, facebook: 200, website: 300 };
         for (const [key, max] of Object.entries(socialLimits)) {
           const v = data.socials[key];
           if (typeof v === 'undefined') continue;

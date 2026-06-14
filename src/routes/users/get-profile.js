@@ -107,7 +107,7 @@ module.exports = async (req, res, next) => {
     // Phase 2 profile fields (defaults applied here because req.user is a
     // mongoose doc; absent fields come through as undefined).
     displayName: req.user.displayName ?? null,
-    socials: req.user.socials || { twitter: "", linkedin: "", instagram: "", website: "" },
+    socials: req.user.socials || { twitter: "", linkedin: "", instagram: "", facebook: "", website: "" },
     profilePublic: req.user.profilePublic ?? false,
     hideLocation: req.user.hideLocation ?? false,
     hideBadges: req.user.hideBadges ?? false,

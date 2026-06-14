@@ -40,6 +40,8 @@ function shapeUser(user) {
     lastName: user.lastName || "",
     username: user.username || "",
     avatar: user.avatar || "",
+    // Frontend disables the row link when false (private profile not clickable).
+    profilePublic: user.profilePublic === true,
   };
 }
 
@@ -51,7 +53,7 @@ async function buildAllTime(limit, opts = {}) {
   })
     .sort({ reviewsAmount: -1, createdAt: 1 })
     .limit(limit)
-    .select("firstName lastName username avatar reviewsAmount showNameOnLeaderboard")
+    .select("firstName lastName username avatar reviewsAmount showNameOnLeaderboard profilePublic")
     .lean();
 
   const rows = users.map((u) =>
@@ -105,6 +107,7 @@ async function buildMonth(limit, opts = {}) {
         avatar: { $ifNull: ["$user.avatar", ""] },
         reviewsAmount: 1,
         showNameOnLeaderboard: { $ifNull: ["$user.showNameOnLeaderboard", true] },
+        profilePublic: { $ifNull: ["$user.profilePublic", false] },
       },
     },
   ]);

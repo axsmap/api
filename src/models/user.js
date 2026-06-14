@@ -281,6 +281,7 @@ const userSchema = new mongoose.Schema(
       twitter: { type: String, maxlength: 100, default: "" },
       linkedin: { type: String, maxlength: 200, default: "" },
       instagram: { type: String, maxlength: 100, default: "" },
+      facebook: { type: String, maxlength: 200, default: "" },
       website: { type: String, maxlength: 300, default: "" },
     },
     // Visibility controls — default to private-first per spec.

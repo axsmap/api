@@ -184,7 +184,7 @@ async function getUserResponse(matchStage, collation, viewerOpts = {}) {
         socials: {
           $ifNull: [
             "$socials",
-            { twitter: "", linkedin: "", instagram: "", website: "" },
+            { twitter: "", linkedin: "", instagram: "", facebook: "", website: "" },
           ],
         },
         profilePublic: { $ifNull: ["$profilePublic", false] },
