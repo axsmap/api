@@ -226,6 +226,13 @@ module.exports = {
       errors.showNameOnLeaderboard = 'Should be a boolean';
     }
 
+    if (typeof data.connectionPreference !== 'undefined') {
+      const allowed = ['mapathon', 'mutual', 'none'];
+      if (!allowed.includes(data.connectionPreference)) {
+        errors.connectionPreference = 'Should be mapathon, mutual, or none';
+      }
+    }
+
     if (typeof data.username !== 'undefined') {
       if (typeof data.username !== 'string') {
         errors.username = 'Should be a string';

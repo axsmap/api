@@ -93,6 +93,7 @@ module.exports = async (req, res, next) => {
     showEmail: req.user.showEmail,
     showPhone: req.user.showPhone,
     showNameOnLeaderboard: req.user.showNameOnLeaderboard !== false,
+    connectionPreference: req.user.connectionPreference || "mapathon",
     teams,
     username: req.user.username,
     zip: req.user.zip,

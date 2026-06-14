@@ -91,6 +91,17 @@ const userSchema = new mongoose.Schema(
         index: true,
       },
     ],
+    // Who may send this user a connection request:
+    //   "mapathon" — anyone who shares a Mapathon with them (default)
+    //   "mutual"   — only people they already share an accepted connection with
+    //   "none"     — opt out of incoming connection requests entirely
+    // Enforced on POST /connections against the RECIPIENT's preference.
+    connectionPreference: {
+      type: String,
+      enum: ["mapathon", "mutual", "none"],
+      default: "mapathon",
+      required: [true, "Is required"],
+    },
     isArchived: {
       type: Boolean,
       default: false,

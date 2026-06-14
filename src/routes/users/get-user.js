@@ -171,6 +171,7 @@ async function getUserResponse(matchStage, collation, viewerOpts = {}) {
         showEmail: 1,
         showPhone: 1,
         showNameOnLeaderboard: { $ifNull: ["$showNameOnLeaderboard", true] },
+        connectionPreference: { $ifNull: ["$connectionPreference", "mapathon"] },
         teams: 1,
         username: mask.field("username", "username"),
         zip: 1,

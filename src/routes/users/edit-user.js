@@ -103,6 +103,13 @@ module.exports = async (req, res, next) => {
       ? data.showNameOnLeaderboard
       : user.showNameOnLeaderboard !== false;
 
+  // Defensive: legacy docs predating the field resolve to "mapathon" (the
+  // default) so a save() never trips the required+enum validation.
+  user.connectionPreference =
+    typeof data.connectionPreference !== "undefined"
+      ? data.connectionPreference
+      : user.connectionPreference || "mapathon";
+
   if (data.username && data.username !== user.username) {
     let repeatedUser;
     try {
@@ -195,6 +202,7 @@ module.exports = async (req, res, next) => {
     showEmail: user.showEmail,
     showPhone: user.showPhone,
     showNameOnLeaderboard: user.showNameOnLeaderboard !== false,
+    connectionPreference: user.connectionPreference || "mapathon",
     username: user.username,
     zip: user.zip,
     aboutMe: user.aboutMe,

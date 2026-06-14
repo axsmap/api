@@ -29,7 +29,7 @@ module.exports = async (req, res, next) => {
   const [me, them] = await Promise.all([
     User.findById(requesterOid).select("blockedConnectionUserIds").lean(),
     User.findById(recipientOid)
-      .select("blockedConnectionUserIds isArchived isBlocked")
+      .select("blockedConnectionUserIds isArchived isBlocked connectionPreference")
       .lean(),
   ]);
   if (!them || them.isArchived || them.isBlocked) {
@@ -69,6 +69,85 @@ module.exports = async (req, res, next) => {
             ? "Connection request already pending"
             : "Connection exists",
     });
+  }
+
+  // Enforce the RECIPIENT's connectionPreference for NEW requests (existing
+  // pairs already returned above, idempotently). All rejections are 403 with a
+  // human `general` message the client toasts; the "none" case also returns a
+  // machine-readable `connectionPreference` discriminator.
+  const preference = them.connectionPreference || "mapathon";
+
+  if (preference === "none") {
+    return res.status(403).json({
+      general: "This user isn't accepting connection requests.",
+      connectionPreference: "none",
+    });
+  }
+
+  if (preference === "mutual") {
+    // Allowed only if requester and recipient already share an accepted
+    // connection (friend-of-a-friend).
+    let mutual = false;
+    try {
+      const reqConns = await Connection.find({
+        state: "accepted",
+        $or: [{ requester: requesterOid }, { recipient: requesterOid }],
+      })
+        .select("requester recipient")
+        .lean();
+      const reqFriendIds = new Set(
+        reqConns.map((c) =>
+          c.requester.toString() === requesterOid.toString()
+            ? c.recipient.toString()
+            : c.requester.toString()
+        )
+      );
+      if (reqFriendIds.size > 0) {
+        const recConns = await Connection.find({
+          state: "accepted",
+          $or: [{ requester: recipientOid }, { recipient: recipientOid }],
+        })
+          .select("requester recipient")
+          .lean();
+        mutual = recConns.some((c) => {
+          const other =
+            c.requester.toString() === recipientOid.toString()
+              ? c.recipient.toString()
+              : c.requester.toString();
+          return reqFriendIds.has(other);
+        });
+      }
+    } catch (err) {
+      return next(err);
+    }
+    if (!mutual) {
+      return res.status(403).json({
+        general:
+          "You can only connect with people you already share a connection with.",
+      });
+    }
+  } else {
+    // "mapathon" (default) — requester and recipient must share at least one
+    // non-archived Mapathon (as participant or manager).
+    let sharedEvent;
+    try {
+      sharedEvent = await Event.findOne({
+        isArchived: false,
+        $and: [
+          { $or: [{ participants: requesterOid }, { managers: requesterOid }] },
+          { $or: [{ participants: recipientOid }, { managers: recipientOid }] },
+        ],
+      })
+        .select("_id")
+        .lean();
+    } catch (err) {
+      return next(err);
+    }
+    if (!sharedEvent) {
+      return res.status(403).json({
+        general: "You can only connect with people from your Mapathons.",
+      });
+    }
   }
 
   // If an eventId is supplied, optionally validate it exists. Failing this
