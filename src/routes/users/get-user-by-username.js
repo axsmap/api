@@ -1,4 +1,8 @@
-const { getUserResponse, shapeResponse } = require("./get-user");
+const {
+  getUserResponse,
+  shapeResponse,
+  applyProfilePrivacyGate,
+} = require("./get-user");
 
 module.exports = async (req, res, next) => {
   const username = req.params.username;
@@ -24,5 +28,7 @@ module.exports = async (req, res, next) => {
     return res.status(404).json({ general: "User not found" });
   }
 
-  return res.status(200).json(shapeResponse(user));
+  return res
+    .status(200)
+    .json(applyProfilePrivacyGate(shapeResponse(user), req.user));
 };

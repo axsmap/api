@@ -210,6 +210,38 @@ function shapeResponse(user) {
   return { ...publicFields, ranking };
 }
 
+/**
+ * Privacy gate for the public profile lookups. When the target's profile is
+ * private (profilePublic !== true) and the viewer is neither the owner nor an
+ * admin, return a minimal sanitized payload (id/username/name/avatar +
+ * isPrivate) instead of the full profile. 200, not 404 — shared links still
+ * render "this profile is private" rather than looking broken.
+ *
+ * @param {object} shaped  the full shapeResponse() output
+ * @param {object|undefined} reqUser  req.user (present on these optional-auth routes when a valid token is sent)
+ * @returns the payload to send (sanitized when gated, otherwise `shaped` unchanged)
+ */
+function applyProfilePrivacyGate(shaped, reqUser) {
+  const viewerId = reqUser && reqUser.id;
+  const viewerIsAdmin = !!(reqUser && reqUser.isAdmin === true);
+  const isOwner = !!(viewerId && String(viewerId) === String(shaped.id));
+  const isPrivate = shaped.profilePublic !== true;
+
+  if (isPrivate && !isOwner && !viewerIsAdmin) {
+    return {
+      id: shaped.id,
+      username: shaped.username || "",
+      displayName: shaped.displayName || null,
+      firstName: shaped.firstName || "",
+      lastName: shaped.lastName || "",
+      avatar: shaped.avatar || "",
+      profilePublic: false,
+      isPrivate: true,
+    };
+  }
+  return shaped;
+}
+
 module.exports = async (req, res, next) => {
   const userId = req.params.userId;
 
@@ -236,8 +268,11 @@ module.exports = async (req, res, next) => {
     return res.status(404).json({ general: "User not found" });
   }
 
-  return res.status(200).json(shapeResponse(user));
+  return res
+    .status(200)
+    .json(applyProfilePrivacyGate(shapeResponse(user), req.user));
 };
 
 module.exports.getUserResponse = getUserResponse;
 module.exports.shapeResponse = shapeResponse;
+module.exports.applyProfilePrivacyGate = applyProfilePrivacyGate;
