@@ -15,6 +15,7 @@ const joinEvent = require("./join-event");
 const listUpcoimgEvents = require("./list-upcoimg-events");
 const JoinedEvents = require("./joined-events");
 const publishEvent = require("./publish-event");
+const updateParticipantFundraisingGoal = require("./update-participant-fundraising-goal");
 const updateParticipantGoal = require("./update-participant-goal");
 const updateParticipantMessage = require("./update-participant-message");
 const updateParticipantVisibility = require("./update-participant-visibility");
@@ -63,6 +64,11 @@ router.patch(
   "/:eventId/participants/:userId/goal",
   isAuthenticated({ isOptional: false }),
   updateParticipantGoal
+);
+router.patch(
+  "/:eventId/participants/:userId/fundraising-goal",
+  isAuthenticated({ isOptional: false }),
+  updateParticipantFundraisingGoal
 );
 router.patch(
   "/:eventId/participants/:userId/visibility",

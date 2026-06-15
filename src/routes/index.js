@@ -13,6 +13,7 @@ const teams = require("./teams");
 const users = require("./users");
 const venues = require("./venues");
 const donations = require("./donatins");
+const paypalDonations = require("./donations");
 
 const router = new express.Router();
 
@@ -29,5 +30,6 @@ router.use("/teams", teams);
 router.use("/users", users);
 router.use("/venues", venues);
 router.use("/donations", donations);
+router.use("/donations", paypalDonations);
 
 module.exports = router;

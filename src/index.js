@@ -48,7 +48,9 @@ function connectedToDB() {
     }
 
     console.error(err.stack);
-    return res.status(500).json({ general: "Something went wrong" });
+    return res
+      .status(err.status || 500)
+      .json({ general: err.status ? err.message : "Something went wrong" });
   });
 
   process.on("uncaughtException", (err) => {

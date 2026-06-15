@@ -23,7 +23,16 @@ async function getUserResponse(matchStage, collation, viewerOpts = {}) {
         //   - find which of the user's teams (if any) is also on this event (team)
         let: { userEvents: "$events", userId: "$_id", userTeams: "$teams" },
         pipeline: [
-          { $match: { $expr: { $in: ["$_id", "$$userEvents"] } } },
+          {
+            $match: {
+              $expr: {
+                $or: [
+                  { $in: ["$_id", { $ifNull: ["$$userEvents", []] }] },
+                  { $in: ["$$userId", { $ifNull: ["$managers", []] }] },
+                ],
+              },
+            },
+          },
           {
             $lookup: {
               from: "reviews",
@@ -67,6 +76,33 @@ async function getUserResponse(matchStage, collation, viewerOpts = {}) {
             },
           },
           {
+            $lookup: {
+              from: "donations",
+              let: { eventId: "$_id" },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $and: [
+                        { $eq: ["$event", "$$eventId"] },
+                        { $eq: ["$creditedUser", "$$userId"] },
+                        { $eq: ["$status", "confirmed"] },
+                      ],
+                    },
+                  },
+                },
+                {
+                  $group: {
+                    _id: null,
+                    amountCents: { $sum: "$amountCents" },
+                    supportersCount: { $sum: 1 },
+                  },
+                },
+              ],
+              as: "_confirmedDonations",
+            },
+          },
+          {
             // Per-event participation row carries personalGoal + hiddenFromProfile.
             // May be absent for events the user joined before EventParticipant
             // rows were created — $ifNull supplies defaults below.
@@ -84,7 +120,14 @@ async function getUserResponse(matchStage, collation, viewerOpts = {}) {
                     },
                   },
                 },
-                { $project: { _id: 0, personalGoal: 1, hiddenFromProfile: 1 } },
+                {
+                  $project: {
+                    _id: 0,
+                    personalGoal: 1,
+                    fundraisingGoal: 1,
+                    hiddenFromProfile: 1,
+                  },
+                },
                 { $limit: 1 },
               ],
               as: "_participation",
@@ -104,11 +147,50 @@ async function getUserResponse(matchStage, collation, viewerOpts = {}) {
               status: {
                 $cond: [{ $lt: ["$endDate", "$$NOW"] }, "completed", "active"],
               },
+              isParticipant: {
+                $in: ["$_id", { $ifNull: ["$$userEvents", []] }],
+              },
+              isOrganizer: {
+                $in: ["$$userId", { $ifNull: ["$managers", []] }],
+              },
               team: { $arrayElemAt: ["$_userTeam", 0] },
               personalGoal: {
                 $ifNull: [
                   { $arrayElemAt: ["$_participation.personalGoal", 0] },
                   15,
+                ],
+              },
+              fundraisingGoal: {
+                $ifNull: [
+                  { $arrayElemAt: ["$_participation.fundraisingGoal", 0] },
+                  0,
+                ],
+              },
+              fundraisingAmountRaised: {
+                $divide: [
+                  {
+                    $ifNull: [
+                      {
+                        $arrayElemAt: [
+                          "$_confirmedDonations.amountCents",
+                          0,
+                        ],
+                      },
+                      0,
+                    ],
+                  },
+                  100,
+                ],
+              },
+              fundraisingSupportersCount: {
+                $ifNull: [
+                  {
+                    $arrayElemAt: [
+                      "$_confirmedDonations.supportersCount",
+                      0,
+                    ],
+                  },
+                  0,
                 ],
               },
               hiddenFromProfile: {
@@ -148,6 +230,56 @@ async function getUserResponse(matchStage, collation, viewerOpts = {}) {
       },
     },
     {
+      $lookup: {
+        from: "donations",
+        let: { userId: "$_id" },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ["$creditedUser", "$$userId"] },
+                  { $eq: ["$status", "confirmed"] },
+                ],
+              },
+            },
+          },
+          { $sort: { amountCents: -1, confirmedAt: -1 } },
+          { $limit: 5 },
+          {
+            $lookup: {
+              from: "events",
+              localField: "event",
+              foreignField: "_id",
+              as: "_event",
+            },
+          },
+          {
+            $project: {
+              _id: 0,
+              id: "$_id",
+              name: {
+                $cond: ["$anonymous", "Anonymous", "$donorName"],
+              },
+              amount: {
+                $cond: [
+                  "$showAmountPublicly",
+                  { $divide: ["$amountCents", 100] },
+                  null,
+                ],
+              },
+              eventId: "$event",
+              eventName: {
+                $ifNull: [{ $arrayElemAt: ["$_event.name", 0] }, "Mapathon"],
+              },
+              confirmedAt: 1,
+            },
+          },
+        ],
+        as: "topSupporters",
+      },
+    },
+    {
       $project: {
         _id: 0,
         id: "$_id",
@@ -173,6 +305,7 @@ async function getUserResponse(matchStage, collation, viewerOpts = {}) {
         showNameOnLeaderboard: { $ifNull: ["$showNameOnLeaderboard", true] },
         connectionPreference: { $ifNull: ["$connectionPreference", "mapathon"] },
         teams: 1,
+        topSupporters: 1,
         username: mask.field("username", "username"),
         zip: 1,
         aboutMe: { $ifNull: ["$aboutMe", ""] },
