@@ -10,6 +10,7 @@ const createUser = require('./create-user');
 const deleteUser = require('./delete-user');
 const editUser = require('./edit-user');
 const getUser = require('./get-user');
+const getUserByUsername = require('./get-user-by-username');
 const getOverallLeaderboard = require('../events/get-overall-leaderboard');
 const getProfile = require('./get-profile');
 const listUsers = require('./list-users');
@@ -22,6 +23,7 @@ const router = new express.Router();
 
 router.get('/profile', isAuthenticated({ isOptional: false }), getProfile);
 router.get('/leaderboard', getOverallLeaderboard);
+router.get('/by-username/:username', getUserByUsername);
 router.put('/opened', isAuthenticated({ isOptional: false }), markOpened);
 router.put('/password', isAuthenticated({ isOptional: false }), changePassword);
 router.get('', isAuthenticated({ isOptional: false }), listUsers);

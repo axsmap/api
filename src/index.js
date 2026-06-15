@@ -13,7 +13,7 @@ const raven = require('raven');
 require('dotenv').config();
 //console.log(process.env)
 
-const port = process.env.PORT  || 8000;
+const port = process.env.PORT || 8000;
 
 const connectToDB = require('./helpers/db-connector');
 const routes = require('./routes');
@@ -47,7 +47,9 @@ function connectedToDB() {
     }
 
     console.error(err.stack);
-    return res.status(500).json({ general: 'Something went wrong' });
+    return res
+      .status(err.status || 500)
+      .json({ general: err.status ? err.message : 'Something went wrong' });
   });
 
   process.on('uncaughtException', err => {

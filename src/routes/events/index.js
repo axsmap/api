@@ -14,6 +14,9 @@ const listEvents = require('./list-events');
 const listOldEvents = require('./list-old-events');
 const listUpcomingEvents = require('./list-upcoming-events');
 const joinEvent = require('./join-event');
+const updateParticipantFundraisingGoal = require('./update-participant-fundraising-goal');
+const updateParticipantGoal = require('./update-participant-goal');
+const updateParticipantVisibility = require('./update-participant-visibility');
 
 const router = new express.Router();
 
@@ -40,6 +43,21 @@ router.put(
   '/:eventId/leave',
   isAuthenticated({ isOptional: false }),
   leaveEvent
+);
+router.patch(
+  '/:eventId/participants/:userId/goal',
+  isAuthenticated({ isOptional: false }),
+  updateParticipantGoal
+);
+router.patch(
+  '/:eventId/participants/:userId/fundraising-goal',
+  isAuthenticated({ isOptional: false }),
+  updateParticipantFundraisingGoal
+);
+router.patch(
+  '/:eventId/participants/:userId/visibility',
+  isAuthenticated({ isOptional: false }),
+  updateParticipantVisibility
 );
 
 module.exports = router;
