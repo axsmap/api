@@ -8,10 +8,22 @@ module.exports = {
   validateFacebookSignIn(data) {
     const errors = {};
 
-    if (!data.code) {
-      errors.code = 'Is required';
-    } else if (typeof data.code !== 'string') {
+    if (!data.code && !data.authenticationToken) {
+      errors.general =
+        'A Facebook authorization code or authentication token is required';
+    } else if (data.code && typeof data.code !== 'string') {
       errors.code = 'Should be a string';
+    }
+
+    if (
+      data.authenticationToken &&
+      typeof data.authenticationToken !== 'string'
+    ) {
+      errors.authenticationToken = 'Should be a string';
+    }
+
+    if (data.nonce && typeof data.nonce !== 'string') {
+      errors.nonce = 'Should be a string';
     }
 
     return { errors, isValid: isEmpty(errors) };

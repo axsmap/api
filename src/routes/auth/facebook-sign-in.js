@@ -11,49 +11,109 @@ const { User } = require('../../models/user');
 
 const { validateFacebookSignIn } = require('./validations');
 
+const FACEBOOK_ISSUER = 'https://www.facebook.com';
+const FACEBOOK_JWKS_URL =
+  'https://www.facebook.com/.well-known/oauth/openid/jwks/';
+
+let facebookSigningKeys;
+let facebookSigningKeysExpiresAt = 0;
+
+async function getFacebookSigningKey(kid) {
+  if (!facebookSigningKeys || Date.now() >= facebookSigningKeysExpiresAt) {
+    const response = await axios.get(FACEBOOK_JWKS_URL);
+    facebookSigningKeys = response.data.keys;
+    facebookSigningKeysExpiresAt = Date.now() + 60 * 60 * 1000;
+  }
+
+  const jwk = facebookSigningKeys.find(key => key.kid === kid);
+  if (!jwk) {
+    facebookSigningKeys = null;
+    throw new Error('Facebook signing key was not found');
+  }
+
+  return crypto.createPublicKey({ key: jwk, format: 'jwk' });
+}
+
+async function verifyLimitedLoginToken(authenticationToken, expectedNonce) {
+  const decoded = jwt.decode(authenticationToken, { complete: true });
+  if (!decoded || !decoded.header || !decoded.header.kid) {
+    throw new Error('Invalid Facebook authentication token');
+  }
+
+  const signingKey = await getFacebookSigningKey(decoded.header.kid);
+  const claims = jwt.verify(authenticationToken, signingKey, {
+    algorithms: ['RS256'],
+    audience: process.env.FACEBOOK_CLIENT_ID,
+    issuer: FACEBOOK_ISSUER
+  });
+
+  if (expectedNonce && claims.nonce !== expectedNonce) {
+    throw new Error('Invalid Facebook authentication nonce');
+  }
+
+  return {
+    id: claims.sub,
+    email: claims.email || '',
+    first_name: claims.given_name || '',
+    last_name: claims.family_name || '',
+    name: claims.name || '',
+    picture: typeof claims.picture === 'string' ? claims.picture : ''
+  };
+}
+
+async function getClassicFacebookProfile(code) {
+  const getTokenResponse = await axios.get(
+    'https://graph.facebook.com/v2.10/oauth/access_token',
+    {
+      params: {
+        code,
+        client_id: process.env.FACEBOOK_CLIENT_ID,
+        client_secret: process.env.FACEBOOK_CLIENT_SECRET,
+        redirect_uri: `${process.env.APP_URL}/auth/facebook`
+      }
+    }
+  );
+  const facebookToken = getTokenResponse.data.access_token;
+  const profileResponse = await axios.get(
+    'https://graph.facebook.com/v2.10/me?fields=id,email,first_name,last_name,locale',
+    { params: { access_token: facebookToken } }
+  );
+
+  return { profile: profileResponse.data, facebookToken };
+}
+
 module.exports = async (req, res, next) => {
   const { errors, isValid } = validateFacebookSignIn(req.body);
   if (!isValid) {
     return res.status(400).json(errors);
   }
 
-  const code = req.body.code;
-
-  const getTokenUrl = 'https://graph.facebook.com/v2.10/oauth/access_token';
-  const getTokenParams = {
-    code,
-    client_id: process.env.FACEBOOK_CLIENT_ID,
-    client_secret: process.env.FACEBOOK_CLIENT_SECRET,
-    redirect_uri: `${process.env.APP_URL}/auth/facebook`
-  };
-  let getTokenResponse;
+  let facebookProfile;
+  let facebookToken;
   try {
-    getTokenResponse = await axios.get(getTokenUrl, { params: getTokenParams });
-  } catch (err) {
-    return res.status(400).json({ general: 'Invalid code' });
-  }
-
-  const facebookToken = getTokenResponse.data.access_token;
-
-  const getProfileUrl =
-    'https://graph.facebook.com/v2.10/me?fields=id,email,first_name,last_name,locale';
-  const getProfileOptions = {
-    params: {
-      access_token: facebookToken
+    if (req.body.authenticationToken) {
+      facebookProfile = await verifyLimitedLoginToken(
+        req.body.authenticationToken,
+        req.body.nonce
+      );
+    } else {
+      const classicLogin = await getClassicFacebookProfile(req.body.code);
+      facebookProfile = classicLogin.profile;
+      facebookToken = classicLogin.facebookToken;
     }
-  };
-  let getProfileResponse;
-  try {
-    getProfileResponse = await axios.get(getProfileUrl, getProfileOptions);
   } catch (err) {
-    console.log('Profile data failed to be found at facebook-sign-in.');
-    return next(err);
+    console.log(`Facebook authentication failed: ${err.message}`);
+    return res.status(400).json({ general: 'Invalid Facebook login' });
   }
 
-  const email = getProfileResponse.data.email
-    ? getProfileResponse.data.email
-    : '';
-  const facebookId = getProfileResponse.data.id;
+  if (!facebookProfile.email) {
+    return res.status(400).json({
+      general: 'No email address is available for this Facebook account'
+    });
+  }
+
+  const email = facebookProfile.email;
+  const facebookId = facebookProfile.id;
   let user;
   try {
     user = await User.findOne({
@@ -67,16 +127,16 @@ module.exports = async (req, res, next) => {
     return next(err);
   }
 
-  let accessToken;
   let refreshToken;
 
   if (!user) {
-    console.log(getProfileResponse.data);
+    const nameParts = (facebookProfile.name || '').trim().split(/\s+/);
     const userData = {
-      email: getProfileResponse.data.email ? getProfileResponse.data.email : '',
-      facebookId: getProfileResponse.data.id,
-      firstName: getProfileResponse.data.first_name,
-      lastName: getProfileResponse.data.last_name
+      email,
+      facebookId,
+      firstName: facebookProfile.first_name || nameParts[0] || 'Facebook',
+      lastName:
+        facebookProfile.last_name || nameParts.slice(1).join(' ') || 'User'
     };
     userData.username = `${slugify(userData.firstName)}-${slugify(
       userData.lastName
@@ -119,27 +179,26 @@ module.exports = async (req, res, next) => {
       } while (repeatedUser && repeatedUser.username === userData.username);
     }
 
-    const getPictureUrl = `https://graph.facebook.com/v2.10/${
-      userData.facebookId
-    }/picture`;
-    const getPictureOptions = {
-      params: {
-        access_token: accessToken,
-        redirect: false,
-        type: 'large'
+    if (facebookProfile.picture) {
+      userData.avatar = facebookProfile.picture;
+    } else if (facebookToken) {
+      try {
+        const pictureResponse = await axios.get(
+          `https://graph.facebook.com/v2.10/${userData.facebookId}/picture`,
+          {
+            params: {
+              access_token: facebookToken,
+              redirect: false,
+              type: 'large'
+            }
+          }
+        );
+        if (!pictureResponse.data.data.is_silhouette) {
+          userData.avatar = pictureResponse.data.data.url;
+        }
+      } catch (err) {
+        console.log('Facebook profile picture could not be loaded.');
       }
-    };
-    let getPictureResponse;
-    try {
-      getPictureResponse = await axios.get(getPictureUrl, getPictureOptions);
-    } catch (err) {
-      console.log('User picture failed to be found at facebook-sign-in.');
-      return next(err);
-    }
-
-    const isSilhouette = getPictureResponse.data.data.is_silhouette;
-    if (!isSilhouette) {
-      userData.avatar = getPictureResponse.data.data.url;
     }
 
     try {
