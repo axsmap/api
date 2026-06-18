@@ -2,7 +2,12 @@ const assert = require('assert');
 // eslint-disable-next-line import/no-unresolved
 const test = require('node:test');
 
-const { captureFromOrder, payerEmail, publicDonation } = require('./helpers');
+const {
+  captureFromOrder,
+  payerEmail,
+  publicDonation,
+  publicDonorName
+} = require('./helpers');
 
 test('public donation respects donor privacy choices', () => {
   const visible = publicDonation({
@@ -67,4 +72,10 @@ test('public donation includes pledge details without exposing donor email', () 
   assert.strictEqual(pledge.pledgeCap, 50);
   assert.strictEqual(pledge.showPledgePublicly, true);
   assert.strictEqual(pledge.donorEmail, undefined);
+});
+
+test('public donor names use first name and last initial', () => {
+  assert.strictEqual(publicDonorName('Jason DaSilva'), 'Jason D.');
+  assert.strictEqual(publicDonorName('  Mary Jane Watson  '), 'Mary W.');
+  assert.strictEqual(publicDonorName('Prince'), 'Prince');
 });

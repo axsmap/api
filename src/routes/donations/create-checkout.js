@@ -5,7 +5,7 @@ const { createOrder } = require('../../helpers/paypal');
 const { Donation } = require('../../models/donation');
 const { Event } = require('../../models/event');
 const { User } = require('../../models/user');
-const { publicDonation } = require('./helpers');
+const { publicDonation, publicDonorName } = require('./helpers');
 
 function webAppUrl(req) {
   const configured = process.env.WEB_APP_URL || process.env.APP_URL;
@@ -28,8 +28,7 @@ module.exports = async (req, res, next) => {
     amount,
     donorName,
     donorEmail,
-    anonymous,
-    showAmountPublicly
+    anonymous
   } = req.body;
 
   if (!mongoose.Types.ObjectId.isValid(eventId)) {
@@ -58,10 +57,6 @@ module.exports = async (req, res, next) => {
   if (typeof anonymous !== 'boolean') {
     return res.status(400).json({ anonymous: 'Should be a boolean' });
   }
-  if (typeof showAmountPublicly !== 'boolean') {
-    return res.status(400).json({ showAmountPublicly: 'Should be a boolean' });
-  }
-
   const cleanDonorName = typeof donorName === 'string' ? donorName.trim() : '';
   if (!anonymous && !cleanDonorName) {
     return res.status(400).json({ donorName: 'Is required' });
@@ -121,10 +116,10 @@ module.exports = async (req, res, next) => {
       event: eventId,
       creditedUser: creditedUserId,
       amountCents,
-      donorName: anonymous ? '' : cleanDonorName,
+      donorName: anonymous ? '' : publicDonorName(cleanDonorName),
       donorEmail: cleanDonorEmail,
       anonymous,
-      showAmountPublicly,
+      showAmountPublicly: true,
       checkoutToken
     });
   } catch (error) {
