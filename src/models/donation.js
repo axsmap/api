@@ -17,7 +17,7 @@ const donationSchema = new mongoose.Schema(
     type: {
       type: String,
       enum: {
-        values: ['flat'],
+        values: ['flat', 'pledge'],
         message: 'Should be a valid donation type'
       },
       default: 'flat',
@@ -58,11 +58,27 @@ const donationSchema = new mongoose.Schema(
       default: false,
       required: [true, 'Is required']
     },
+    pledgeAmountCents: {
+      type: Number,
+      min: [100, 'Should be greater than or equal to 100'],
+      max: [100000000, 'Should be less than or equal to 100000000']
+    },
+    pledgeCapCents: {
+      type: Number,
+      min: [100, 'Should be greater than or equal to 100'],
+      max: [100000000, 'Should be less than or equal to 100000000']
+    },
+    showPledgePublicly: {
+      type: Boolean,
+      default: false,
+      required: [true, 'Is required']
+    },
     status: {
       type: String,
       enum: {
         values: [
           'pending',
+          'pledged',
           'approved',
           'confirmed',
           'cancelled',
@@ -78,7 +94,9 @@ const donationSchema = new mongoose.Schema(
     },
     checkoutToken: {
       type: String,
-      required: [true, 'Is required'],
+      required: function() {
+        return this.type === 'flat';
+      },
       select: false
     },
     paypalOrderId: {

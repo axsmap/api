@@ -42,3 +42,29 @@ test('capture helpers read PayPal order details', () => {
   assert.strictEqual(captureFromOrder({}), undefined);
   assert.strictEqual(payerEmail({}), '');
 });
+
+test('public donation includes pledge details without exposing donor email', () => {
+  const pledge = publicDonation({
+    id: 'pledge-1',
+    event: 'event-1',
+    creditedUser: 'user-1',
+    type: 'pledge',
+    amountCents: 5000,
+    pledgeAmountCents: 300,
+    pledgeCapCents: 5000,
+    currency: 'USD',
+    status: 'pledged',
+    anonymous: false,
+    donorName: 'Joe W.',
+    donorEmail: 'private@example.com',
+    showAmountPublicly: true,
+    showPledgePublicly: true,
+    createdAt: new Date('2026-06-15T11:00:00Z')
+  });
+
+  assert.strictEqual(pledge.type, 'pledge');
+  assert.strictEqual(pledge.pledgeAmount, 3);
+  assert.strictEqual(pledge.pledgeCap, 50);
+  assert.strictEqual(pledge.showPledgePublicly, true);
+  assert.strictEqual(pledge.donorEmail, undefined);
+});

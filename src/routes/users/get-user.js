@@ -103,6 +103,59 @@ async function getUserResponse(matchStage, collation, viewerOpts = {}) {
             },
           },
           {
+            $lookup: {
+              from: "donations",
+              let: { eventId: "$_id" },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $and: [
+                        { $eq: ["$event", "$$eventId"] },
+                        { $eq: ["$creditedUser", "$$userId"] },
+                        { $eq: ["$type", "pledge"] },
+                        { $in: ["$status", ["pledged", "approved"]] },
+                        { $eq: ["$showPledgePublicly", true] },
+                      ],
+                    },
+                  },
+                },
+                { $sort: { createdAt: -1 } },
+                { $limit: 5 },
+                {
+                  $project: {
+                    _id: 0,
+                    id: "$_id",
+                    eventId: "$event",
+                    name: {
+                      $cond: ["$anonymous", "Anonymous", "$donorName"],
+                    },
+                    pledgeAmount: {
+                      $cond: [
+                        "$showAmountPublicly",
+                        { $divide: ["$pledgeAmountCents", 100] },
+                        null,
+                      ],
+                    },
+                    pledgeCap: {
+                      $cond: [
+                        "$showAmountPublicly",
+                        { $divide: ["$pledgeCapCents", 100] },
+                        null,
+                      ],
+                    },
+                    status: 1,
+                    anonymous: 1,
+                    showAmountPublicly: 1,
+                    showPledgePublicly: 1,
+                    createdAt: 1,
+                  },
+                },
+              ],
+              as: "_publicPledges",
+            },
+          },
+          {
             // Per-event participation row carries personalGoal + hiddenFromProfile.
             // May be absent for events the user joined before EventParticipant
             // rows were created — $ifNull supplies defaults below.
@@ -193,6 +246,7 @@ async function getUserResponse(matchStage, collation, viewerOpts = {}) {
                   0,
                 ],
               },
+              pledges: "$_publicPledges",
               hiddenFromProfile: {
                 $ifNull: [
                   { $arrayElemAt: ["$_participation.hiddenFromProfile", 0] },
