@@ -27,6 +27,12 @@ const eventParticipantSchema = new mongoose.Schema(
       min: [1, 'Should be greater than or equal to 1'],
       max: [10000, 'Should be less than or equal to 10000']
     },
+    fundraisingGoal: {
+      type: Number,
+      default: 0,
+      min: [0, 'Should be greater than or equal to 0'],
+      max: [1000000, 'Should be less than or equal to 1000000']
+    },
     // Spec "hide past participation" toggle. When true, the entry is still in
     // the user's events[] but the frontend treats it as hidden on the profile.
     hiddenFromProfile: {
