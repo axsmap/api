@@ -13,6 +13,10 @@ const { buildAggregationMask } = require("../../helpers/leaderboard-mask");
  */
 async function getUserResponse(matchStage, collation, viewerOpts = {}) {
   const mask = buildAggregationMask(viewerOpts);
+  const viewerId =
+    viewerOpts.viewerId && mongoose.Types.ObjectId.isValid(viewerOpts.viewerId)
+      ? new mongoose.Types.ObjectId(viewerOpts.viewerId)
+      : null;
   const cursor = User.aggregate([
     { $match: matchStage },
     {
@@ -286,7 +290,7 @@ async function getUserResponse(matchStage, collation, viewerOpts = {}) {
     {
       $lookup: {
         from: "donations",
-        let: { userId: "$_id" },
+        let: { userId: "$_id", viewerId },
         pipeline: [
           {
             $match: {
@@ -294,6 +298,12 @@ async function getUserResponse(matchStage, collation, viewerOpts = {}) {
                 $and: [
                   { $eq: ["$creditedUser", "$$userId"] },
                   { $eq: ["$status", "confirmed"] },
+                  {
+                    $or: [
+                      { $eq: ["$showAmountPublicly", true] },
+                      { $eq: ["$$viewerId", "$$userId"] },
+                    ],
+                  },
                 ],
               },
             },
@@ -313,15 +323,13 @@ async function getUserResponse(matchStage, collation, viewerOpts = {}) {
               _id: 0,
               id: "$_id",
               name: {
-                $cond: ["$anonymous", "Anonymous", "$donorName"],
-              },
-              amount: {
                 $cond: [
-                  "$showAmountPublicly",
-                  { $divide: ["$amountCents", 100] },
-                  null,
+                  { $eq: ["$showAmountPublicly", false] },
+                  "Private donor",
+                  { $cond: ["$anonymous", "Anonymous", "$donorName"] },
                 ],
               },
+              amount: { $divide: ["$amountCents", 100] },
               eventId: "$event",
               eventName: {
                 $ifNull: [{ $arrayElemAt: ["$_event.name", 0] }, "Mapathon"],
