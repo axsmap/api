@@ -27,6 +27,7 @@ module.exports = async (req, res, next) => {
     creditedUserId,
     amount,
     donorName,
+    donorEmail,
     anonymous,
     showAmountPublicly
   } = req.body;
@@ -70,6 +71,16 @@ module.exports = async (req, res, next) => {
       .status(400)
       .json({ donorName: 'Should be less than 81 characters' });
   }
+  const cleanDonorEmail =
+    typeof donorEmail === 'string' ? donorEmail.trim().toLowerCase() : '';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanDonorEmail)) {
+    return res.status(400).json({ donorEmail: 'Should be a valid email' });
+  }
+  if (cleanDonorEmail.length > 254) {
+    return res
+      .status(400)
+      .json({ donorEmail: 'Should be less than 255 characters' });
+  }
 
   let event;
   let participant;
@@ -111,6 +122,7 @@ module.exports = async (req, res, next) => {
       creditedUser: creditedUserId,
       amountCents,
       donorName: anonymous ? '' : cleanDonorName,
+      donorEmail: cleanDonorEmail,
       anonymous,
       showAmountPublicly,
       checkoutToken
