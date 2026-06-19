@@ -315,13 +315,7 @@ async function getUserResponse(matchStage, collation, viewerOpts = {}) {
               name: {
                 $cond: ["$anonymous", "Anonymous", "$donorName"],
               },
-              amount: {
-                $cond: [
-                  "$showAmountPublicly",
-                  { $divide: ["$amountCents", 100] },
-                  null,
-                ],
-              },
+              amount: { $divide: ["$amountCents", 100] },
               eventId: "$event",
               eventName: {
                 $ifNull: [{ $arrayElemAt: ["$_event.name", 0] }, "Mapathon"],

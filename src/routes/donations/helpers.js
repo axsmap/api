@@ -20,6 +20,12 @@ function publicDonation(donation) {
   };
 }
 
+function publicDonorName(name) {
+  const parts = name.split(/\s+/).filter(Boolean);
+  if (parts.length < 2) return parts[0] || '';
+  return `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.`;
+}
+
 function captureFromOrder(order) {
   const purchaseUnit = order.purchase_units && order.purchase_units[0];
   const captures =
@@ -36,5 +42,6 @@ function payerEmail(order) {
 module.exports = {
   captureFromOrder,
   payerEmail,
+  publicDonorName,
   publicDonation
 };
