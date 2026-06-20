@@ -115,13 +115,38 @@ async function getUserResponse(matchStage, collation, viewerOpts = {}) {
                         { $eq: ["$creditedUser", "$$userId"] },
                         { $eq: ["$type", "pledge"] },
                         { $in: ["$status", ["pledged", "approved"]] },
-                        { $eq: ["$showPledgePublicly", true] },
                       ],
                     },
                   },
                 },
                 { $sort: { createdAt: -1 } },
-                { $limit: 5 },
+                {
+                  $lookup: {
+                    from: "reviews",
+                    let: {
+                      pledgeEventId: "$event",
+                      pledgeUserId: "$creditedUser",
+                      pledgedAt: "$createdAt",
+                    },
+                    pipeline: [
+                      {
+                        $match: {
+                          $expr: {
+                            $and: [
+                              { $eq: ["$event", "$$pledgeEventId"] },
+                              { $eq: ["$user", "$$pledgeUserId"] },
+                              { $ne: ["$isBanned", true] },
+                              { $gt: ["$createdAt", "$$pledgedAt"] },
+                            ],
+                          },
+                        },
+                      },
+                      { $group: { _id: "$venue" } },
+                      { $count: "n" },
+                    ],
+                    as: "_postPledgeReviewCount",
+                  },
+                },
                 {
                   $project: {
                     _id: 0,
@@ -130,24 +155,18 @@ async function getUserResponse(matchStage, collation, viewerOpts = {}) {
                     name: {
                       $cond: ["$anonymous", "Anonymous", "$donorName"],
                     },
-                    pledgeAmount: {
-                      $cond: [
-                        "$showAmountPublicly",
-                        { $divide: ["$pledgeAmountCents", 100] },
-                        null,
-                      ],
-                    },
-                    pledgeCap: {
-                      $cond: [
-                        "$showAmountPublicly",
-                        { $divide: ["$pledgeCapCents", 100] },
-                        null,
-                      ],
-                    },
+                    pledgeAmount: { $divide: ["$pledgeAmountCents", 100] },
+                    pledgeCap: { $divide: ["$pledgeCapCents", 100] },
                     status: 1,
                     anonymous: 1,
-                    showAmountPublicly: 1,
-                    showPledgePublicly: 1,
+                    showAmountPublicly: { $literal: true },
+                    showPledgePublicly: { $literal: true },
+                    mappedCount: {
+                      $ifNull: [
+                        { $arrayElemAt: ["$_postPledgeReviewCount.n", 0] },
+                        0,
+                      ],
+                    },
                     createdAt: 1,
                   },
                 },
@@ -299,7 +318,6 @@ async function getUserResponse(matchStage, collation, viewerOpts = {}) {
             },
           },
           { $sort: { amountCents: -1, confirmedAt: -1 } },
-          { $limit: 5 },
           {
             $lookup: {
               from: "events",
