@@ -29,9 +29,7 @@ module.exports = async (req, res, next) => {
     maximumCap,
     donorName,
     donorEmail,
-    anonymous,
-    showPledgePublicly,
-    showAmountPublicly
+    anonymous
   } = req.body;
 
   if (!mongoose.Types.ObjectId.isValid(eventId)) {
@@ -57,13 +55,6 @@ module.exports = async (req, res, next) => {
   if (typeof anonymous !== 'boolean') {
     return res.status(400).json({ anonymous: 'Should be a boolean' });
   }
-  if (typeof showAmountPublicly !== 'boolean') {
-    return res.status(400).json({ showAmountPublicly: 'Should be a boolean' });
-  }
-  if (typeof showPledgePublicly !== 'boolean') {
-    return res.status(400).json({ showPledgePublicly: 'Should be a boolean' });
-  }
-
   const cleanDonorName = typeof donorName === 'string' ? donorName.trim() : '';
   if (!anonymous && !cleanDonorName) {
     return res.status(400).json({ donorName: 'Is required' });
@@ -127,8 +118,8 @@ module.exports = async (req, res, next) => {
       donorName: anonymous ? '' : cleanDonorName,
       donorEmail: cleanDonorEmail,
       anonymous,
-      showAmountPublicly,
-      showPledgePublicly,
+      showAmountPublicly: true,
+      showPledgePublicly: true,
       status: 'pledged'
     });
 

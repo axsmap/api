@@ -2,21 +2,6 @@ const mongoose = require('mongoose');
 
 const { Donation } = require('../../models/donation');
 
-function publicPledge(pledge) {
-  return {
-    id: pledge.id,
-    eventId: pledge.event,
-    name: pledge.anonymous ? 'Anonymous' : pledge.donorName,
-    pledgeAmount: pledge.pledgeAmountCents / 100,
-    pledgeCap: pledge.pledgeCapCents / 100,
-    status: pledge.status,
-    anonymous: pledge.anonymous,
-    showAmountPublicly: pledge.showAmountPublicly,
-    showPledgePublicly: pledge.showPledgePublicly,
-    createdAt: pledge.createdAt
-  };
-}
-
 module.exports = async (req, res, next) => {
   const { userId } = req.params;
   if (!mongoose.Types.ObjectId.isValid(userId)) {
@@ -28,14 +13,67 @@ module.exports = async (req, res, next) => {
 
   let pledges;
   try {
-    pledges = await Donation.find({
-      creditedUser: userId,
-      type: 'pledge',
-      status: { $in: ['pledged', 'approved'] }
-    }).sort({ createdAt: -1 });
+    pledges = await Donation.aggregate([
+      {
+        $match: {
+          creditedUser: mongoose.Types.ObjectId(userId),
+          type: 'pledge',
+          status: { $in: ['pledged', 'approved'] }
+        }
+      },
+      { $sort: { createdAt: -1 } },
+      {
+        $lookup: {
+          from: 'reviews',
+          let: {
+            pledgeEventId: '$event',
+            pledgeUserId: '$creditedUser',
+            pledgedAt: '$createdAt'
+          },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ['$event', '$$pledgeEventId'] },
+                    { $eq: ['$user', '$$pledgeUserId'] },
+                    { $ne: ['$isBanned', true] },
+                    { $gt: ['$createdAt', '$$pledgedAt'] }
+                  ]
+                }
+              }
+            },
+            { $group: { _id: '$venue' } },
+            { $count: 'n' }
+          ],
+          as: '_postPledgeReviewCount'
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          id: '$_id',
+          eventId: '$event',
+          name: { $cond: ['$anonymous', 'Anonymous', '$donorName'] },
+          pledgeAmount: { $divide: ['$pledgeAmountCents', 100] },
+          pledgeCap: { $divide: ['$pledgeCapCents', 100] },
+          status: 1,
+          anonymous: 1,
+          showAmountPublicly: { $literal: true },
+          showPledgePublicly: { $literal: true },
+          mappedCount: {
+            $ifNull: [
+              { $arrayElemAt: ['$_postPledgeReviewCount.n', 0] },
+              0
+            ]
+          },
+          createdAt: 1
+        }
+      }
+    ]);
   } catch (error) {
     return next(error);
   }
 
-  return res.status(200).json({ pledges: pledges.map(publicPledge) });
+  return res.status(200).json({ pledges });
 };
