@@ -102,14 +102,6 @@ async function findOne({ objectName, fieldName, value }) {
   return records[0] || null;
 }
 
-async function createRecord(objectName, fields) {
-  return request({
-    method: 'post',
-    path: `/sobjects/${objectName}`,
-    data: fields
-  });
-}
-
 async function upsertRecord({
   objectName,
   externalIdField,
@@ -140,7 +132,6 @@ function resetSession() {
 }
 
 module.exports = {
-  createRecord,
   escapeSoql,
   findOne,
   query,

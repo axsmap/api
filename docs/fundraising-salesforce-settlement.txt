@@ -47,6 +47,19 @@ SALESFORCE_CONTACT_EMAIL_FIELD=Email
 Every Salesforce Campaign representing a Mapathon must contain the matching
 MongoDB event ID in AXS_Map_Mapathon_ID__c before its pledges are synchronized.
 
+Contact permission policy
+-------------------------
+
+The integration treats Salesforce Contacts as read-only:
+
+- Donors and Mapathon participants are looked up by email.
+- The integration never creates, edits, or deletes Contact records.
+- If a donor Contact is not found, Donor__c is left blank and
+  Donor_email__c is still populated.
+- A participant Contact is required because Mapathon_Participant__c is part
+  of the pledge relationship model. A missing participant Contact causes the
+  pledge sync to fail for administrator review.
+
 AWS secrets
 -----------
 

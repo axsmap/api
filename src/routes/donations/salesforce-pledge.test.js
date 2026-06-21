@@ -6,9 +6,10 @@ const {
   pledgeFieldMapping,
   publicRecognition,
   resolveCampaign,
-  splitContactName,
+  resolveDonorContact,
   syncCalculatedPledge
 } = require('./salesforce-pledge');
+const salesforce = require('../../helpers/salesforce');
 
 test('maps a calculated pledge to the exact Salesforce fields', () => {
   const fields = pledgeFieldMapping({
@@ -66,19 +67,55 @@ test('maps anonymous recognition without exposing the public donor name', () => 
   );
 });
 
-test('builds valid Salesforce Contact names', () => {
-  assert.deepEqual(splitContactName('Joe Walker'), {
-    firstName: 'Joe',
-    lastName: 'Walker'
+test('omits the donor lookup when no Salesforce Contact matches', () => {
+  const fields = pledgeFieldMapping({
+    pledge: {
+      id: 'pledge-id',
+      anonymous: true,
+      donorEmail: 'anonymous@example.com',
+      pledgeAmountCents: 500,
+      pledgeCapCents: 5000,
+      pledgeEligibleLocations: 0,
+      pledgeFinalAmountCents: 0,
+      createdAt: new Date('2026-06-01T18:30:00.000Z')
+    },
+    event: { id: 'event-id' },
+    participant: {
+      id: 'participant-id',
+      firstName: 'Jack',
+      lastName: 'Mosley'
+    },
+    campaignId: '701xx',
+    donorContactId: null,
+    participantContactId: '003participant',
+    externalIdField: 'AXS_Map_Pledge_ID__c'
   });
-  assert.deepEqual(splitContactName('Prince'), {
-    firstName: '',
-    lastName: 'Prince'
-  });
-  assert.deepEqual(splitContactName(''), {
-    firstName: '',
-    lastName: 'Anonymous Donor'
-  });
+
+  assert.equal(fields.Donor__c, undefined);
+  assert.equal(fields.Donor_email__c, 'anonymous@example.com');
+});
+
+test('donor Contact resolution is lookup-only', async () => {
+  const originalFindOne = salesforce.findOne;
+  let lookup;
+  salesforce.findOne = async options => {
+    lookup = options;
+    return null;
+  };
+
+  try {
+    const donor = await resolveDonorContact({
+      donorEmail: 'new-donor@example.com'
+    });
+    assert.equal(donor, null);
+    assert.deepEqual(lookup, {
+      objectName: 'Contact',
+      fieldName: 'Email',
+      value: 'new-donor@example.com'
+    });
+  } finally {
+    salesforce.findOne = originalFindOne;
+  }
 });
 
 test('formats Salesforce date fields without time components', () => {
