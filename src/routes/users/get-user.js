@@ -86,7 +86,7 @@ async function getUserResponse(matchStage, collation, viewerOpts = {}) {
                       $and: [
                         { $eq: ["$event", "$$eventId"] },
                         { $eq: ["$creditedUser", "$$userId"] },
-                        { $eq: ["$status", "confirmed"] },
+                        { $in: ["$status", ["confirmed", "paid"]] },
                       ],
                     },
                   },
@@ -352,7 +352,7 @@ async function getUserResponse(matchStage, collation, viewerOpts = {}) {
               $expr: {
                 $and: [
                   { $eq: ["$creditedUser", "$$userId"] },
-                  { $eq: ["$status", "confirmed"] },
+                  { $in: ["$status", ["confirmed", "paid"]] },
                 ],
               },
             },

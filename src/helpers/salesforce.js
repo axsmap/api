@@ -127,6 +127,15 @@ async function upsertRecord({
   return record;
 }
 
+async function updateRecord({ objectName, recordId, fields }) {
+  await request({
+    method: 'patch',
+    path: `/sobjects/${objectName}/${encodeURIComponent(recordId)}`,
+    data: fields
+  });
+  return { Id: recordId };
+}
+
 function resetSession() {
   cachedSession = undefined;
 }
@@ -137,5 +146,6 @@ module.exports = {
   query,
   request,
   resetSession,
+  updateRecord,
   upsertRecord
 };

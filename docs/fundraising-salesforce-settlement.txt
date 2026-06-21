@@ -25,6 +25,13 @@ Type: Text
 Length: 24 or greater
 Options: Unique and External ID
 
+Opportunity:
+Label: AXS Map Donation ID
+API name: AXS_Map_Donation_ID__c
+Type: Text
+Length: 24 or greater
+Options: Unique and External ID
+
 These fields provide duplicate-safe Pledge upserts and exact Campaign
 matching. Campaign Name is never used as a fallback.
 
@@ -39,10 +46,24 @@ SALESFORCE_API_VERSION=v64.0
 SALESFORCE_PLEDGE_OBJECT=AXS_Map_Pledge__c
 SALESFORCE_PLEDGE_EXTERNAL_ID_FIELD=AXS_Map_Pledge_ID__c
 SALESFORCE_CAMPAIGN_EXTERNAL_ID_FIELD=AXS_Map_Mapathon_ID__c
+SALESFORCE_OPPORTUNITY_EXTERNAL_ID_FIELD=AXS_Map_Donation_ID__c
+SALESFORCE_OPPORTUNITY_PAYPAL_TRANSACTION_FIELD=<existing PayPal transaction field>
+SALESFORCE_OPPORTUNITY_DONOR_EMAIL_FIELD=<Opportunity donor email field>
+SALESFORCE_OPPORTUNITY_PAID_STAGE=Posted - Fully Paid
+SALESFORCE_WEBHOOK_SECRET=<strong shared secret>
 
 Optional matching configuration:
 
 SALESFORCE_CONTACT_EMAIL_FIELD=Email
+SALESFORCE_OPPORTUNITY_PRIMARY_CONTACT_FIELD=<donor Contact lookup field>
+SALESFORCE_OPPORTUNITY_PARTICIPANT_FIELD=<participant Contact lookup field>
+SALESFORCE_OPPORTUNITY_DONATION_SOURCE_FIELD=<donation source field>
+SALESFORCE_OPPORTUNITY_DONATION_SOURCE_VALUE=AXS Map
+SALESFORCE_OPPORTUNITY_DONATION_TYPE_FIELD=<donation type field>
+SALESFORCE_OPPORTUNITY_FLAT_DONATION_VALUE=Flat Donation
+SALESFORCE_OPPORTUNITY_DONOR_NAME_FIELD=<donor display name field>
+SALESFORCE_OPPORTUNITY_ANONYMOUS_FIELD=<anonymous flag field>
+SALESFORCE_OPPORTUNITY_RECEIPT_SENT_FIELD=<receipt sent field>
 
 Every Salesforce Campaign representing a Mapathon must contain the matching
 MongoDB event ID in AXS_Map_Mapathon_ID__c before its pledges are synchronized.
@@ -59,6 +80,9 @@ The integration treats Salesforce Contacts as read-only:
 - A participant Contact is required because Mapathon_Participant__c is part
   of the pledge relationship model. A missing participant Contact causes the
   pledge sync to fail for administrator review.
+- A first-time donor is still stored in MongoDB and can be synchronized to
+  an Opportunity without creating a Contact. The donor email is written to
+  the configured Opportunity donor-email field.
 
 AWS secrets
 -----------
@@ -72,8 +96,38 @@ API workflow
 GET /donations/pledges/settlement-candidates
 POST /donations/pledges/:donationId/close
 POST /donations/pledges/:donationId/sync-salesforce
+POST /donations/:donationId/sync-salesforce
+POST /donations/salesforce/payment-confirmation
 
-All three routes require an authenticated AXS Map administrator.
+The settlement, close, and manual synchronization routes require an
+authenticated AXS Map administrator. The payment-confirmation route is
+server-to-server and requires these headers:
+
+x-axsmap-timestamp: current Unix epoch time in milliseconds
+x-axsmap-signature: lowercase hex HMAC-SHA256 signature
+
+The signed value is:
+
+timestamp + "." + axsMapPledgeId + "|" + status + "|" + opportunityId +
+"|" + paypalTransactionId + "|" + paymentDate + "|" + receiptSent
+
+The HMAC key is SALESFORCE_WEBHOOK_SECRET. Requests older than five minutes
+are rejected. Paid updates require an Opportunity ID, PayPal transaction ID,
+and payment date. MongoDB uses the frozen pledge calculation and does not
+trust Salesforce to supply a different amount.
+
+Flat donation workflow
+----------------------
+
+After PayPal confirms a flat donation, AXS Map keeps the MongoDB payment
+confirmation even if Salesforce is temporarily unavailable. It then attempts
+to synchronize an Opportunity. The synchronization first searches the
+configured PayPal transaction field and updates that Opportunity if found;
+otherwise it upserts by AXS_Map_Donation_ID__c. This prevents duplicate
+Opportunities when another PayPal automation created the record first.
+
+The configured PayPal transaction field should be marked Unique in
+Salesforce where possible to protect against concurrent duplicate creation.
 
 Salesforce automation still required
 ------------------------------------
@@ -82,3 +136,10 @@ There are currently no Flow Triggers on AXS_Map_Pledge__c and no pledge flow
 was found in the Salesforce Flow inventory. Salesforce still needs an active
 automation that sends the payment-request email and updates Status__c from
 Calculated to Payment Requested.
+
+Salesforce also needs an authenticated Flow/Apex callout that posts pledge
+payment and receipt updates to:
+
+POST https://<stage-api-host>/donations/salesforce/payment-confirmation
+
+The callout must generate the timestamp and HMAC headers described above.

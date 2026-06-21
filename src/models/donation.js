@@ -157,6 +157,15 @@ const donationSchema = new mongoose.Schema(
       type: String,
       default: ''
     },
+    salesforcePaymentId: {
+      type: String,
+      default: ''
+    },
+    salesforcePaymentStatus: {
+      type: String,
+      default: ''
+    },
+    receiptSentAt: Date,
     confirmedAt: Date,
     refundedAt: Date,
     reversedAt: Date

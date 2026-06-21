@@ -145,5 +145,6 @@ module.exports = {
   publicRecognition,
   resolveCampaign,
   resolveDonorContact,
+  resolveParticipantContact,
   syncCalculatedPledge
 };
