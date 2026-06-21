@@ -10,6 +10,7 @@ const createPledge = require('./create-pledge');
 const listPledgeSettlementCandidates = require('./list-pledge-settlement-candidates');
 const listUserPledges = require('./list-user-pledges');
 const paypalWebhook = require('./paypal-webhook');
+const syncPledgeSalesforce = require('./sync-pledge-salesforce');
 
 const router = new express.Router();
 
@@ -26,6 +27,11 @@ router.post(
   '/pledges/:donationId/close',
   isAuthenticated({ isOptional: false }),
   closePledge
+);
+router.post(
+  '/pledges/:donationId/sync-salesforce',
+  isAuthenticated({ isOptional: false }),
+  syncPledgeSalesforce
 );
 router.get(
   '/pledges/credited-user/:userId',

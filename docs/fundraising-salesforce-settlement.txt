@@ -1,0 +1,64 @@
+AXS Map pledge settlement and Salesforce synchronization
+=========================================================
+
+Salesforce object
+-----------------
+
+AXS_Map_Pledge__c
+
+Required additional field
+-------------------------
+
+Create this field before enabling synchronization:
+
+Label: AXS Map Pledge ID
+API name: AXS_Map_Pledge_ID__c
+Type: Text
+Length: 24 or greater
+Options: Unique and External ID
+
+This field provides duplicate-safe upserts when a Salesforce request is
+retried.
+
+Environment configuration
+-------------------------
+
+SALESFORCE_LOGIN_URL=https://test.salesforce.com
+SALESFORCE_CLIENT_ID=<connected-app-consumer-key>
+SALESFORCE_CLIENT_SECRET=<connected-app-consumer-secret>
+SALESFORCE_REFRESH_TOKEN=<integration-user-refresh-token>
+SALESFORCE_API_VERSION=v64.0
+SALESFORCE_PLEDGE_OBJECT=AXS_Map_Pledge__c
+SALESFORCE_PLEDGE_EXTERNAL_ID_FIELD=AXS_Map_Pledge_ID__c
+
+Optional matching configuration:
+
+SALESFORCE_CAMPAIGN_EXTERNAL_ID_FIELD=<Campaign field containing Mongo event ID>
+SALESFORCE_CONTACT_EMAIL_FIELD=Email
+
+When SALESFORCE_CAMPAIGN_EXTERNAL_ID_FIELD is not set, the integration matches
+the Campaign by its exact Name. Duplicate Campaign names cause the sync to
+fail rather than choosing an arbitrary record.
+
+AWS secrets
+-----------
+
+Store Salesforce credentials in the staging API environment or AWS Secrets
+Manager. Do not commit them to Git.
+
+API workflow
+------------
+
+GET /donations/pledges/settlement-candidates
+POST /donations/pledges/:donationId/close
+POST /donations/pledges/:donationId/sync-salesforce
+
+All three routes require an authenticated AXS Map administrator.
+
+Salesforce automation still required
+------------------------------------
+
+There are currently no Flow Triggers on AXS_Map_Pledge__c and no pledge flow
+was found in the Salesforce Flow inventory. Salesforce still needs an active
+automation that sends the payment-request email and updates Status__c from
+Calculated to Payment Requested.
