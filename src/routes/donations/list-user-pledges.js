@@ -18,7 +18,15 @@ module.exports = async (req, res, next) => {
         $match: {
           creditedUser: mongoose.Types.ObjectId(userId),
           type: 'pledge',
-          status: { $in: ['pledged', 'approved'] }
+          status: {
+            $in: [
+              'pledged',
+              'approved',
+              'calculated',
+              'payment_requested',
+              'paid'
+            ]
+          }
         }
       },
       { $sort: { createdAt: -1 } },
@@ -62,11 +70,35 @@ module.exports = async (req, res, next) => {
           showAmountPublicly: { $literal: true },
           showPledgePublicly: { $literal: true },
           mappedCount: {
-            $ifNull: [
-              { $arrayElemAt: ['$_postPledgeReviewCount.n', 0] },
-              0
+            $cond: [
+              {
+                $ne: [
+                  { $ifNull: ['$pledgeClosedAt', null] },
+                  null
+                ]
+              },
+              '$pledgeEligibleLocations',
+              {
+                $ifNull: [
+                  { $arrayElemAt: ['$_postPledgeReviewCount.n', 0] },
+                  0
+                ]
+              }
             ]
           },
+          finalAmount: {
+            $cond: [
+              {
+                $ne: [
+                  { $ifNull: ['$pledgeClosedAt', null] },
+                  null
+                ]
+              },
+              { $divide: ['$pledgeFinalAmountCents', 100] },
+              null
+            ]
+          },
+          closedAt: '$pledgeClosedAt',
           createdAt: 1
         }
       }

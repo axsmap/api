@@ -9,12 +9,22 @@ function publicDonation(donation) {
       ? donation.pledgeAmountCents / 100
       : null,
     pledgeCap: donation.pledgeCapCents ? donation.pledgeCapCents / 100 : null,
+    eligibleLocations:
+      typeof donation.pledgeEligibleLocations === 'number'
+        ? donation.pledgeEligibleLocations
+        : null,
+    finalAmount:
+      typeof donation.pledgeFinalAmountCents === 'number'
+        ? donation.pledgeFinalAmountCents / 100
+        : null,
     currency: donation.currency,
     status: donation.status,
     anonymous: donation.anonymous,
     donorName: donation.anonymous ? 'Anonymous' : donation.donorName,
     showAmountPublicly: donation.showAmountPublicly,
     showPledgePublicly: donation.showPledgePublicly,
+    pledgeCalculatedAt: donation.pledgeCalculatedAt,
+    pledgeClosedAt: donation.pledgeClosedAt,
     confirmedAt: donation.confirmedAt,
     createdAt: donation.createdAt
   };
