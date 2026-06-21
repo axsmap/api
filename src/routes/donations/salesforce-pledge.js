@@ -7,23 +7,6 @@ function isoDate(value) {
   return new Date(value).toISOString().slice(0, 10);
 }
 
-function splitContactName(name) {
-  const parts = String(name || '')
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
-  if (parts.length < 2) {
-    return {
-      firstName: '',
-      lastName: parts[0] || 'Anonymous Donor'
-    };
-  }
-  return {
-    firstName: parts[0],
-    lastName: parts.slice(1).join(' ')
-  };
-}
-
 function publicRecognition(pledge) {
   return pledge.anonymous ? 'Anonymous' : 'First Name + Last Initial';
 }
@@ -41,7 +24,6 @@ function pledgeFieldMapping({
     Amount_Per_Location__c: pledge.pledgeAmountCents / 100,
     Approved_Locations__c: pledge.pledgeEligibleLocations,
     Calculated_Amount__c: pledge.pledgeFinalAmountCents / 100,
-    Donor__c: donorContactId,
     Donor_email__c: pledge.donorEmail,
     Locations_Target__c: Math.ceil(
       pledge.pledgeCapCents / pledge.pledgeAmountCents
@@ -63,6 +45,7 @@ function pledgeFieldMapping({
     Public_Recognition__c: publicRecognition(pledge),
     Status__c: 'Calculated'
   };
+  if (donorContactId) fields.Donor__c = donorContactId;
   fields[externalIdField] = pledge.id;
   return fields;
 }
@@ -70,17 +53,18 @@ function pledgeFieldMapping({
 async function resolveCampaign(event) {
   const externalIdField =
     process.env.SALESFORCE_CAMPAIGN_EXTERNAL_ID_FIELD;
-  if (externalIdField) {
-    return salesforce.findOne({
-      objectName: 'Campaign',
-      fieldName: externalIdField,
-      value: event.id
-    });
+  if (!externalIdField) {
+    const error = new Error(
+      'SALESFORCE_CAMPAIGN_EXTERNAL_ID_FIELD is not configured'
+    );
+    error.code = 'SALESFORCE_CAMPAIGN_EXTERNAL_ID_REQUIRED';
+    throw error;
   }
+
   return salesforce.findOne({
     objectName: 'Campaign',
-    fieldName: 'Name',
-    value: event.name
+    fieldName: externalIdField,
+    value: event.id
   });
 }
 
@@ -99,25 +83,11 @@ async function resolveParticipantContact(participant) {
 }
 
 async function resolveDonorContact(pledge) {
-  const emailField = process.env.SALESFORCE_CONTACT_EMAIL_FIELD || 'Email';
-  const existing = await salesforce.findOne({
+  return salesforce.findOne({
     objectName: 'Contact',
-    fieldName: emailField,
+    fieldName: process.env.SALESFORCE_CONTACT_EMAIL_FIELD || 'Email',
     value: pledge.donorEmail
   });
-  if (existing) return existing;
-
-  const name = splitContactName(
-    pledge.anonymous ? 'Anonymous Donor' : pledge.donorName
-  );
-  const fields = {
-    FirstName: name.firstName || undefined,
-    LastName: name.lastName
-  };
-  fields[emailField] = pledge.donorEmail;
-
-  const created = await salesforce.createRecord('Contact', fields);
-  return { Id: created.id };
 }
 
 async function syncCalculatedPledge({ pledge, event, participant }) {
@@ -155,7 +125,7 @@ async function syncCalculatedPledge({ pledge, event, participant }) {
     event,
     participant,
     campaignId: campaign.Id,
-    donorContactId: donorContact.Id,
+    donorContactId: donorContact && donorContact.Id,
     participantContactId: participantContact.Id,
     externalIdField
   });
@@ -173,6 +143,8 @@ module.exports = {
   isoDate,
   pledgeFieldMapping,
   publicRecognition,
-  splitContactName,
+  resolveCampaign,
+  resolveDonorContact,
+  resolveParticipantContact,
   syncCalculatedPledge
 };
