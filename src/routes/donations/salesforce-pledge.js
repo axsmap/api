@@ -70,17 +70,18 @@ function pledgeFieldMapping({
 async function resolveCampaign(event) {
   const externalIdField =
     process.env.SALESFORCE_CAMPAIGN_EXTERNAL_ID_FIELD;
-  if (externalIdField) {
-    return salesforce.findOne({
-      objectName: 'Campaign',
-      fieldName: externalIdField,
-      value: event.id
-    });
+  if (!externalIdField) {
+    const error = new Error(
+      'SALESFORCE_CAMPAIGN_EXTERNAL_ID_FIELD is not configured'
+    );
+    error.code = 'SALESFORCE_CAMPAIGN_EXTERNAL_ID_REQUIRED';
+    throw error;
   }
+
   return salesforce.findOne({
     objectName: 'Campaign',
-    fieldName: 'Name',
-    value: event.name
+    fieldName: externalIdField,
+    value: event.id
   });
 }
 
@@ -173,6 +174,7 @@ module.exports = {
   isoDate,
   pledgeFieldMapping,
   publicRecognition,
+  resolveCampaign,
   splitContactName,
   syncCalculatedPledge
 };

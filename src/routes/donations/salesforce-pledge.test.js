@@ -5,6 +5,7 @@ const {
   isoDate,
   pledgeFieldMapping,
   publicRecognition,
+  resolveCampaign,
   splitContactName,
   syncCalculatedPledge
 } = require('./salesforce-pledge');
@@ -103,5 +104,19 @@ test('refuses to sync without a duplicate-safe external ID field', async () => {
 
   if (previous) {
     process.env.SALESFORCE_PLEDGE_EXTERNAL_ID_FIELD = previous;
+  }
+});
+
+test('requires a dedicated Campaign external ID field', async () => {
+  const previous = process.env.SALESFORCE_CAMPAIGN_EXTERNAL_ID_FIELD;
+  delete process.env.SALESFORCE_CAMPAIGN_EXTERNAL_ID_FIELD;
+
+  await assert.rejects(
+    resolveCampaign({ id: 'event-id', name: 'Duplicate-prone name' }),
+    error => error.code === 'SALESFORCE_CAMPAIGN_EXTERNAL_ID_REQUIRED'
+  );
+
+  if (previous) {
+    process.env.SALESFORCE_CAMPAIGN_EXTERNAL_ID_FIELD = previous;
   }
 });

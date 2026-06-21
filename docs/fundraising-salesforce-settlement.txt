@@ -9,16 +9,24 @@ AXS_Map_Pledge__c
 Required additional field
 -------------------------
 
-Create this field before enabling synchronization:
+Create these fields before enabling synchronization.
 
+Pledge:
 Label: AXS Map Pledge ID
 API name: AXS_Map_Pledge_ID__c
 Type: Text
 Length: 24 or greater
 Options: Unique and External ID
 
-This field provides duplicate-safe upserts when a Salesforce request is
-retried.
+Campaign:
+Label: AXS Map Mapathon ID
+API name: AXS_Map_Mapathon_ID__c
+Type: Text
+Length: 24 or greater
+Options: Unique and External ID
+
+These fields provide duplicate-safe Pledge upserts and exact Campaign
+matching. Campaign Name is never used as a fallback.
 
 Environment configuration
 -------------------------
@@ -30,15 +38,14 @@ SALESFORCE_REFRESH_TOKEN=<integration-user-refresh-token>
 SALESFORCE_API_VERSION=v64.0
 SALESFORCE_PLEDGE_OBJECT=AXS_Map_Pledge__c
 SALESFORCE_PLEDGE_EXTERNAL_ID_FIELD=AXS_Map_Pledge_ID__c
+SALESFORCE_CAMPAIGN_EXTERNAL_ID_FIELD=AXS_Map_Mapathon_ID__c
 
 Optional matching configuration:
 
-SALESFORCE_CAMPAIGN_EXTERNAL_ID_FIELD=<Campaign field containing Mongo event ID>
 SALESFORCE_CONTACT_EMAIL_FIELD=Email
 
-When SALESFORCE_CAMPAIGN_EXTERNAL_ID_FIELD is not set, the integration matches
-the Campaign by its exact Name. Duplicate Campaign names cause the sync to
-fail rather than choosing an arbitrary record.
+Every Salesforce Campaign representing a Mapathon must contain the matching
+MongoDB event ID in AXS_Map_Mapathon_ID__c before its pledges are synchronized.
 
 AWS secrets
 -----------
