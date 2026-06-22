@@ -1,6 +1,10 @@
 const { captureOrder } = require('../../helpers/paypal');
 const { Donation } = require('../../models/donation');
-const { captureFromOrder, payerEmail, publicDonation } = require('./helpers');
+const {
+  captureFromOrder,
+  publicDonation,
+  receiptEmail
+} = require('./helpers');
 const {
   syncFlatDonationToSalesforce
 } = require('./sync-flat-donation-salesforce');
@@ -33,7 +37,7 @@ module.exports = async (req, res, next) => {
     const captureStatus = capture && capture.status;
 
     donation.paypalStatus = captureStatus || order.status || '';
-    donation.donorEmail = payerEmail(order) || donation.donorEmail;
+    donation.donorEmail = receiptEmail(donation.donorEmail, order);
     if (capture && capture.id) donation.paypalCaptureId = capture.id;
 
     if (captureStatus === 'COMPLETED') {
