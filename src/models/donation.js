@@ -73,6 +73,47 @@ const donationSchema = new mongoose.Schema(
       default: false,
       required: [true, 'Is required']
     },
+    pledgeEligibleLocations: {
+      type: Number,
+      min: [0, 'Should be greater than or equal to 0']
+    },
+    pledgeFinalAmountCents: {
+      type: Number,
+      min: [0, 'Should be greater than or equal to 0'],
+      max: [100000000, 'Should be less than or equal to 100000000']
+    },
+    pledgeCalculatedAt: Date,
+    pledgeClosedAt: Date,
+    pledgeClosedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    salesforceSync: {
+      status: {
+        type: String,
+        enum: {
+          values: ['not_ready', 'pending', 'synced', 'failed'],
+          message: 'Should be a valid Salesforce sync status'
+        },
+        default: 'not_ready'
+      },
+      recordId: {
+        type: String,
+        default: ''
+      },
+      attempts: {
+        type: Number,
+        min: [0, 'Should be greater than or equal to 0'],
+        default: 0
+      },
+      lastAttemptAt: Date,
+      syncedAt: Date,
+      lastError: {
+        type: String,
+        maxlength: [2000, 'Should be less than 2001 characters'],
+        default: ''
+      }
+    },
     status: {
       type: String,
       enum: {
@@ -80,9 +121,14 @@ const donationSchema = new mongoose.Schema(
           'pending',
           'pledged',
           'approved',
+          'calculated',
+          'payment_requested',
+          'paid',
           'confirmed',
           'cancelled',
           'failed',
+          'expired',
+          'uncollected',
           'refunded',
           'reversed'
         ],
@@ -111,6 +157,15 @@ const donationSchema = new mongoose.Schema(
       type: String,
       default: ''
     },
+    salesforcePaymentId: {
+      type: String,
+      default: ''
+    },
+    salesforcePaymentStatus: {
+      type: String,
+      default: ''
+    },
+    receiptSentAt: Date,
     confirmedAt: Date,
     refundedAt: Date,
     reversedAt: Date
@@ -136,6 +191,11 @@ donationSchema.index({
   event: 1,
   creditedUser: 1,
   status: 1
+});
+donationSchema.index({
+  type: 1,
+  'salesforceSync.status': 1,
+  pledgeClosedAt: 1
 });
 
 module.exports = {

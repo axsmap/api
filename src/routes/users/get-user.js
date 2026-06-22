@@ -86,7 +86,7 @@ async function getUserResponse(matchStage, collation, viewerOpts = {}) {
                       $and: [
                         { $eq: ["$event", "$$eventId"] },
                         { $eq: ["$creditedUser", "$$userId"] },
-                        { $eq: ["$status", "confirmed"] },
+                        { $in: ["$status", ["confirmed", "paid"]] },
                       ],
                     },
                   },
@@ -114,7 +114,18 @@ async function getUserResponse(matchStage, collation, viewerOpts = {}) {
                         { $eq: ["$event", "$$eventId"] },
                         { $eq: ["$creditedUser", "$$userId"] },
                         { $eq: ["$type", "pledge"] },
-                        { $in: ["$status", ["pledged", "approved"]] },
+                        {
+                          $in: [
+                            "$status",
+                            [
+                              "pledged",
+                              "approved",
+                              "calculated",
+                              "payment_requested",
+                              "paid",
+                            ],
+                          ],
+                        },
                       ],
                     },
                   },
@@ -162,11 +173,40 @@ async function getUserResponse(matchStage, collation, viewerOpts = {}) {
                     showAmountPublicly: { $literal: true },
                     showPledgePublicly: { $literal: true },
                     mappedCount: {
-                      $ifNull: [
-                        { $arrayElemAt: ["$_postPledgeReviewCount.n", 0] },
-                        0,
+                      $cond: [
+                        {
+                          $ne: [
+                            { $ifNull: ["$pledgeClosedAt", null] },
+                            null,
+                          ],
+                        },
+                        "$pledgeEligibleLocations",
+                        {
+                          $ifNull: [
+                            {
+                              $arrayElemAt: [
+                                "$_postPledgeReviewCount.n",
+                                0,
+                              ],
+                            },
+                            0,
+                          ],
+                        },
                       ],
                     },
+                    finalAmount: {
+                      $cond: [
+                        {
+                          $ne: [
+                            { $ifNull: ["$pledgeClosedAt", null] },
+                            null,
+                          ],
+                        },
+                        { $divide: ["$pledgeFinalAmountCents", 100] },
+                        null,
+                      ],
+                    },
+                    closedAt: "$pledgeClosedAt",
                     createdAt: 1,
                   },
                 },
@@ -312,7 +352,7 @@ async function getUserResponse(matchStage, collation, viewerOpts = {}) {
               $expr: {
                 $and: [
                   { $eq: ["$creditedUser", "$$userId"] },
-                  { $eq: ["$status", "confirmed"] },
+                  { $in: ["$status", ["confirmed", "paid"]] },
                 ],
               },
             },

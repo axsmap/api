@@ -1,6 +1,9 @@
 const { captureOrder } = require('../../helpers/paypal');
 const { Donation } = require('../../models/donation');
 const { captureFromOrder, payerEmail, publicDonation } = require('./helpers');
+const {
+  syncFlatDonationToSalesforce
+} = require('./sync-flat-donation-salesforce');
 
 module.exports = async (req, res, next) => {
   const { orderId } = req.body;
@@ -17,6 +20,7 @@ module.exports = async (req, res, next) => {
   if (!donation) return res.status(404).json({ general: 'Donation not found' });
 
   if (donation.status === 'confirmed') {
+    await syncFlatDonationToSalesforce(donation);
     return res.status(200).json({ donation: publicDonation(donation) });
   }
   if (['cancelled', 'refunded', 'reversed'].includes(donation.status)) {
@@ -29,7 +33,7 @@ module.exports = async (req, res, next) => {
     const captureStatus = capture && capture.status;
 
     donation.paypalStatus = captureStatus || order.status || '';
-    donation.donorEmail = payerEmail(order);
+    donation.donorEmail = payerEmail(order) || donation.donorEmail;
     if (capture && capture.id) donation.paypalCaptureId = capture.id;
 
     if (captureStatus === 'COMPLETED') {
@@ -42,6 +46,9 @@ module.exports = async (req, res, next) => {
     }
 
     await donation.save();
+    if (donation.status === 'confirmed') {
+      await syncFlatDonationToSalesforce(donation);
+    }
     return res.status(200).json({ donation: publicDonation(donation) });
   } catch (error) {
     const paypalStatus =

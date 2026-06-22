@@ -1,5 +1,8 @@
 const { verifyWebhook } = require('../../helpers/paypal');
 const { Donation } = require('../../models/donation');
+const {
+  syncFlatDonationToSalesforce
+} = require('./sync-flat-donation-salesforce');
 
 function relatedIds(resource) {
   return (
@@ -72,6 +75,12 @@ module.exports = async (req, res, next) => {
 
   try {
     await donation.save();
+    if (
+      event.event_type === 'PAYMENT.CAPTURE.COMPLETED' &&
+      donation.type === 'flat'
+    ) {
+      await syncFlatDonationToSalesforce(donation);
+    }
   } catch (error) {
     return next(error);
   }
