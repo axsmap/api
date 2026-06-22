@@ -143,3 +143,26 @@ test('authenticates using a Salesforce client credentials token response', { con
     axios.post = originalPost;
   }
 });
+
+test('omits the external ID field from Salesforce upsert data', () => {
+  const fields = {
+    Name: 'AXS Map donation',
+    AXS_Map_Donation_ID__c: '6a397482c5d67caef20b3b8b',
+    Amount: 5
+  };
+
+  assert.deepEqual(
+    salesforce.fieldsForExternalIdUpsert(
+      fields,
+      'AXS_Map_Donation_ID__c'
+    ),
+    {
+      Name: 'AXS Map donation',
+      Amount: 5
+    }
+  );
+  assert.equal(
+    fields.AXS_Map_Donation_ID__c,
+    '6a397482c5d67caef20b3b8b'
+  );
+});
