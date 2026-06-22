@@ -1,0 +1,145 @@
+const assert = require('node:assert/strict');
+const test = require('node:test');
+
+const axios = require('axios');
+const salesforce = require('./salesforce');
+
+const SALESFORCE_ENVIRONMENT = [
+  'SALESFORCE_ACCESS_TOKEN',
+  'SALESFORCE_AUTH_FLOW',
+  'SALESFORCE_CLIENT_ID',
+  'SALESFORCE_CLIENT_SECRET',
+  'SALESFORCE_INSTANCE_URL',
+  'SALESFORCE_LOGIN_URL',
+  'SALESFORCE_REFRESH_TOKEN'
+];
+
+function withEnvironment(values, callback) {
+  const previous = {};
+  SALESFORCE_ENVIRONMENT.forEach(name => {
+    previous[name] = process.env[name];
+    delete process.env[name];
+  });
+  Object.entries(values).forEach(([name, value]) => {
+    process.env[name] = value;
+  });
+
+  return Promise.resolve()
+    .then(callback)
+    .finally(() => {
+      SALESFORCE_ENVIRONMENT.forEach(name => {
+        if (previous[name] === undefined) delete process.env[name];
+        else process.env[name] = previous[name];
+      });
+      salesforce.resetSession();
+    });
+}
+
+test('builds Salesforce client credentials parameters', { concurrency: false }, async () => {
+  await withEnvironment(
+    {
+      SALESFORCE_AUTH_FLOW: 'client_credentials',
+      SALESFORCE_CLIENT_ID: 'client-id',
+      SALESFORCE_CLIENT_SECRET: 'client-secret'
+    },
+    () => {
+      const params = salesforce.authenticationParameters();
+      assert.equal(params.get('grant_type'), 'client_credentials');
+      assert.equal(params.get('client_id'), 'client-id');
+      assert.equal(params.get('client_secret'), 'client-secret');
+      assert.equal(params.has('refresh_token'), false);
+    }
+  );
+});
+
+test('keeps refresh token authentication as the default', { concurrency: false }, async () => {
+  await withEnvironment(
+    {
+      SALESFORCE_CLIENT_ID: 'client-id',
+      SALESFORCE_CLIENT_SECRET: 'client-secret',
+      SALESFORCE_REFRESH_TOKEN: 'refresh-token'
+    },
+    () => {
+      const params = salesforce.authenticationParameters();
+      assert.equal(params.get('grant_type'), 'refresh_token');
+      assert.equal(params.get('refresh_token'), 'refresh-token');
+    }
+  );
+});
+
+test('requires a client ID for client credentials', { concurrency: false }, async () => {
+  await withEnvironment(
+    {
+      SALESFORCE_AUTH_FLOW: 'client_credentials',
+      SALESFORCE_CLIENT_SECRET: 'client-secret'
+    },
+    () => {
+      assert.throws(
+        () => salesforce.authenticationParameters(),
+        error =>
+          error.code === 'SALESFORCE_NOT_CONFIGURED' &&
+          error.message === 'SALESFORCE_CLIENT_ID is not configured'
+      );
+    }
+  );
+});
+
+test('requires a client secret for client credentials', { concurrency: false }, async () => {
+  await withEnvironment(
+    {
+      SALESFORCE_AUTH_FLOW: 'client_credentials',
+      SALESFORCE_CLIENT_ID: 'client-id'
+    },
+    () => {
+      assert.throws(
+        () => salesforce.authenticationParameters(),
+        error =>
+          error.code === 'SALESFORCE_NOT_CONFIGURED' &&
+          error.message === 'SALESFORCE_CLIENT_SECRET is not configured'
+      );
+    }
+  );
+});
+
+test('authenticates using a Salesforce client credentials token response', { concurrency: false }, async () => {
+  const originalPost = axios.post;
+  let request;
+  axios.post = async (url, body, options) => {
+    request = { url, body, options };
+    return {
+      data: {
+        access_token: 'access-token',
+        instance_url: 'https://axs-lab.my.salesforce.com'
+      }
+    };
+  };
+
+  try {
+    await withEnvironment(
+      {
+        SALESFORCE_AUTH_FLOW: 'client_credentials',
+        SALESFORCE_CLIENT_ID: 'client-id',
+        SALESFORCE_CLIENT_SECRET: 'client-secret',
+        SALESFORCE_LOGIN_URL: 'https://login.salesforce.com/'
+      },
+      async () => {
+        const session = await salesforce.authenticate();
+        const params = new URLSearchParams(request.body);
+
+        assert.equal(
+          request.url,
+          'https://login.salesforce.com/services/oauth2/token'
+        );
+        assert.equal(params.get('grant_type'), 'client_credentials');
+        assert.equal(params.get('client_id'), 'client-id');
+        assert.equal(params.get('client_secret'), 'client-secret');
+        assert.deepEqual(session, {
+          accessToken: 'access-token',
+          instanceUrl: 'https://axs-lab.my.salesforce.com'
+        });
+      }
+    );
+  } finally {
+    axios.post = originalPost;
+  }
+});
