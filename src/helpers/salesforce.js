@@ -132,6 +132,12 @@ async function findOne({ objectName, fieldName, value }) {
   return records[0] || null;
 }
 
+function fieldsForExternalIdUpsert(fields, externalIdField) {
+  const data = { ...fields };
+  delete data[externalIdField];
+  return data;
+}
+
 async function upsertRecord({
   objectName,
   externalIdField,
@@ -143,7 +149,7 @@ async function upsertRecord({
     path:
       `/sobjects/${objectName}/${externalIdField}/` +
       encodeURIComponent(externalIdValue),
-    data: fields
+    data: fieldsForExternalIdUpsert(fields, externalIdField)
   });
 
   const record = await findOne({
@@ -174,6 +180,7 @@ module.exports = {
   authenticate,
   authenticationParameters,
   escapeSoql,
+  fieldsForExternalIdUpsert,
   findOne,
   query,
   request,
