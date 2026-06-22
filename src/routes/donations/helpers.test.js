@@ -6,7 +6,8 @@ const {
   captureFromOrder,
   payerEmail,
   publicDonation,
-  publicDonorName
+  publicDonorName,
+  receiptEmail
 } = require('./helpers');
 
 test('public donation respects donor privacy choices', () => {
@@ -46,6 +47,21 @@ test('capture helpers read PayPal order details', () => {
   assert.strictEqual(payerEmail(order), 'donor@example.com');
   assert.strictEqual(captureFromOrder({}), undefined);
   assert.strictEqual(payerEmail({}), '');
+});
+
+test('AXS Map donor email takes priority over PayPal payer email', () => {
+  const order = {
+    payer: { email_address: 'paypal-sandbox@example.com' }
+  };
+
+  assert.strictEqual(
+    receiptEmail('donor-entered@example.com', order),
+    'donor-entered@example.com'
+  );
+  assert.strictEqual(
+    receiptEmail('', order),
+    'paypal-sandbox@example.com'
+  );
 });
 
 test('public donation includes pledge details without exposing donor email', () => {

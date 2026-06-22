@@ -49,9 +49,14 @@ function payerEmail(order) {
     : '';
 }
 
+function receiptEmail(donorEmail, order) {
+  return donorEmail || payerEmail(order);
+}
+
 module.exports = {
   captureFromOrder,
   payerEmail,
   publicDonorName,
-  publicDonation
+  publicDonation,
+  receiptEmail
 };
