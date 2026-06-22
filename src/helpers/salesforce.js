@@ -22,6 +22,32 @@ function requireConfig(name) {
   return value;
 }
 
+function authenticationParameters() {
+  const params = new URLSearchParams();
+  const authFlow =
+    process.env.SALESFORCE_AUTH_FLOW || 'refresh_token';
+
+  if (authFlow === 'client_credentials') {
+    params.set('grant_type', 'client_credentials');
+    params.set('client_id', requireConfig('SALESFORCE_CLIENT_ID'));
+    params.set('client_secret', requireConfig('SALESFORCE_CLIENT_SECRET'));
+    return params;
+  }
+  if (authFlow !== 'refresh_token') {
+    const error = new Error(
+      `Unsupported Salesforce authentication flow: ${authFlow}`
+    );
+    error.code = 'SALESFORCE_AUTH_FLOW_UNSUPPORTED';
+    throw error;
+  }
+
+  params.set('grant_type', 'refresh_token');
+  params.set('client_id', requireConfig('SALESFORCE_CLIENT_ID'));
+  params.set('client_secret', requireConfig('SALESFORCE_CLIENT_SECRET'));
+  params.set('refresh_token', requireConfig('SALESFORCE_REFRESH_TOKEN'));
+  return params;
+}
+
 async function authenticate() {
   const configuredAccessToken = process.env.SALESFORCE_ACCESS_TOKEN;
   const configuredInstanceUrl = process.env.SALESFORCE_INSTANCE_URL;
@@ -34,11 +60,7 @@ async function authenticate() {
 
   if (cachedSession) return cachedSession;
 
-  const params = new URLSearchParams();
-  params.set('grant_type', 'refresh_token');
-  params.set('client_id', requireConfig('SALESFORCE_CLIENT_ID'));
-  params.set('client_secret', requireConfig('SALESFORCE_CLIENT_SECRET'));
-  params.set('refresh_token', requireConfig('SALESFORCE_REFRESH_TOKEN'));
+  const params = authenticationParameters();
 
   const response = await axios.post(
     `${configuredLoginUrl()}/services/oauth2/token`,
@@ -50,6 +72,14 @@ async function authenticate() {
       timeout: 15000
     }
   );
+
+  if (!response.data.access_token || !response.data.instance_url) {
+    const error = new Error(
+      'Salesforce token response is missing access_token or instance_url'
+    );
+    error.code = 'SALESFORCE_INVALID_TOKEN_RESPONSE';
+    throw error;
+  }
 
   cachedSession = {
     accessToken: response.data.access_token,
@@ -141,6 +171,8 @@ function resetSession() {
 }
 
 module.exports = {
+  authenticate,
+  authenticationParameters,
   escapeSoql,
   findOne,
   query,
