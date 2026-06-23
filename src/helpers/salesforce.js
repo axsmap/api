@@ -88,7 +88,17 @@ async function authenticate() {
   return cachedSession;
 }
 
-async function request({ method, path, data }) {
+function isInvalidSessionError(error) {
+  const responseData = error.response && error.response.data;
+  const errors = Array.isArray(responseData) ? responseData : [responseData];
+  return (
+    error.response &&
+    error.response.status === 401 &&
+    errors.some(item => item && item.errorCode === 'INVALID_SESSION_ID')
+  );
+}
+
+async function authenticatedRequest({ method, path, data }) {
   const session = await authenticate();
   const response = await axios({
     method,
@@ -101,6 +111,20 @@ async function request({ method, path, data }) {
     timeout: 15000
   });
   return response.data;
+}
+
+async function request(options) {
+  try {
+    return await authenticatedRequest(options);
+  } catch (error) {
+    const usesStaticToken =
+      process.env.SALESFORCE_ACCESS_TOKEN &&
+      process.env.SALESFORCE_INSTANCE_URL;
+    if (usesStaticToken || !isInvalidSessionError(error)) throw error;
+
+    resetSession();
+    return authenticatedRequest(options);
+  }
 }
 
 function escapeSoql(value) {
@@ -182,6 +206,7 @@ module.exports = {
   escapeSoql,
   fieldsForExternalIdUpsert,
   findOne,
+  isInvalidSessionError,
   query,
   request,
   resetSession,

@@ -166,3 +166,91 @@ test('omits the external ID field from Salesforce upsert data', () => {
     '6a397482c5d67caef20b3b8b'
   );
 });
+
+test('recognizes only Salesforce invalid-session responses', () => {
+  assert.equal(
+    salesforce.isInvalidSessionError({
+      response: {
+        status: 401,
+        data: [
+          {
+            message: 'Session expired or invalid',
+            errorCode: 'INVALID_SESSION_ID'
+          }
+        ]
+      }
+    }),
+    true
+  );
+  assert.equal(
+    salesforce.isInvalidSessionError({
+      response: {
+        status: 400,
+        data: [{ errorCode: 'INVALID_FIELD' }]
+      }
+    }),
+    false
+  );
+});
+
+test('refreshes an expired Salesforce session and retries once', { concurrency: false }, async () => {
+  const originalPost = axios.post;
+  const originalAdapter = axios.defaults.adapter;
+  let tokenRequests = 0;
+  let apiRequests = 0;
+
+  axios.post = async () => {
+    tokenRequests += 1;
+    return {
+      data: {
+        access_token: `access-token-${tokenRequests}`,
+        instance_url: 'https://axslab.my.salesforce.com'
+      }
+    };
+  };
+  axios.defaults.adapter = async config => {
+    apiRequests += 1;
+    if (apiRequests === 1) {
+      const error = new Error('Request failed with status code 401');
+      error.response = {
+        status: 401,
+        data: [
+          {
+            message: 'Session expired or invalid',
+            errorCode: 'INVALID_SESSION_ID'
+          }
+        ]
+      };
+      throw error;
+    }
+    return {
+      data: { records: [{ Id: '701campaign' }] },
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      config
+    };
+  };
+
+  try {
+    await withEnvironment(
+      {
+        SALESFORCE_AUTH_FLOW: 'client_credentials',
+        SALESFORCE_CLIENT_ID: 'client-id',
+        SALESFORCE_CLIENT_SECRET: 'client-secret',
+        SALESFORCE_LOGIN_URL: 'https://axslab.my.salesforce.com'
+      },
+      async () => {
+        const records = await salesforce.query(
+          "SELECT Id FROM Campaign WHERE Name = 'Mapathon'"
+        );
+        assert.deepEqual(records, [{ Id: '701campaign' }]);
+        assert.equal(tokenRequests, 2);
+        assert.equal(apiRequests, 2);
+      }
+    );
+  } finally {
+    axios.post = originalPost;
+    axios.defaults.adapter = originalAdapter;
+  }
+});
