@@ -196,6 +196,18 @@ async function updateRecord({ objectName, recordId, fields }) {
   return { Id: recordId };
 }
 
+async function createRecord({ objectName, fields }) {
+  const result = await request({
+    method: 'post',
+    path: `/sobjects/${objectName}`,
+    data: fields
+  });
+  if (!result.id) {
+    throw new Error('Salesforce create completed but no record ID was returned');
+  }
+  return { Id: result.id };
+}
+
 function resetSession() {
   cachedSession = undefined;
 }
@@ -205,6 +217,7 @@ module.exports = {
   authenticationParameters,
   escapeSoql,
   fieldsForExternalIdUpsert,
+  createRecord,
   findOne,
   isInvalidSessionError,
   query,
