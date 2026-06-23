@@ -2,8 +2,11 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 
 const {
+  donorContactFields,
+  donorNameParts,
   opportunityFieldMapping,
   opportunityName,
+  resolveOrCreateDonorContact,
   syncConfirmedFlatDonation
 } = require('./salesforce-opportunity');
 const salesforce = require('../../helpers/salesforce');
@@ -84,7 +87,7 @@ test('maps a confirmed flat donation to an Opportunity', () => {
   }
 });
 
-test('omits donor Contact lookup when no Contact matches', () => {
+test('omits donor Contact field when no Contact matches', () => {
   const previousPaypalField =
     process.env.SALESFORCE_OPPORTUNITY_PAYPAL_TRANSACTION_FIELD;
   const previousContactField =
@@ -134,6 +137,131 @@ test('omits donor Contact lookup when no Contact matches', () => {
         previousDonorEmailField;
     } else {
       delete process.env.SALESFORCE_OPPORTUNITY_DONOR_EMAIL_FIELD;
+    }
+  }
+});
+
+test('maps donor name and email to Contact fields', () => {
+  const previousEnvironment = {
+    accountId: process.env.SALESFORCE_CONTACT_ACCOUNT_ID,
+    sourceField: process.env.SALESFORCE_CONTACT_SOURCE_FIELD,
+    sourceValue: process.env.SALESFORCE_CONTACT_SOURCE_VALUE
+  };
+  process.env.SALESFORCE_CONTACT_ACCOUNT_ID = '001donoraccount';
+  process.env.SALESFORCE_CONTACT_SOURCE_FIELD = 'LeadSource';
+  process.env.SALESFORCE_CONTACT_SOURCE_VALUE = 'AXS Map Donation';
+
+  try {
+    assert.deepEqual(donorNameParts({ donorName: 'Jason D.' }), {
+      firstName: 'Jason',
+      lastName: 'D.'
+    });
+    assert.deepEqual(donorNameParts({ donorName: '' }), {
+      firstName: 'AXS Map',
+      lastName: 'Donor'
+    });
+    assert.deepEqual(
+      donorContactFields({
+        donorName: 'Jason D.',
+        donorEmail: 'jason@example.com'
+      }),
+      {
+        Email: 'jason@example.com',
+        FirstName: 'Jason',
+        LastName: 'D.',
+        AccountId: '001donoraccount',
+        LeadSource: 'AXS Map Donation'
+      }
+    );
+  } finally {
+    Object.entries(previousEnvironment).forEach(([name, value]) => {
+      const environmentName = {
+        accountId: 'SALESFORCE_CONTACT_ACCOUNT_ID',
+        sourceField: 'SALESFORCE_CONTACT_SOURCE_FIELD',
+        sourceValue: 'SALESFORCE_CONTACT_SOURCE_VALUE'
+      }[name];
+      if (value) process.env[environmentName] = value;
+      else delete process.env[environmentName];
+    });
+  }
+});
+
+test('creates a donor Contact only when enabled and no Contact matches', async () => {
+  const previousEnvironment = {
+    createEnabled: process.env.SALESFORCE_CONTACT_CREATE_ENABLED,
+    accountId: process.env.SALESFORCE_CONTACT_ACCOUNT_ID
+  };
+  const originalFindOne = salesforce.findOne;
+  const originalCreateRecord = salesforce.createRecord;
+  process.env.SALESFORCE_CONTACT_CREATE_ENABLED = 'true';
+  process.env.SALESFORCE_CONTACT_ACCOUNT_ID = '001donoraccount';
+
+  let createRequest;
+  salesforce.findOne = async () => null;
+  salesforce.createRecord = async request => {
+    createRequest = request;
+    return { Id: '003created' };
+  };
+
+  try {
+    const contact = await resolveOrCreateDonorContact({
+      donorName: 'Jane Q.',
+      donorEmail: 'jane@example.com'
+    });
+
+    assert.deepEqual(contact, { Id: '003created' });
+    assert.deepEqual(createRequest, {
+      objectName: 'Contact',
+      fields: {
+        Email: 'jane@example.com',
+        FirstName: 'Jane',
+        LastName: 'Q.',
+        AccountId: '001donoraccount'
+      }
+    });
+  } finally {
+    salesforce.findOne = originalFindOne;
+    salesforce.createRecord = originalCreateRecord;
+    if (previousEnvironment.createEnabled) {
+      process.env.SALESFORCE_CONTACT_CREATE_ENABLED =
+        previousEnvironment.createEnabled;
+    } else {
+      delete process.env.SALESFORCE_CONTACT_CREATE_ENABLED;
+    }
+    if (previousEnvironment.accountId) {
+      process.env.SALESFORCE_CONTACT_ACCOUNT_ID =
+        previousEnvironment.accountId;
+    } else {
+      delete process.env.SALESFORCE_CONTACT_ACCOUNT_ID;
+    }
+  }
+});
+
+test('keeps donor Contact lookup-only when Contact creation is disabled', async () => {
+  const previousCreateEnabled = process.env.SALESFORCE_CONTACT_CREATE_ENABLED;
+  const originalFindOne = salesforce.findOne;
+  const originalCreateRecord = salesforce.createRecord;
+  delete process.env.SALESFORCE_CONTACT_CREATE_ENABLED;
+
+  let createCalled = false;
+  salesforce.findOne = async () => null;
+  salesforce.createRecord = async () => {
+    createCalled = true;
+  };
+
+  try {
+    const contact = await resolveOrCreateDonorContact({
+      donorName: 'Jane Q.',
+      donorEmail: 'jane@example.com'
+    });
+
+    assert.equal(contact, null);
+    assert.equal(createCalled, false);
+  } finally {
+    salesforce.findOne = originalFindOne;
+    salesforce.createRecord = originalCreateRecord;
+    if (previousCreateEnabled) {
+      process.env.SALESFORCE_CONTACT_CREATE_ENABLED = previousCreateEnabled;
     }
   }
 });
