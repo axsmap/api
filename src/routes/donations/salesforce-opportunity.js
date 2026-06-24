@@ -21,6 +21,10 @@ function contactCreationEnabled() {
   return process.env.SALESFORCE_CONTACT_CREATE_ENABLED === 'true';
 }
 
+function contactRoleEnabled() {
+  return process.env.SALESFORCE_OPPORTUNITY_CONTACT_ROLE_ENABLED === 'true';
+}
+
 function donorNameParts(donation) {
   const donorName = String(donation.donorName || '').trim();
   if (!donorName) {
@@ -74,6 +78,32 @@ async function resolveOrCreateDonorContact(donation) {
   return salesforce.createRecord({
     objectName: 'Contact',
     fields: donorContactFields(donation)
+  });
+}
+
+async function ensureOpportunityContactRole({ opportunityId, contactId }) {
+  if (!contactRoleEnabled() || !opportunityId || !contactId) return null;
+
+  const existingRoles = await salesforce.query(
+    "SELECT Id FROM OpportunityContactRole WHERE OpportunityId = " +
+      `'${salesforce.escapeSoql(opportunityId)}' AND ContactId = ` +
+      `'${salesforce.escapeSoql(contactId)}' LIMIT 1`
+  );
+  if (existingRoles[0]) return existingRoles[0];
+
+  const fields = {
+    OpportunityId: opportunityId,
+    ContactId: contactId,
+    Role: process.env.SALESFORCE_OPPORTUNITY_CONTACT_ROLE_VALUE || 'Donor'
+  };
+
+  if (process.env.SALESFORCE_OPPORTUNITY_CONTACT_ROLE_PRIMARY !== 'false') {
+    fields.IsPrimary = true;
+  }
+
+  return salesforce.createRecord({
+    objectName: 'OpportunityContactRole',
+    fields
   });
 }
 
@@ -197,24 +227,36 @@ async function syncConfirmedFlatDonation({ donation, event, participant }) {
     value: paypalTransactionId
   });
   if (existingOpportunity) {
-    return salesforce.updateRecord({
+    const opportunity = await salesforce.updateRecord({
       objectName: 'Opportunity',
       recordId: existingOpportunity.Id,
       fields
     });
+    await ensureOpportunityContactRole({
+      opportunityId: opportunity.Id,
+      contactId: donorContact && donorContact.Id
+    });
+    return opportunity;
   }
 
-  return salesforce.upsertRecord({
+  const opportunity = await salesforce.upsertRecord({
     objectName: 'Opportunity',
     externalIdField,
     externalIdValue: donation.id,
     fields
   });
+  await ensureOpportunityContactRole({
+    opportunityId: opportunity.Id,
+    contactId: donorContact && donorContact.Id
+  });
+  return opportunity;
 }
 
 module.exports = {
+  contactRoleEnabled,
   donorContactFields,
   donorNameParts,
+  ensureOpportunityContactRole,
   isoDate,
   opportunityFieldMapping,
   opportunityName,

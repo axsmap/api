@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 
 const {
+  ensureOpportunityContactRole,
   donorContactFields,
   donorNameParts,
   opportunityFieldMapping,
@@ -406,5 +407,93 @@ test('updates an existing Opportunity matched by PayPal transaction', async () =
       if (value) process.env[environmentName] = value;
       else delete process.env[environmentName];
     });
+  }
+});
+
+test('creates an Opportunity Contact Role when enabled', async () => {
+  const previousEnvironment = {
+    enabled: process.env.SALESFORCE_OPPORTUNITY_CONTACT_ROLE_ENABLED,
+    role: process.env.SALESFORCE_OPPORTUNITY_CONTACT_ROLE_VALUE,
+    primary: process.env.SALESFORCE_OPPORTUNITY_CONTACT_ROLE_PRIMARY
+  };
+  const originalQuery = salesforce.query;
+  const originalCreateRecord = salesforce.createRecord;
+  process.env.SALESFORCE_OPPORTUNITY_CONTACT_ROLE_ENABLED = 'true';
+  process.env.SALESFORCE_OPPORTUNITY_CONTACT_ROLE_VALUE = 'Donor';
+  delete process.env.SALESFORCE_OPPORTUNITY_CONTACT_ROLE_PRIMARY;
+
+  let queryText;
+  let createRequest;
+  salesforce.query = async (soql) => {
+    queryText = soql;
+    return [];
+  };
+  salesforce.createRecord = async (request) => {
+    createRequest = request;
+    return { Id: '00Krole' };
+  };
+
+  try {
+    const record = await ensureOpportunityContactRole({
+      opportunityId: '006opportunity',
+      contactId: '003donor'
+    });
+
+    assert.equal(record.Id, '00Krole');
+    assert.match(queryText, /OpportunityContactRole/);
+    assert.deepEqual(createRequest, {
+      objectName: 'OpportunityContactRole',
+      fields: {
+        OpportunityId: '006opportunity',
+        ContactId: '003donor',
+        Role: 'Donor',
+        IsPrimary: true
+      }
+    });
+  } finally {
+    salesforce.query = originalQuery;
+    salesforce.createRecord = originalCreateRecord;
+    Object.entries(previousEnvironment).forEach(([name, value]) => {
+      const environmentName = {
+        enabled: 'SALESFORCE_OPPORTUNITY_CONTACT_ROLE_ENABLED',
+        role: 'SALESFORCE_OPPORTUNITY_CONTACT_ROLE_VALUE',
+        primary: 'SALESFORCE_OPPORTUNITY_CONTACT_ROLE_PRIMARY'
+      }[name];
+      if (value) process.env[environmentName] = value;
+      else delete process.env[environmentName];
+    });
+  }
+});
+
+test('does not duplicate an existing Opportunity Contact Role', async () => {
+  const previousEnabled =
+    process.env.SALESFORCE_OPPORTUNITY_CONTACT_ROLE_ENABLED;
+  const originalQuery = salesforce.query;
+  const originalCreateRecord = salesforce.createRecord;
+  process.env.SALESFORCE_OPPORTUNITY_CONTACT_ROLE_ENABLED = 'true';
+
+  let createCalled = false;
+  salesforce.query = async () => [{ Id: '00Kexisting' }];
+  salesforce.createRecord = async () => {
+    createCalled = true;
+  };
+
+  try {
+    const record = await ensureOpportunityContactRole({
+      opportunityId: '006opportunity',
+      contactId: '003donor'
+    });
+
+    assert.equal(record.Id, '00Kexisting');
+    assert.equal(createCalled, false);
+  } finally {
+    salesforce.query = originalQuery;
+    salesforce.createRecord = originalCreateRecord;
+    if (previousEnabled) {
+      process.env.SALESFORCE_OPPORTUNITY_CONTACT_ROLE_ENABLED =
+        previousEnabled;
+    } else {
+      delete process.env.SALESFORCE_OPPORTUNITY_CONTACT_ROLE_ENABLED;
+    }
   }
 });
