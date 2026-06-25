@@ -14,11 +14,16 @@ function configuredField(name) {
 }
 
 function opportunityName({ donation, event }) {
-  return `AXS Map donation ${donation.id} - ${event.name}`.slice(0, 120);
+  const campaignName = event && event.name ? event.name : 'General Donations';
+  return `AXS Map donation ${donation.id} - ${campaignName}`.slice(0, 120);
 }
 
 function contactCreationEnabled() {
   return process.env.SALESFORCE_CONTACT_CREATE_ENABLED === 'true';
+}
+
+function contactRoleEnabled() {
+  return process.env.SALESFORCE_OPPORTUNITY_CONTACT_ROLE_ENABLED === 'true';
 }
 
 function donorNameParts(donation) {
@@ -53,6 +58,10 @@ function donorContactFields(donation) {
   const accountId = process.env.SALESFORCE_CONTACT_ACCOUNT_ID;
   const sourceField = process.env.SALESFORCE_CONTACT_SOURCE_FIELD;
   const sourceValue = process.env.SALESFORCE_CONTACT_SOURCE_VALUE || 'AXS Map';
+  const emailCampaignsField =
+    process.env.SALESFORCE_CONTACT_EMAIL_CAMPAIGNS_FIELD;
+  const emailCampaignsValue =
+    process.env.SALESFORCE_CONTACT_EMAIL_CAMPAIGNS_VALUE;
   const { firstName, lastName } = donorNameParts(donation);
 
   const fields = {
@@ -63,8 +72,31 @@ function donorContactFields(donation) {
   if (firstName) fields[firstNameField] = firstName;
   if (accountId) fields.AccountId = accountId;
   if (sourceField) fields[sourceField] = sourceValue;
+  if (emailCampaignsField && emailCampaignsValue) {
+    fields[emailCampaignsField] = emailCampaignsValue;
+  }
 
   return fields;
+}
+
+async function resolveGeneralDonationCampaign() {
+  const externalIdField =
+    process.env.SALESFORCE_CAMPAIGN_EXTERNAL_ID_FIELD;
+  if (!externalIdField) {
+    const error = new Error(
+      'SALESFORCE_CAMPAIGN_EXTERNAL_ID_FIELD is not configured'
+    );
+    error.code = 'SALESFORCE_CAMPAIGN_EXTERNAL_ID_REQUIRED';
+    throw error;
+  }
+
+  return salesforce.findOne({
+    objectName: 'Campaign',
+    fieldName: externalIdField,
+    value:
+      process.env.SALESFORCE_GENERAL_DONATION_CAMPAIGN_EXTERNAL_ID ||
+      'general-donations'
+  });
 }
 
 async function resolveOrCreateDonorContact(donation) {
@@ -74,6 +106,32 @@ async function resolveOrCreateDonorContact(donation) {
   return salesforce.createRecord({
     objectName: 'Contact',
     fields: donorContactFields(donation)
+  });
+}
+
+async function ensureOpportunityContactRole({ opportunityId, contactId }) {
+  if (!contactRoleEnabled() || !opportunityId || !contactId) return null;
+
+  const existingRoles = await salesforce.query(
+    "SELECT Id FROM OpportunityContactRole WHERE OpportunityId = " +
+      `'${salesforce.escapeSoql(opportunityId)}' AND ContactId = ` +
+      `'${salesforce.escapeSoql(contactId)}' LIMIT 1`
+  );
+  if (existingRoles[0]) return existingRoles[0];
+
+  const fields = {
+    OpportunityId: opportunityId,
+    ContactId: contactId,
+    Role: process.env.SALESFORCE_OPPORTUNITY_CONTACT_ROLE_VALUE || 'Donor'
+  };
+
+  if (process.env.SALESFORCE_OPPORTUNITY_CONTACT_ROLE_PRIMARY !== 'false') {
+    fields.IsPrimary = true;
+  }
+
+  return salesforce.createRecord({
+    objectName: 'OpportunityContactRole',
+    fields
   });
 }
 
@@ -122,7 +180,10 @@ function opportunityFieldMapping({
     ['SALESFORCE_OPPORTUNITY_PARTICIPANT_FIELD', participantContactId],
     [
       'SALESFORCE_OPPORTUNITY_DONATION_SOURCE_FIELD',
-      process.env.SALESFORCE_OPPORTUNITY_DONATION_SOURCE_VALUE || 'AXS Map'
+      donation.source === 'general'
+        ? process.env.SALESFORCE_OPPORTUNITY_GENERAL_DONATION_SOURCE_VALUE ||
+            'AXS Map General Donation'
+        : process.env.SALESFORCE_OPPORTUNITY_DONATION_SOURCE_VALUE || 'AXS Map'
     ],
     [
       'SALESFORCE_OPPORTUNITY_DONATION_TYPE_FIELD',
@@ -141,6 +202,58 @@ function opportunityFieldMapping({
   });
 
   return fields;
+}
+
+async function upsertDonationOpportunity({
+  donation,
+  event,
+  campaignId,
+  donorContactId,
+  participantContactId,
+  externalIdField
+}) {
+  const fields = opportunityFieldMapping({
+    donation,
+    event,
+    campaignId,
+    donorContactId,
+    participantContactId,
+    externalIdField
+  });
+
+  const paypalTransactionField =
+    process.env.SALESFORCE_OPPORTUNITY_PAYPAL_TRANSACTION_FIELD;
+  const paypalTransactionId =
+    donation.paypalCaptureId || donation.paypalOrderId;
+  const existingOpportunity = await salesforce.findOne({
+    objectName: 'Opportunity',
+    fieldName: paypalTransactionField,
+    value: paypalTransactionId
+  });
+  if (existingOpportunity) {
+    const opportunity = await salesforce.updateRecord({
+      objectName: 'Opportunity',
+      recordId: existingOpportunity.Id,
+      fields
+    });
+    await ensureOpportunityContactRole({
+      opportunityId: opportunity.Id,
+      contactId: donorContactId
+    });
+    return opportunity;
+  }
+
+  const opportunity = await salesforce.upsertRecord({
+    objectName: 'Opportunity',
+    externalIdField,
+    externalIdValue: donation.id,
+    fields
+  });
+  await ensureOpportunityContactRole({
+    opportunityId: opportunity.Id,
+    contactId: donorContactId
+  });
+  return opportunity;
 }
 
 async function syncConfirmedFlatDonation({ donation, event, participant }) {
@@ -178,7 +291,7 @@ async function syncConfirmedFlatDonation({ donation, event, participant }) {
     throw error;
   }
 
-  const fields = opportunityFieldMapping({
+  return upsertDonationOpportunity({
     donation,
     event,
     campaignId: campaign.Id,
@@ -186,38 +299,59 @@ async function syncConfirmedFlatDonation({ donation, event, participant }) {
     participantContactId: participantContact.Id,
     externalIdField
   });
+}
 
-  const paypalTransactionField =
-    process.env.SALESFORCE_OPPORTUNITY_PAYPAL_TRANSACTION_FIELD;
-  const paypalTransactionId =
-    donation.paypalCaptureId || donation.paypalOrderId;
-  const existingOpportunity = await salesforce.findOne({
-    objectName: 'Opportunity',
-    fieldName: paypalTransactionField,
-    value: paypalTransactionId
-  });
-  if (existingOpportunity) {
-    return salesforce.updateRecord({
-      objectName: 'Opportunity',
-      recordId: existingOpportunity.Id,
-      fields
-    });
+async function syncConfirmedGeneralDonation({ donation }) {
+  if (donation.type !== 'flat' || donation.status !== 'confirmed') {
+    const error = new Error('Only confirmed flat donations can be synced');
+    error.code = 'DONATION_NOT_READY_FOR_SALESFORCE';
+    throw error;
   }
 
-  return salesforce.upsertRecord({
-    objectName: 'Opportunity',
-    externalIdField,
-    externalIdValue: donation.id,
-    fields
+  const externalIdField = process.env.SALESFORCE_OPPORTUNITY_EXTERNAL_ID_FIELD;
+  if (!externalIdField) {
+    const error = new Error(
+      'SALESFORCE_OPPORTUNITY_EXTERNAL_ID_FIELD is not configured'
+    );
+    error.code = 'SALESFORCE_OPPORTUNITY_EXTERNAL_ID_REQUIRED';
+    throw error;
+  }
+
+  const [campaign, donorContact] = await Promise.all([
+    resolveGeneralDonationCampaign(),
+    resolveOrCreateDonorContact(donation)
+  ]);
+
+  if (!campaign) {
+    const error = new Error(
+      'Salesforce Campaign was not found for general donations'
+    );
+    error.code = 'SALESFORCE_GENERAL_CAMPAIGN_NOT_FOUND';
+    throw error;
+  }
+
+  return upsertDonationOpportunity({
+    donation,
+    event: {
+      name: 'AXS Map General Donations'
+    },
+    campaignId: campaign.Id,
+    donorContactId: donorContact && donorContact.Id,
+    participantContactId: null,
+    externalIdField
   });
 }
 
 module.exports = {
+  contactRoleEnabled,
   donorContactFields,
   donorNameParts,
+  ensureOpportunityContactRole,
   isoDate,
   opportunityFieldMapping,
   opportunityName,
+  resolveGeneralDonationCampaign,
   resolveOrCreateDonorContact,
-  syncConfirmedFlatDonation
+  syncConfirmedFlatDonation,
+  syncConfirmedGeneralDonation
 };

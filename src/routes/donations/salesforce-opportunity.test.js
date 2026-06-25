@@ -2,12 +2,14 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 
 const {
+  ensureOpportunityContactRole,
   donorContactFields,
   donorNameParts,
   opportunityFieldMapping,
   opportunityName,
   resolveOrCreateDonorContact,
-  syncConfirmedFlatDonation
+  syncConfirmedFlatDonation,
+  syncConfirmedGeneralDonation
 } = require('./salesforce-opportunity');
 const salesforce = require('../../helpers/salesforce');
 
@@ -145,11 +147,16 @@ test('maps donor name and email to Contact fields', () => {
   const previousEnvironment = {
     accountId: process.env.SALESFORCE_CONTACT_ACCOUNT_ID,
     sourceField: process.env.SALESFORCE_CONTACT_SOURCE_FIELD,
-    sourceValue: process.env.SALESFORCE_CONTACT_SOURCE_VALUE
+    sourceValue: process.env.SALESFORCE_CONTACT_SOURCE_VALUE,
+    emailCampaignsField: process.env.SALESFORCE_CONTACT_EMAIL_CAMPAIGNS_FIELD,
+    emailCampaignsValue: process.env.SALESFORCE_CONTACT_EMAIL_CAMPAIGNS_VALUE
   };
   process.env.SALESFORCE_CONTACT_ACCOUNT_ID = '001donoraccount';
   process.env.SALESFORCE_CONTACT_SOURCE_FIELD = 'LeadSource';
   process.env.SALESFORCE_CONTACT_SOURCE_VALUE = 'AXS Map Donation';
+  process.env.SALESFORCE_CONTACT_EMAIL_CAMPAIGNS_FIELD =
+    'Email_Campaigns__c';
+  process.env.SALESFORCE_CONTACT_EMAIL_CAMPAIGNS_VALUE = 'Subscribed';
 
   try {
     assert.deepEqual(donorNameParts({ donorName: 'Jason D.' }), {
@@ -170,7 +177,8 @@ test('maps donor name and email to Contact fields', () => {
         FirstName: 'Jason',
         LastName: 'D.',
         AccountId: '001donoraccount',
-        LeadSource: 'AXS Map Donation'
+        LeadSource: 'AXS Map Donation',
+        Email_Campaigns__c: 'Subscribed'
       }
     );
   } finally {
@@ -178,7 +186,107 @@ test('maps donor name and email to Contact fields', () => {
       const environmentName = {
         accountId: 'SALESFORCE_CONTACT_ACCOUNT_ID',
         sourceField: 'SALESFORCE_CONTACT_SOURCE_FIELD',
-        sourceValue: 'SALESFORCE_CONTACT_SOURCE_VALUE'
+        sourceValue: 'SALESFORCE_CONTACT_SOURCE_VALUE',
+        emailCampaignsField: 'SALESFORCE_CONTACT_EMAIL_CAMPAIGNS_FIELD',
+        emailCampaignsValue: 'SALESFORCE_CONTACT_EMAIL_CAMPAIGNS_VALUE'
+      }[name];
+      if (value) process.env[environmentName] = value;
+      else delete process.env[environmentName];
+    });
+  }
+});
+
+test('syncs a general donation to the configured general Campaign', async () => {
+  const previousEnvironment = {
+    campaign: process.env.SALESFORCE_CAMPAIGN_EXTERNAL_ID_FIELD,
+    generalCampaign:
+      process.env.SALESFORCE_GENERAL_DONATION_CAMPAIGN_EXTERNAL_ID,
+    donation: process.env.SALESFORCE_OPPORTUNITY_EXTERNAL_ID_FIELD,
+    email: process.env.SALESFORCE_OPPORTUNITY_DONOR_EMAIL_FIELD,
+    paypal: process.env.SALESFORCE_OPPORTUNITY_PAYPAL_TRANSACTION_FIELD,
+    contactCreate: process.env.SALESFORCE_CONTACT_CREATE_ENABLED,
+    sourceField: process.env.SALESFORCE_OPPORTUNITY_DONATION_SOURCE_FIELD
+  };
+  const originalFindOne = salesforce.findOne;
+  const originalUpsertRecord = salesforce.upsertRecord;
+  const originalCreateRecord = salesforce.createRecord;
+
+  process.env.SALESFORCE_CAMPAIGN_EXTERNAL_ID_FIELD =
+    'AXS_Map_Mapathon_ID__c';
+  process.env.SALESFORCE_GENERAL_DONATION_CAMPAIGN_EXTERNAL_ID =
+    'general-donations';
+  process.env.SALESFORCE_OPPORTUNITY_EXTERNAL_ID_FIELD =
+    'AXS_Map_Donation_ID__c';
+  process.env.SALESFORCE_OPPORTUNITY_DONOR_EMAIL_FIELD = 'Donor_Email__c';
+  process.env.SALESFORCE_OPPORTUNITY_PAYPAL_TRANSACTION_FIELD =
+    'PayPal_Transaction_ID__c';
+  process.env.SALESFORCE_CONTACT_CREATE_ENABLED = 'true';
+  process.env.SALESFORCE_OPPORTUNITY_DONATION_SOURCE_FIELD =
+    'Donation_Source__c';
+
+  let campaignLookup;
+  let upsertRequest;
+  salesforce.findOne = async (request) => {
+    if (request.objectName === 'Campaign') {
+      campaignLookup = request;
+      return { Id: '701general' };
+    }
+    if (request.objectName === 'Contact') return null;
+    if (request.objectName === 'Opportunity') return null;
+    return null;
+  };
+  salesforce.createRecord = async (request) => {
+    if (request.objectName === 'Contact') return { Id: '003donor' };
+    return { Id: 'created' };
+  };
+  salesforce.upsertRecord = async (request) => {
+    upsertRequest = request;
+    return { Id: '006general' };
+  };
+
+  try {
+    const record = await syncConfirmedGeneralDonation({
+      donation: {
+        id: '6a36bf002de97a67d63ccf24',
+        source: 'general',
+        type: 'flat',
+        status: 'confirmed',
+        amountCents: 1500,
+        confirmedAt: new Date('2026-06-21T12:00:00.000Z'),
+        paypalCaptureId: 'PAYPAL-CAPTURE',
+        donorName: 'Jane D.',
+        donorEmail: 'jane@example.com',
+        anonymous: false
+      }
+    });
+
+    assert.equal(record.Id, '006general');
+    assert.deepEqual(campaignLookup, {
+      objectName: 'Campaign',
+      fieldName: 'AXS_Map_Mapathon_ID__c',
+      value: 'general-donations'
+    });
+    assert.equal(upsertRequest.objectName, 'Opportunity');
+    assert.equal(upsertRequest.fields.CampaignId, '701general');
+    assert.equal(
+      upsertRequest.fields.Name,
+      'AXS Map donation 6a36bf002de97a67d63ccf24 - AXS Map General Donations'
+    );
+    assert.equal(upsertRequest.fields.Donation_Source__c, 'AXS Map General Donation');
+    assert.equal(upsertRequest.fields.Donor_Email__c, 'jane@example.com');
+  } finally {
+    salesforce.findOne = originalFindOne;
+    salesforce.upsertRecord = originalUpsertRecord;
+    salesforce.createRecord = originalCreateRecord;
+    Object.entries(previousEnvironment).forEach(([name, value]) => {
+      const environmentName = {
+        campaign: 'SALESFORCE_CAMPAIGN_EXTERNAL_ID_FIELD',
+        generalCampaign: 'SALESFORCE_GENERAL_DONATION_CAMPAIGN_EXTERNAL_ID',
+        donation: 'SALESFORCE_OPPORTUNITY_EXTERNAL_ID_FIELD',
+        email: 'SALESFORCE_OPPORTUNITY_DONOR_EMAIL_FIELD',
+        paypal: 'SALESFORCE_OPPORTUNITY_PAYPAL_TRANSACTION_FIELD',
+        contactCreate: 'SALESFORCE_CONTACT_CREATE_ENABLED',
+        sourceField: 'SALESFORCE_OPPORTUNITY_DONATION_SOURCE_FIELD'
       }[name];
       if (value) process.env[environmentName] = value;
       else delete process.env[environmentName];
@@ -406,5 +514,93 @@ test('updates an existing Opportunity matched by PayPal transaction', async () =
       if (value) process.env[environmentName] = value;
       else delete process.env[environmentName];
     });
+  }
+});
+
+test('creates an Opportunity Contact Role when enabled', async () => {
+  const previousEnvironment = {
+    enabled: process.env.SALESFORCE_OPPORTUNITY_CONTACT_ROLE_ENABLED,
+    role: process.env.SALESFORCE_OPPORTUNITY_CONTACT_ROLE_VALUE,
+    primary: process.env.SALESFORCE_OPPORTUNITY_CONTACT_ROLE_PRIMARY
+  };
+  const originalQuery = salesforce.query;
+  const originalCreateRecord = salesforce.createRecord;
+  process.env.SALESFORCE_OPPORTUNITY_CONTACT_ROLE_ENABLED = 'true';
+  process.env.SALESFORCE_OPPORTUNITY_CONTACT_ROLE_VALUE = 'Donor';
+  delete process.env.SALESFORCE_OPPORTUNITY_CONTACT_ROLE_PRIMARY;
+
+  let queryText;
+  let createRequest;
+  salesforce.query = async (soql) => {
+    queryText = soql;
+    return [];
+  };
+  salesforce.createRecord = async (request) => {
+    createRequest = request;
+    return { Id: '00Krole' };
+  };
+
+  try {
+    const record = await ensureOpportunityContactRole({
+      opportunityId: '006opportunity',
+      contactId: '003donor'
+    });
+
+    assert.equal(record.Id, '00Krole');
+    assert.match(queryText, /OpportunityContactRole/);
+    assert.deepEqual(createRequest, {
+      objectName: 'OpportunityContactRole',
+      fields: {
+        OpportunityId: '006opportunity',
+        ContactId: '003donor',
+        Role: 'Donor',
+        IsPrimary: true
+      }
+    });
+  } finally {
+    salesforce.query = originalQuery;
+    salesforce.createRecord = originalCreateRecord;
+    Object.entries(previousEnvironment).forEach(([name, value]) => {
+      const environmentName = {
+        enabled: 'SALESFORCE_OPPORTUNITY_CONTACT_ROLE_ENABLED',
+        role: 'SALESFORCE_OPPORTUNITY_CONTACT_ROLE_VALUE',
+        primary: 'SALESFORCE_OPPORTUNITY_CONTACT_ROLE_PRIMARY'
+      }[name];
+      if (value) process.env[environmentName] = value;
+      else delete process.env[environmentName];
+    });
+  }
+});
+
+test('does not duplicate an existing Opportunity Contact Role', async () => {
+  const previousEnabled =
+    process.env.SALESFORCE_OPPORTUNITY_CONTACT_ROLE_ENABLED;
+  const originalQuery = salesforce.query;
+  const originalCreateRecord = salesforce.createRecord;
+  process.env.SALESFORCE_OPPORTUNITY_CONTACT_ROLE_ENABLED = 'true';
+
+  let createCalled = false;
+  salesforce.query = async () => [{ Id: '00Kexisting' }];
+  salesforce.createRecord = async () => {
+    createCalled = true;
+  };
+
+  try {
+    const record = await ensureOpportunityContactRole({
+      opportunityId: '006opportunity',
+      contactId: '003donor'
+    });
+
+    assert.equal(record.Id, '00Kexisting');
+    assert.equal(createCalled, false);
+  } finally {
+    salesforce.query = originalQuery;
+    salesforce.createRecord = originalCreateRecord;
+    if (previousEnabled) {
+      process.env.SALESFORCE_OPPORTUNITY_CONTACT_ROLE_ENABLED =
+        previousEnabled;
+    } else {
+      delete process.env.SALESFORCE_OPPORTUNITY_CONTACT_ROLE_ENABLED;
+    }
   }
 });

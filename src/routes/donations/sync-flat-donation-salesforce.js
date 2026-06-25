@@ -1,6 +1,9 @@
 const { Event } = require('../../models/event');
 const { User } = require('../../models/user');
-const { syncConfirmedFlatDonation } = require('./salesforce-opportunity');
+const {
+  syncConfirmedFlatDonation,
+  syncConfirmedGeneralDonation
+} = require('./salesforce-opportunity');
 
 function safeErrorMessage(error) {
   const salesforceError =
@@ -26,6 +29,16 @@ async function syncFlatDonationToSalesforce(donation) {
   donation.salesforceSync.lastAttemptAt = new Date();
 
   try {
+    if (donation.source === 'general') {
+      const record = await syncConfirmedGeneralDonation({ donation });
+      donation.salesforceSync.status = 'synced';
+      donation.salesforceSync.recordId = record.Id;
+      donation.salesforceSync.syncedAt = new Date();
+      donation.salesforceSync.lastError = '';
+      await donation.save();
+      return { salesforceRecordId: record.Id };
+    }
+
     const [event, participant] = await Promise.all([
       Event.findOne({ _id: donation.event, isArchived: false }),
       User.findOne({
