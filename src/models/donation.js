@@ -2,16 +2,30 @@ const mongoose = require('mongoose');
 
 const donationSchema = new mongoose.Schema(
   {
+    source: {
+      type: String,
+      enum: {
+        values: ['mapathon', 'general'],
+        message: 'Should be a valid donation source'
+      },
+      default: 'mapathon',
+      required: [true, 'Is required'],
+      index: true
+    },
     event: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Event',
-      required: [true, 'Is required'],
+      required: function() {
+        return this.source !== 'general';
+      },
       index: true
     },
     creditedUser: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: [true, 'Is required'],
+      required: function() {
+        return this.source !== 'general';
+      },
       index: true
     },
     type: {

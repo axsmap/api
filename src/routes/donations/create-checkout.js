@@ -23,6 +23,7 @@ function webAppUrl(req) {
 
 module.exports = async (req, res, next) => {
   const {
+    source,
     eventId,
     creditedUserId,
     amount,
@@ -30,12 +31,15 @@ module.exports = async (req, res, next) => {
     donorEmail,
     anonymous
   } = req.body;
+  const donationSource = source === 'general' ? 'general' : 'mapathon';
 
-  if (!mongoose.Types.ObjectId.isValid(eventId)) {
-    return res.status(400).json({ eventId: 'Invalid event' });
-  }
-  if (!mongoose.Types.ObjectId.isValid(creditedUserId)) {
-    return res.status(400).json({ creditedUserId: 'Invalid participant' });
+  if (donationSource === 'mapathon') {
+    if (!mongoose.Types.ObjectId.isValid(eventId)) {
+      return res.status(400).json({ eventId: 'Invalid event' });
+    }
+    if (!mongoose.Types.ObjectId.isValid(creditedUserId)) {
+      return res.status(400).json({ creditedUserId: 'Invalid participant' });
+    }
   }
 
   const numericAmount = Number(amount);
@@ -79,49 +83,55 @@ module.exports = async (req, res, next) => {
 
   let event;
   let participant;
-  try {
-    [event, participant] = await Promise.all([
-      Event.findOne({ _id: eventId, isArchived: false }),
-      User.findOne({
-        _id: creditedUserId,
-        isArchived: false,
-        isBlocked: false
-      }).select('firstName lastName username events')
-    ]);
-  } catch (error) {
-    return next(error);
-  }
+  if (donationSource === 'mapathon') {
+    try {
+      [event, participant] = await Promise.all([
+        Event.findOne({ _id: eventId, isArchived: false }),
+        User.findOne({
+          _id: creditedUserId,
+          isArchived: false,
+          isBlocked: false
+        }).select('firstName lastName username events')
+      ]);
+    } catch (error) {
+      return next(error);
+    }
 
-  if (!event) return res.status(404).json({ eventId: 'Event not found' });
-  if (!participant) {
-    return res.status(404).json({ creditedUserId: 'Participant not found' });
-  }
-  if (new Date(event.endDate).getTime() < Date.now()) {
-    return res.status(400).json({ eventId: 'Event has already ended' });
-  }
+    if (!event) return res.status(404).json({ eventId: 'Event not found' });
+    if (!participant) {
+      return res.status(404).json({ creditedUserId: 'Participant not found' });
+    }
+    if (new Date(event.endDate).getTime() < Date.now()) {
+      return res.status(400).json({ eventId: 'Event has already ended' });
+    }
 
-  const belongsToEvent =
-    event.participants.some(id => id.toString() === creditedUserId) ||
-    event.managers.some(id => id.toString() === creditedUserId);
-  if (!belongsToEvent) {
-    return res.status(400).json({
-      creditedUserId: 'Participant is not associated with this event'
-    });
+    const belongsToEvent =
+      event.participants.some(id => id.toString() === creditedUserId) ||
+      event.managers.some(id => id.toString() === creditedUserId);
+    if (!belongsToEvent) {
+      return res.status(400).json({
+        creditedUserId: 'Participant is not associated with this event'
+      });
+    }
   }
 
   const checkoutToken = crypto.randomBytes(32).toString('hex');
   let donation;
   try {
-    donation = await Donation.create({
-      event: eventId,
-      creditedUser: creditedUserId,
+    const donationFields = {
+      source: donationSource,
       amountCents,
       donorName: anonymous ? '' : publicDonorName(cleanDonorName),
       donorEmail: cleanDonorEmail,
       anonymous,
       showAmountPublicly: true,
       checkoutToken
-    });
+    };
+    if (donationSource === 'mapathon') {
+      donationFields.event = eventId;
+      donationFields.creditedUser = creditedUserId;
+    }
+    donation = await Donation.create(donationFields);
   } catch (error) {
     return next(error);
   }

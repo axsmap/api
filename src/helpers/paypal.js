@@ -59,6 +59,10 @@ async function createOrder({
   cancelUrl
 }) {
   const amount = (donation.amountCents / 100).toFixed(2);
+  const description =
+    donation.source === 'general'
+      ? 'AXS Map general donation'
+      : `AXS Map donation supporting ${participant.firstName} for ${event.name}`;
   return paypalRequest({
     method: 'post',
     path: '/v2/checkout/orders',
@@ -70,9 +74,7 @@ async function createOrder({
           reference_id: donation.id,
           custom_id: donation.id,
           invoice_id: `axs-${donation.id}`,
-          description: `AXS Map donation supporting ${
-            participant.firstName
-          } for ${event.name}`.slice(0, 127),
+          description: description.slice(0, 127),
           amount: {
             currency_code: donation.currency,
             value: amount

@@ -1,6 +1,7 @@
 function publicDonation(donation) {
   return {
     id: donation.id,
+    source: donation.source || 'mapathon',
     event: donation.event,
     creditedUser: donation.creditedUser,
     amount: donation.amountCents / 100,
