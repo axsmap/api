@@ -182,6 +182,7 @@ module.exports = async (req, res, next) => {
           donationAmounts: 1,
           donationId: 1,
           endDate: 1,
+          isInviteOnly: 1,
           isOpen: 1,
           location: 1,
           managers: 1,

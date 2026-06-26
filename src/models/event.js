@@ -53,6 +53,11 @@ const eventSchema = new mongoose.Schema(
       default: false,
       required: [true, 'Is required']
     },
+    isInviteOnly: {
+      type: Boolean,
+      default: false,
+      required: [true, 'Is required']
+    },
     joinCode: {
       type: String,
       default: () => crypto.randomBytes(18).toString('hex'),

@@ -50,7 +50,7 @@ module.exports = async (req, res, next) => {
   }
 
   const inviteCode = req.body?.inviteCode || req.query?.inviteCode;
-  if (event.isOpen === false && inviteCode !== event.joinCode) {
+  if (event.isInviteOnly === true && inviteCode !== event.joinCode) {
     return res.status(403).json({ general: "This Mapathon is invite-only" });
   }
 

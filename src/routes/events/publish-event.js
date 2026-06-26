@@ -60,6 +60,7 @@ module.exports = async (req, res, next) => {
     description: event.description,
     endDate: event.endDate,
     startDate: event.startDate,
+    isInviteOnly: event.isInviteOnly,
     isOpen: event.isOpen,
     location: eventLocation,
     managers: event.managers,
