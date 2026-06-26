@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const mongoose = require('mongoose');
 
 const eventSchema = new mongoose.Schema(
@@ -51,6 +52,11 @@ const eventSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
       required: [true, 'Is required']
+    },
+    joinCode: {
+      type: String,
+      default: () => crypto.randomBytes(18).toString('hex'),
+      index: true
     },
     location: {
       type: {

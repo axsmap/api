@@ -49,6 +49,11 @@ module.exports = async (req, res, next) => {
       .json({ general: "You already are a participant in this event" });
   }
 
+  const inviteCode = req.body?.inviteCode || req.query?.inviteCode;
+  if (event.isOpen === false && inviteCode !== event.joinCode) {
+    return res.status(403).json({ general: "This Mapathon is invite-only" });
+  }
+
   event.participants = [...event.participants, req.user.id];
   event.updatedAt = moment.utc().toDate();
 
