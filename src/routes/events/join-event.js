@@ -2,7 +2,6 @@ const moment = require("moment");
 
 const { Event } = require("../../models/event");
 const { EventParticipant } = require("../../models/event-participant");
-const { Petition } = require("../../models/petition");
 const { User } = require("../../models/user");
 
 module.exports = async (req, res, next) => {
@@ -33,6 +32,12 @@ module.exports = async (req, res, next) => {
     return res
       .status(423)
       .json({ general: "This event has already finished" });
+  }
+
+  if (event.isOpen === false) {
+    return res
+      .status(423)
+      .json({ general: "This Mapathon is not open for joining" });
   }
 
   const eventParticipants = event.participants.map((p) => p.toString());
@@ -87,89 +92,4 @@ module.exports = async (req, res, next) => {
 
 
   return res.status(200).json({ general: "Joined" });
-
-  if (true || event.isOpen) {
-    req.user.events = [...req.user.events, event.id];
-    req.user.updatedAt = moment.utc().toDate();
-
-    
-
-    return res.status(200).json({ general: "Joined" });
-  } else {
-    let petition;
-    try {
-      petition = await Petition.findOne({
-        event: event.id,
-        sender: req.user.id,
-        type: "request-user-event",
-      });
-    } catch (err) {
-      console.log(
-        `Petition from user ${req.user.id} to event ${
-          event.id
-        } failed to be found at join-event`
-      );
-      return next(err);
-    }
-
-    if (petition && petition.state === "pending") {
-      return res.status(400).json({
-        general: "You already have a pending petition with this event",
-      });
-    }
-
-    if (
-      petition &&
-      (petition.state === "rejected" || petition.state === "canceled")
-    ) {
-      try {
-        await Petition.deleteOne({
-          event: event.id,
-          sender: req.user.id,
-          type: "request-user-event",
-        });
-      } catch (err) {
-        console.log(
-          `Petition ${petition.id} failed to be removed at join-event`
-        );
-        return next(err);
-      }
-    }
-
-    const endDate = moment(event.endDate).utc();
-    const today = moment.utc();
-    if (endDate.isBefore(today)) {
-      return res
-        .status(423)
-        .json({ general: "This event has already finished" });
-    }
-
-    const petitionData = {
-      event: event.id,
-      sender: req.user.id,
-      type: "request-user-event",
-    };
-    try {
-      await Petition.create(petitionData);
-    } catch (err) {
-      if (typeof err.errors === "object") {
-        const validationErrors = {};
-
-        Object.keys(err.errors).forEach((key) => {
-          validationErrors[key] = err.errors[key].message;
-        });
-
-        return res.status(400).json(validationErrors);
-      }
-
-      console.log(
-        `Petition failed to be created at join-event.\nData: ${JSON.stringify(
-          petitionData
-        )}`
-      );
-      return next(err);
-    }
-
-    return res.status(200).json({ general: "Requested" });
-  }
 };
