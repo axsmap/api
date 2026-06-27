@@ -6,6 +6,7 @@ const createEvent = require("./create-event");
 const deleteEvent = require("./delete-event");
 const editEvent = require("./edit-event");
 const getEvent = require("./get-event");
+const getInviteLink = require("./get-invite-link");
 const getParticipant = require("./get-participant");
 const leaveEvent = require("./leave-event");
 const listEventLeaderboard = require("./list-event-leaderboard");
@@ -31,6 +32,11 @@ router.get(
   "/:eventId/leaderboard",
   isAuthenticated({ isOptional: true }),
   listEventLeaderboard
+);
+router.get(
+  "/:eventId/invite-link",
+  isAuthenticated({ isOptional: false }),
+  getInviteLink
 );
 router.get("/:eventId", getEvent);
 router.put("/:eventId", isAuthenticated({ isOptional: false }), editEvent);

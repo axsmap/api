@@ -91,6 +91,7 @@ module.exports = async (req, res, next) => {
           status: 1,
           location: 1,
           description: 1,
+          isInviteOnly: 1,
           isOpen: 1,
         })
         .sort(sortBy)
