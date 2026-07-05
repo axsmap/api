@@ -3,9 +3,10 @@ const mongoose = require("mongoose");
 const { Connection } = require("../../models/connection");
 const { User } = require("../../models/user");
 const { Event } = require("../../models/event");
+const { maskUserIdentity } = require("../../helpers/leaderboard-mask");
 
 const STATES = new Set(["pending", "accepted", "declined", "all"]);
-const USER_FIELDS = "avatar firstName lastName username";
+const USER_FIELDS = "avatar firstName lastName username publicVisibility";
 
 // GET /connections?state=pending|accepted|declined|all
 module.exports = async (req, res, next) => {
@@ -17,6 +18,26 @@ module.exports = async (req, res, next) => {
   }
 
   const userId = new mongoose.Types.ObjectId(req.user.id);
+  const viewer = {
+    viewerId: req.user.id,
+    viewerIsAdmin: !!(req.user && req.user.isAdmin === true),
+  };
+  // Mask a peer who chose publicVisibility="anonymous". Owner-exemption means
+  // the viewer always sees their own entry unmasked.
+  const shapeParty = (u) =>
+    u
+      ? maskUserIdentity(
+          {
+            id: u._id.toString(),
+            avatar: u.avatar,
+            firstName: u.firstName,
+            lastName: u.lastName,
+            username: u.username,
+          },
+          u.publicVisibility,
+          viewer
+        )
+      : null;
 
   const filter = {
     $or: [{ requester: userId }, { recipient: userId }],
@@ -61,24 +82,8 @@ module.exports = async (req, res, next) => {
       return {
         id: c._id.toString(),
         state: c.state,
-        requester: c.requester
-          ? {
-              id: c.requester._id.toString(),
-              avatar: c.requester.avatar,
-              firstName: c.requester.firstName,
-              lastName: c.requester.lastName,
-              username: c.requester.username,
-            }
-          : null,
-        recipient: c.recipient
-          ? {
-              id: c.recipient._id.toString(),
-              avatar: c.recipient.avatar,
-              firstName: c.recipient.firstName,
-              lastName: c.recipient.lastName,
-              username: c.recipient.username,
-            }
-          : null,
+        requester: shapeParty(c.requester),
+        recipient: shapeParty(c.recipient),
         originEvent: c.originEvent
           ? {
               id: c.originEvent._id.toString(),

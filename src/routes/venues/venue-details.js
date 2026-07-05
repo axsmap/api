@@ -34,10 +34,29 @@ module.exports = async (req, res, next) => {
             lastName: { $ifNull: ["$user.lastName", null] },
             avatar: { $ifNull: ["$user.avatar", null] },
             createdAt: 1,
+            userId: "$user._id",
+            publicVisibility: {
+              $ifNull: ["$user.publicVisibility", "displayName"],
+            },
           },
         },
       ]);
     }
+    // Mask anonymous review authors (publicVisibility === "anonymous") for
+    // everyone but the author and admins. Strips the helper fields (userId,
+    // publicVisibility) from the output; preserves _id/comments/createdAt.
+    const viewerId = req.user && req.user.id;
+    const viewerIsAdmin = !!(req.user && req.user.isAdmin === true);
+    customReviews = (customReviews || []).map((r) => {
+      const isOwner = viewerId && String(viewerId) === String(r.userId);
+      const anonymous = r.publicVisibility === "anonymous";
+      const { userId, publicVisibility, ...rest } = r;
+      if (anonymous && !viewerIsAdmin && !isOwner) {
+        return { ...rest, firstName: "Anonymous", lastName: "", avatar: null, anonymous: true };
+      }
+      return { ...rest, anonymous };
+    });
+
     const googleResponse = await axios.get(
       "https://maps.googleapis.com/maps/api/place/details/json",
       {

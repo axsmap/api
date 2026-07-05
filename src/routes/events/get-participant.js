@@ -5,6 +5,7 @@ const { Event } = require('../../models/event');
 const { EventParticipant } = require('../../models/event-participant');
 const { Review } = require('../../models/review');
 const { User } = require('../../models/user');
+const { maskUserIdentity } = require('../../helpers/leaderboard-mask');
 
 module.exports = async (req, res, next) => {
   const { eventId, userId } = req.params;
@@ -79,7 +80,9 @@ module.exports = async (req, res, next) => {
         id: '$_id',
         avatar: 1,
         firstName: 1,
-        lastName: 1
+        lastName: 1,
+        username: 1,
+        publicVisibility: { $ifNull: ['$publicVisibility', 'displayName'] }
       }
     }
   ]).toArray();
@@ -111,11 +114,16 @@ module.exports = async (req, res, next) => {
     return next(err);
   }
 
+  // Mask if this participant chose publicVisibility="anonymous", unless the
+  // viewer is the participant themselves or an admin.
+  const { publicVisibility, ...identity } = user;
+  const masked = maskUserIdentity(identity, publicVisibility, {
+    viewerId: req.user && req.user.id,
+    viewerIsAdmin: !!(req.user && req.user.isAdmin === true),
+  });
+
   return res.status(200).json({
-    id: user.id,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    avatar: user.avatar,
+    ...masked,
     reviewsAmount,
     personalMessage
   });

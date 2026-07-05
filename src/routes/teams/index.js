@@ -14,7 +14,7 @@ const router = new express.Router();
 
 router.get('', isAuthenticated({ isOptional: true }), listTeams);
 router.post('', isAuthenticated({ isOptional: false }), createTeam);
-router.get('/:teamId', getTeam);
+router.get('/:teamId', isAuthenticated({ isOptional: true }), getTeam);
 router.put('/:teamId', isAuthenticated({ isOptional: false }), editTeam);
 router.delete('/:teamId', isAuthenticated({ isOptional: false }), deleteTeam);
 router.post('/:teamId/join', isAuthenticated({ isOptional: false }), joinTeam);

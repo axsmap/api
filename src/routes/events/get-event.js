@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const { isMongoId } = require('validator');
 
 const { Event } = require('../../models/event');
+const { maskUserIdentity } = require('../../helpers/leaderboard-mask');
 
 module.exports = async (req, res, next) => {
   let eventId = req.params.eventId;
@@ -42,7 +43,8 @@ module.exports = async (req, res, next) => {
                 lastName: 1,
                 username: 1,
                 // Frontend only links to a profile when it's public.
-                profilePublic: { $ifNull: ['$profilePublic', true] }
+                profilePublic: { $ifNull: ['$profilePublic', true] },
+                publicVisibility: { $ifNull: ['$publicVisibility', 'displayName'] }
               }
             }
           ],
@@ -91,6 +93,7 @@ module.exports = async (req, res, next) => {
                 username: 1,
                 // Frontend only links to a profile when it's public.
                 profilePublic: { $ifNull: ['$profilePublic', true] },
+                publicVisibility: { $ifNull: ['$publicVisibility', 'displayName'] },
                 reviewsAmount: {
                   $ifNull: [{ $arrayElemAt: ['$eventReviews.count', 0] }, 0]
                 }
@@ -209,8 +212,24 @@ module.exports = async (req, res, next) => {
     return res.status(404).json({ general: 'Event not found' });
   }
 
+  // Mask anonymous managers/participants (publicVisibility === "anonymous")
+  // for everyone but the person themselves and admins. Additive per row.
+  const viewer = {
+    viewerId: req.user && req.user.id,
+    viewerIsAdmin: !!(req.user && req.user.isAdmin === true),
+  };
+  const maskList = (list) =>
+    Array.isArray(list)
+      ? list.map((u) => {
+          const { publicVisibility, ...rest } = u;
+          return maskUserIdentity(rest, publicVisibility, viewer);
+        })
+      : list;
+
   const dataResponse = Object.assign({}, event[0], {
-    ranking: event[0].ranking && event[0].ranking.length ? event[0].ranking[0].ranking + 1 : 1
+    ranking: event[0].ranking && event[0].ranking.length ? event[0].ranking[0].ranking + 1 : 1,
+    managers: maskList(event[0].managers),
+    participants: maskList(event[0].participants),
   });
 
   if (dataResponse.donationId) {

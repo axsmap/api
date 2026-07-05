@@ -4,6 +4,7 @@ const slugify = require('speakingurl');
 
 const { Venue } = require('../../models/venue');
 const venueReviewSummary = require('../../helpers/venue-review-summary.js');
+const { maskUserIdentity } = require('../../helpers/leaderboard-mask');
 
 module.exports = async (req, res, next) => {
   const placeId = req.params.placeId;
@@ -160,7 +161,11 @@ module.exports = async (req, res, next) => {
                         id: '$_id',
                         avatar: 1,
                         firstName: 1,
-                        lastName: 1
+                        lastName: 1,
+                        username: 1,
+                        publicVisibility: {
+                          $ifNull: ['$publicVisibility', 'displayName']
+                        }
                       }
                     }
                   ],
@@ -338,7 +343,22 @@ module.exports = async (req, res, next) => {
     dataResponse.hasSupportAroundToilet = venue[0].hasSupportAroundToilet;
     dataResponse.hasLoweredSinks = venue[0].hasLoweredSinks;
 
-    dataResponse.reviews = venue[0].reviews;
+    // Mask anonymous review authors (publicVisibility === "anonymous") for
+    // everyone except the author themselves and admins. Additive — only the
+    // nested `user` identity fields change; all review fields are preserved.
+    const viewer = {
+      viewerId: req.user && req.user.id,
+      viewerIsAdmin: !!(req.user && req.user.isAdmin === true),
+    };
+    dataResponse.reviews = venue[0].reviews.map((r) => {
+      if (Array.isArray(r.user)) {
+        r.user = r.user.map((u) => {
+          const { publicVisibility, ...rest } = u;
+          return maskUserIdentity(rest, publicVisibility, viewer);
+        });
+      }
+      return r;
+    });
   }
 
   return res.status(200).json(dataResponse);

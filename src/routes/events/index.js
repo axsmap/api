@@ -38,7 +38,7 @@ router.get(
   isAuthenticated({ isOptional: false }),
   getInviteLink
 );
-router.get("/:eventId", getEvent);
+router.get("/:eventId", isAuthenticated({ isOptional: true }), getEvent);
 router.put("/:eventId", isAuthenticated({ isOptional: false }), editEvent);
 router.put(
   "/:eventId/publish",

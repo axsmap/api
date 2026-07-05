@@ -18,8 +18,8 @@ router.get("/places/:placeId", getPlaceLocation);
 // captured by the parameterized route. If "/:placeId" is first, requests like
 // "/detail/XYZ" are treated as placeId="detail" and never reach the detail
 // handler.
-router.get("/detail/:placeId", venueDetails);
-router.get("/:placeId", getVenue);
+router.get("/detail/:placeId", isAuthenticated({ isOptional: true }), venueDetails);
+router.get("/:placeId", isAuthenticated({ isOptional: true }), getVenue);
 router.put(
   "/:venueId/archive",
   isAuthenticated({ isOptional: false }),
