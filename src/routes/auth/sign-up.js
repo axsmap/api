@@ -26,6 +26,8 @@ module.exports = async (req, res, next) => {
     "isSubscribed",
     "lastName",
     "password",
+    "displayName",
+    "publicVisibility",
     "aboutMe",
     "dateOfBirth",
     "disability",
@@ -124,6 +126,9 @@ module.exports = async (req, res, next) => {
       lastName: data.lastName,
       password: data.password,
       username: data.username,
+      displayName: cleanSpaces(data.displayName || ""),
+      publicVisibility:
+        data.publicVisibility === "anonymous" ? "anonymous" : "displayName",
       aboutMe: data.aboutMe || null,
       dateOfBirth: data.dateOfBirth || null,
       disability: data.disability || null,

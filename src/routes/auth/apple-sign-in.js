@@ -6,6 +6,7 @@ const moment = require("moment");
 
 const { RefreshToken } = require("../../models/refresh-token");
 const { User } = require("../../models/user");
+const { buildDisplayName } = require("../../helpers");
 
 const { validateAppleSignIn } = require("./validations");
 
@@ -29,10 +30,14 @@ module.exports = async (req, res, next) => {
     });
     const now = new Date();
     if (!user) {
+      const appleFirst = appleResponse?.fullName?.givenName ?? "";
+      const appleLast = appleResponse?.fullName?.familyName ?? "";
       user = new User({
         email: appleResponse?.email,
-        firstName:appleResponse?.fullName?.givenName ?? "",
-        lastName:appleResponse?.fullName?.familyName ?? "",
+        firstName: appleFirst,
+        lastName: appleLast,
+        displayName: buildDisplayName(appleFirst, appleLast),
+        promptedForVisibility: true,
         appleId: appleResponse?.sub,
         lastLogin: now,
         lastOpenedAt: now,

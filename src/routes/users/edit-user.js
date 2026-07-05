@@ -97,11 +97,11 @@ module.exports = async (req, res, next) => {
   // Defensive: never assign undefined (the field is required:true). Legacy
   // docs predating the field resolve to true (visible); an explicit opt-out is
   // preserved. Avoids a save() validation failure when a legacy user edits any
-  // other field without sending showNameOnLeaderboard.
-  user.showNameOnLeaderboard =
-    typeof data.showNameOnLeaderboard !== "undefined"
-      ? data.showNameOnLeaderboard
-      : user.showNameOnLeaderboard !== false;
+  // other field without sending publicVisibility.
+  user.publicVisibility =
+    typeof data.publicVisibility !== "undefined"
+      ? data.publicVisibility
+      : user.publicVisibility || "displayName";
 
   // Defensive: legacy docs predating the field resolve to "mapathon" (the
   // default) so a save() never trips the required+enum validation.
@@ -151,7 +151,7 @@ module.exports = async (req, res, next) => {
     user.markModified("socials");
   }
 
-  for (const f of ["profilePublic", "hideLocation", "hideBadges", "hideSupporters", "hideSocials"]) {
+  for (const f of ["profilePublic", "hideLocation", "hideBadges", "hideSupporters", "hideSocials", "promptedForVisibility"]) {
     if (typeof data[f] !== "undefined") {
       user[f] = data[f];
     }
@@ -201,7 +201,8 @@ module.exports = async (req, res, next) => {
     showDisabilities: user.showDisabilities,
     showEmail: user.showEmail,
     showPhone: user.showPhone,
-    showNameOnLeaderboard: user.showNameOnLeaderboard !== false,
+    publicVisibility: user.publicVisibility || "displayName",
+    promptedForVisibility: user.promptedForVisibility === true,
     connectionPreference: user.connectionPreference || "mapathon",
     username: user.username,
     zip: user.zip,

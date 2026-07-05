@@ -10,6 +10,7 @@ const slugify = require("speakingurl");
 
 const { RefreshToken } = require("../../models/refresh-token");
 const { User } = require("../../models/user");
+const { buildDisplayName } = require("../../helpers");
 
 const { validateGoogleSignIn } = require("./validations");
 
@@ -59,6 +60,8 @@ module.exports = async (req, res) => {
         email: email,
         firstName: firstName || name,
         lastName: lastName || "",
+        displayName: buildDisplayName(firstName || name, lastName || ""),
+        promptedForVisibility: true,
         createdAt: now,
         avatar: picture,
         lastLogin: now,

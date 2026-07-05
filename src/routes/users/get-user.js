@@ -8,7 +8,7 @@ const { buildAggregationMask } = require("../../helpers/leaderboard-mask");
  * Returns the shaped response object, or null when no user matches.
  *
  * viewerOpts { viewerId, viewerIsAdmin } controls identity masking: a user who
- * set showNameOnLeaderboard=false is returned as "Anonymous" / null unless the
+ * set publicVisibility="anonymous" is returned as "Anonymous" / null unless the
  * viewer is the user themselves or an admin.
  */
 async function getUserResponse(matchStage, collation, viewerOpts = {}) {
@@ -408,7 +408,7 @@ async function getUserResponse(matchStage, collation, viewerOpts = {}) {
         showDisabilities: 1,
         showEmail: 1,
         showPhone: 1,
-        showNameOnLeaderboard: { $ifNull: ["$showNameOnLeaderboard", true] },
+        publicVisibility: { $ifNull: ["$publicVisibility", "displayName"] },
         connectionPreference: { $ifNull: ["$connectionPreference", "mapathon"] },
         teams: 1,
         topSupporters: 1,

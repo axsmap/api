@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
 
-// Masked identity values returned for a user who has opted out of appearing
-// by name on ranked/public surfaces (showNameOnLeaderboard === false).
+// Values substituted for a user whose publicVisibility === "anonymous".
 const MASKED = {
   firstName: "Anonymous",
   lastName: "",
@@ -11,55 +10,59 @@ const MASKED = {
 };
 
 /**
- * Build the masking primitives for an aggregation $project stage.
- *
- * Masks a user's identity when showNameOnLeaderboard === false. Legacy docs
- * without the field default to visible (via $ifNull → true). The viewer is
- * exempt from masking when they are the user themselves (owner) or an admin —
- * those viewers always see the real identity.
+ * Build masking primitives for an aggregation $project stage where the USER is
+ * the root document (get-user, list-users). Masks identity when
+ * publicVisibility === "anonymous"; legacy docs without the field default to
+ * "displayName" (visible). Owner (viewer === this user) and admins are exempt.
  *
  * @param {{ viewerId?: string|null, viewerIsAdmin?: boolean }} opts
- * @returns {{ field: (realField: string, key: keyof MASKED) => any }}
- *   `field` returns the $project expression for one identity field.
+ * @returns {{ field: (realField: string, key: keyof MASKED) => any, anonymousExpr: object }}
  */
 function buildAggregationMask(opts = {}) {
   const { viewerId, viewerIsAdmin } = opts;
+  const anonymousExpr = {
+    $eq: [{ $ifNull: ["$publicVisibility", "displayName"] }, "anonymous"],
+  };
 
   // Admins always see the real identity → no masking expression at all.
   if (viewerIsAdmin === true) {
-    return { field: (realField) => `$${realField}` };
+    return { field: (realField) => `$${realField}`, anonymousExpr };
   }
 
-  const optedOut = { $eq: [{ $ifNull: ["$showNameOnLeaderboard", true] }, false] };
   // When the viewer's id is known, exempt the owner viewing themselves.
   const notOwner = viewerId
     ? { $ne: ["$_id", new mongoose.Types.ObjectId(viewerId)] }
     : true;
-  const shouldMask = { $and: [optedOut, notOwner] };
+  const shouldMask = { $and: [anonymousExpr, notOwner] };
 
   return {
     field: (realField, key) => ({
       $cond: [shouldMask, MASKED[key], `$${realField}`],
     }),
+    anonymousExpr,
   };
 }
 
 /**
- * JS-side masking for the leaderboard endpoint. Returns the row with an
- * `anonymous` boolean flag added (true when the user opted out — useful to
- * the client even when fields are NOT masked, e.g. admin view rendering a
- * subtle badge). Identity fields are masked only when:
- *   - the user opted out (`showNameOnLeaderboard === false`), AND
- *   - the viewer is not an admin.
- * Legacy docs without the field default to visible (undefined → true).
+ * JS-side identity masking for any shaped row that carries `id` + identity
+ * fields. Used by the leaderboard endpoints and every other surface that
+ * returns a user reference for public display (venue review authors, team
+ * members, event participants/managers, connections, etc.).
  *
- * @param {object} row              shaped row (id, firstName, lastName, username, avatar, reviewsAmount)
- * @param {boolean|undefined} showNameOnLeaderboard  raw field off the user doc
- * @param {{ viewerIsAdmin?: boolean }} [opts]
+ * Masks firstName/lastName/username/avatar when the user is anonymous
+ * (publicVisibility === "anonymous"), UNLESS the viewer is that same user
+ * (owner) or an admin. Always attaches an `anonymous` boolean so admin/client
+ * UIs can badge opted-out users even when their identity is shown.
+ *
+ * @param {object} row  shaped row containing at least { id }
+ * @param {string|undefined} publicVisibility  raw field off the user doc
+ * @param {{ viewerId?: string|null, viewerIsAdmin?: boolean }} [opts]
  */
-function maskLeaderboardRow(row, showNameOnLeaderboard, opts = {}) {
-  const anonymous = showNameOnLeaderboard === false;
-  if (anonymous && opts.viewerIsAdmin !== true) {
+function maskUserIdentity(row, publicVisibility, opts = {}) {
+  const anonymous = publicVisibility === "anonymous";
+  const isOwner =
+    opts.viewerId && row && String(opts.viewerId) === String(row.id);
+  if (anonymous && opts.viewerIsAdmin !== true && !isOwner) {
     return {
       ...row,
       firstName: MASKED.firstName,
@@ -72,4 +75,4 @@ function maskLeaderboardRow(row, showNameOnLeaderboard, opts = {}) {
   return { ...row, anonymous };
 }
 
-module.exports = { MASKED, buildAggregationMask, maskLeaderboardRow };
+module.exports = { MASKED, buildAggregationMask, maskUserIdentity };

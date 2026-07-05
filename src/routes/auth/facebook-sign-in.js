@@ -6,6 +6,7 @@ const moment = require("moment");
 
 const { RefreshToken } = require("../../models/refresh-token");
 const { User } = require("../../models/user");
+const { buildDisplayName } = require("../../helpers");
 
 const { validateFacebookSignIn } = require("./validations");
 
@@ -58,6 +59,8 @@ module.exports = async (req, res, next) => {
           email,
           firstName: firstName || "",
           lastName: lastName || "",
+          displayName: buildDisplayName(firstName || "", lastName || ""),
+          promptedForVisibility: true,
           avatar: fbUser.picture.data.url,
           lastLogin: now,
           lastOpenedAt: now,

@@ -230,11 +230,10 @@ module.exports = {
       errors.showPhone = 'Should be a boolean';
     }
 
-    if (
-      typeof data.showNameOnLeaderboard !== 'undefined' &&
-      typeof data.showNameOnLeaderboard !== 'boolean'
-    ) {
-      errors.showNameOnLeaderboard = 'Should be a boolean';
+    if (typeof data.publicVisibility !== 'undefined') {
+      if (!['displayName', 'anonymous'].includes(data.publicVisibility)) {
+        errors.publicVisibility = 'Should be displayName or anonymous';
+      }
     }
 
     if (typeof data.connectionPreference !== 'undefined') {
@@ -290,7 +289,7 @@ module.exports = {
       }
     }
 
-    for (const f of ['profilePublic', 'hideLocation', 'hideBadges', 'hideSupporters', 'hideSocials']) {
+    for (const f of ['profilePublic', 'hideLocation', 'hideBadges', 'hideSupporters', 'hideSocials', 'promptedForVisibility']) {
       if (typeof data[f] !== 'undefined' && typeof data[f] !== 'boolean') {
         errors[f] = 'Should be a boolean';
       }

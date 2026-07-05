@@ -206,17 +206,24 @@ const userSchema = new mongoose.Schema(
       default: false,
       required: [true, "Is required"],
     },
-    // Gates whether the user's identity (firstName, lastName, username, avatar,
-    // email) is exposed on ranked/public surfaces — the leaderboards
-    // (/users/leaderboard, /events/:id/leaderboard), user search (/users), and
-    // the public profile lookups (/users/:id, /users/by-username/:slug). When
-    // false those endpoints return a masked identity ("Anonymous" / null).
-    // Owner-facing endpoints (/users/profile, self-edit) and admins always see
-    // the real identity. Defaults to true so existing users keep appearing by
-    // name until they explicitly opt out.
-    showNameOnLeaderboard: {
+    // Controls whether the user's identity (firstName, lastName, username,
+    // avatar, email) is shown on public surfaces where they're referenced —
+    // leaderboards, user search, public profiles, venue review attribution,
+    // team rosters, event participant/manager lists, connections. "anonymous"
+    // masks it to "Anonymous"/null; "displayName" shows it. Owner-facing
+    // endpoints and admins always see the real identity. Default "displayName".
+    publicVisibility: {
+      type: String,
+      enum: ["displayName", "anonymous"],
+      default: "displayName",
+      required: [true, "Is required"],
+    },
+    // One-time onboarding modal bookkeeping. New users set this true (they pick
+    // during onboarding); existing users default false so the frontend can show
+    // the modal once on next login, then PUT it to true.
+    promptedForVisibility: {
       type: Boolean,
-      default: true,
+      default: false,
       required: [true, "Is required"],
     },
     showPhone: {

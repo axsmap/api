@@ -121,6 +121,15 @@ module.exports = {
   isNumber(number) {
     return !isNaN(parseFloat(number)) && isFinite(number);
   },
+  // Default display name — "First L." — used when a user hasn't set one.
+  // Matches the frontend fallback. Returns "" only when both names are empty.
+  buildDisplayName(firstName, lastName) {
+    const f = (firstName || "").trim();
+    const l = (lastName || "").trim();
+    if (!f && !l) return "";
+    if (!l) return f;
+    return `${f} ${l.charAt(0).toUpperCase()}.`;
+  },
   mapCamelCaseKeys(obj) {
     return mapKeys(obj, (value, key) => camelCase(key));
   },

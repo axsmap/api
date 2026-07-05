@@ -153,6 +153,24 @@ module.exports = {
       errors.lastName = "Should have less than 37 characters";
     }
 
+    // displayName: validated when provided; always guaranteed downstream via
+    // the buildDisplayName fallback in every creation path, so a missing value
+    // is not rejected (avoids breaking signup before the frontend sends it).
+    if (typeof data.displayName !== "undefined" && data.displayName !== null) {
+      if (typeof data.displayName !== "string") {
+        errors.displayName = "Should be a string";
+      } else if (cleanSpaces(data.displayName).length > 60) {
+        errors.displayName = "Should have less than 61 characters";
+      }
+    }
+
+    if (
+      typeof data.publicVisibility !== "undefined" &&
+      !["displayName", "anonymous"].includes(data.publicVisibility)
+    ) {
+      errors.publicVisibility = "Should be displayName or anonymous";
+    }
+
     if (!data.password) {
       errors.password = "Is required";
     } else if (typeof data.password !== "string") {

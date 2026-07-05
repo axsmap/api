@@ -7,6 +7,7 @@ const slugify = require("speakingurl");
 const { ActivationTicket } = require("../../models/activation-ticket");
 const { RefreshToken } = require("../../models/refresh-token");
 const { User } = require("../../models/user");
+const { buildDisplayName } = require("../../helpers");
 
 /**
  * Normalizes a date to noon UTC to avoid timezone issues.
@@ -53,18 +54,29 @@ module.exports = async (req, res, next) => {
     return res.status(400).json({ general: "Activation ticket expired" });
   }
 
+  const firstName = activationTicket?.userData?.firstName;
+  const lastName = activationTicket?.userData?.lastName;
   const userData = {
-    firstName: activationTicket?.userData?.firstName,
+    firstName,
     isSubscribed: activationTicket?.userData?.isSubscribed,
-    lastName: activationTicket?.userData?.lastName,
+    lastName,
     password: activationTicket?.userData?.password,
     username: activationTicket?.userData?.username,
+    displayName:
+      (activationTicket?.userData?.displayName || "").trim() ||
+      buildDisplayName(firstName, lastName),
+    publicVisibility:
+      activationTicket?.userData?.publicVisibility === "anonymous"
+        ? "anonymous"
+        : "displayName",
     aboutMe: activationTicket?.userData?.aboutMe || '',
     birthday: normalizeDateToNoonUTC(activationTicket?.userData?.dateOfBirth),
     disability: activationTicket?.userData?.disability || '',
     gender: activationTicket?.userData?.gender || 'not-to-say',
     race: activationTicket?.userData?.race || '',
     email: activationTicket?.email,
+    // New account — they've been through signup/onboarding, so don't re-prompt.
+    promptedForVisibility: true,
   };
   
 

@@ -5,7 +5,7 @@ const { pick } = require("lodash");
 const randomstring = require("randomstring");
 const slugify = require("speakingurl");
 
-const { cleanSpaces } = require("../../helpers");
+const { cleanSpaces, buildDisplayName } = require("../../helpers");
 const { RefreshToken } = require("../../models/refresh-token");
 const { User } = require("../../models/user");
 
@@ -39,6 +39,10 @@ module.exports = async (req, res, next) => {
   ]);
   userData.firstName = cleanSpaces(userData.firstName);
   userData.lastName = cleanSpaces(userData.lastName);
+  userData.displayName =
+    (req.body.displayName && cleanSpaces(req.body.displayName)) ||
+    buildDisplayName(userData.firstName, userData.lastName);
+  userData.promptedForVisibility = true;
 
   let usernameSent = true;
 
