@@ -7,6 +7,7 @@ const {
   findReusableCampaign,
   isoDate,
   requireCampaignExternalIdField,
+  soqlDateLiteral,
   syncMapathonCampaign
 } = require('./salesforce-campaign');
 
@@ -60,6 +61,14 @@ test('marks draft Mapathon Campaigns inactive', () => {
 test('formats Salesforce Campaign dates without time components', () => {
   assert.equal(isoDate(new Date('2026-07-01T14:00:00.000Z')), '2026-07-01');
   assert.equal(isoDate(null), null);
+});
+
+test('formats Salesforce Date field literals without quotes', () => {
+  assert.equal(
+    soqlDateLiteral(new Date('2026-07-01T14:00:00.000Z')),
+    '2026-07-01'
+  );
+  assert.equal(soqlDateLiteral(null), 'null');
 });
 
 test('requires the configured Salesforce Campaign external ID field', () => {
@@ -135,8 +144,8 @@ test('reuses an existing matching Campaign without an external id', async () => 
       AXS_Map_Mapathon_ID__c: null
     });
     assert.match(soql, /Name = 'Downtown\\'s Mapathon'/);
-    assert.match(soql, /StartDate = '2026-07-01'/);
-    assert.match(soql, /EndDate = '2026-07-31'/);
+    assert.match(soql, /StartDate = 2026-07-01/);
+    assert.match(soql, /EndDate = 2026-07-31/);
     assert.match(
       soql,
       /\(AXS_Map_Mapathon_ID__c = null OR AXS_Map_Mapathon_ID__c = 'event-id'\)/
