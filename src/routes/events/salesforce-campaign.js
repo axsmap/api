@@ -30,6 +30,28 @@ function campaignFieldMapping({ event, externalIdField }) {
   return fields;
 }
 
+async function findReusableCampaign({ event, externalIdField }) {
+  const startDate = isoDate(event.startDate);
+  const endDate = isoDate(event.endDate);
+  const records = await salesforce.query(
+    `SELECT Id, ${externalIdField} FROM Campaign WHERE Name = ` +
+      `'${salesforce.escapeSoql(event.name)}' AND StartDate = ` +
+      `${startDate ? `'${salesforce.escapeSoql(startDate)}'` : 'null'} ` +
+      `AND EndDate = ` +
+      `${endDate ? `'${salesforce.escapeSoql(endDate)}'` : 'null'} ` +
+      `AND (${externalIdField} = null OR ${externalIdField} = ` +
+      `'${salesforce.escapeSoql(event.id)}') ` +
+      'ORDER BY LastModifiedDate DESC LIMIT 2'
+  );
+
+  const exactMatch = records.find(
+    record => record[externalIdField] === event.id
+  );
+  if (exactMatch) return exactMatch;
+  if (records.length === 1) return records[0];
+  return null;
+}
+
 async function syncMapathonCampaign(event) {
   const externalIdField = requireCampaignExternalIdField();
   const fields = campaignFieldMapping({ event, externalIdField });
@@ -38,6 +60,22 @@ async function syncMapathonCampaign(event) {
     `Syncing Salesforce Campaign for Mapathon ${event.id} using ` +
       `${externalIdField}`
   );
+
+  const existingCampaign = await findReusableCampaign({
+    event,
+    externalIdField
+  });
+  if (existingCampaign) {
+    console.log(
+      `Updating existing Salesforce Campaign ${existingCampaign.Id} for ` +
+        `Mapathon ${event.id}`
+    );
+    return salesforce.updateRecord({
+      objectName: 'Campaign',
+      recordId: existingCampaign.Id,
+      fields
+    });
+  }
 
   return salesforce.upsertRecord({
     objectName: 'Campaign',
@@ -49,6 +87,7 @@ async function syncMapathonCampaign(event) {
 
 module.exports = {
   campaignFieldMapping,
+  findReusableCampaign,
   isoDate,
   requireCampaignExternalIdField,
   syncMapathonCampaign
