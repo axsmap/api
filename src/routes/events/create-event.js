@@ -8,6 +8,10 @@ const { Photo } = require('../../models/photo');
 const { Team } = require('../../models/team');
 
 const { validateCreateEvent } = require('./validations');
+const {
+  requireCampaignExternalIdField,
+  syncMapathonCampaign
+} = require('./salesforce-campaign');
 
 module.exports = async (req, res, next) => {
   const data = {
@@ -100,6 +104,15 @@ module.exports = async (req, res, next) => {
   }
 
   if (data.donationEnabled) {
+    try {
+      requireCampaignExternalIdField();
+    } catch (err) {
+      console.log(
+        'Salesforce Campaign external ID field is not configured at create-event.'
+      );
+      return next(err);
+    }
+
     const campaignData = new FormData();
     campaignData.append('title', data.name);
     campaignData.append('goal_in_cents', data.donationGoal * 100);
@@ -152,6 +165,19 @@ module.exports = async (req, res, next) => {
       )}`
     );
     return next(err);
+  }
+
+  if (event.donationEnabled) {
+    try {
+      await syncMapathonCampaign(event);
+    } catch (err) {
+      console.log(
+        `Salesforce Campaign failed to be synced for Mapathon ${
+          event.id
+        } at create-event.`
+      );
+      return next(err);
+    }
   }
 
   req.user.events = [...req.user.events, event.id];
