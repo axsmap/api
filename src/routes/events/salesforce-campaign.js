@@ -30,15 +30,18 @@ function campaignFieldMapping({ event, externalIdField }) {
   return fields;
 }
 
+function soqlDateLiteral(value) {
+  const date = isoDate(value);
+  return date ? salesforce.escapeSoql(date) : 'null';
+}
+
 async function findReusableCampaign({ event, externalIdField }) {
-  const startDate = isoDate(event.startDate);
-  const endDate = isoDate(event.endDate);
   const records = await salesforce.query(
     `SELECT Id, ${externalIdField} FROM Campaign WHERE Name = ` +
       `'${salesforce.escapeSoql(event.name)}' AND StartDate = ` +
-      `${startDate ? `'${salesforce.escapeSoql(startDate)}'` : 'null'} ` +
+      `${soqlDateLiteral(event.startDate)} ` +
       `AND EndDate = ` +
-      `${endDate ? `'${salesforce.escapeSoql(endDate)}'` : 'null'} ` +
+      `${soqlDateLiteral(event.endDate)} ` +
       `AND (${externalIdField} = null OR ${externalIdField} = ` +
       `'${salesforce.escapeSoql(event.id)}') ` +
       'ORDER BY LastModifiedDate DESC LIMIT 2'
@@ -90,5 +93,6 @@ module.exports = {
   findReusableCampaign,
   isoDate,
   requireCampaignExternalIdField,
+  soqlDateLiteral,
   syncMapathonCampaign
 };
