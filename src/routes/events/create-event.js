@@ -1,13 +1,17 @@
-const moment = require("moment");
+const moment = require('moment');
 
-const { Event } = require("../../models/event");
-const { cleanSpaces } = require("../../helpers");
-const { Photo } = require("../../models/photo");
-const { Team } = require("../../models/team");
-const { User } = require("../../models/user");
+const { Event } = require('../../models/event');
+const { cleanSpaces } = require('../../helpers');
+const { Photo } = require('../../models/photo');
+const { Team } = require('../../models/team');
+const { User } = require('../../models/user');
 
-const { validateCreateEvent } = require("./validations");
-const { sendError } = require("../../helpers/Error");
+const { validateCreateEvent } = require('./validations');
+const { sendError } = require('../../helpers/Error');
+const {
+  requireCampaignExternalIdField,
+  syncMapathonCampaign
+} = require('./salesforce-campaign');
 
 module.exports = async (req, res, next) => {
   const data = {
@@ -26,7 +30,7 @@ module.exports = async (req, res, next) => {
     reviewsGoal: req.body.reviewsGoal,
     startDate: req.body.startDate,
     status: req.body.status,
-    teamManager: req.body.teamManager,
+    teamManager: req.body.teamManager
   };
 
   const { errors, isValid } = validateCreateEvent(data);
@@ -34,11 +38,11 @@ module.exports = async (req, res, next) => {
 
   data.address = cleanSpaces(data.address);
 
-  data.endDate = moment(data.endDate).endOf("day").toDate();
-  data.startDate = moment(data.startDate).startOf("day").toDate();
+  data.endDate = moment(data.endDate).endOf('day').toDate();
+  data.startDate = moment(data.startDate).startOf('day').toDate();
 
   data.location = {
-    coordinates: [data.locationCoordinates[1], data.locationCoordinates[0]],
+    coordinates: [data.locationCoordinates[1], data.locationCoordinates[0]]
   };
   delete data.locationCoordinates;
 
@@ -56,7 +60,7 @@ module.exports = async (req, res, next) => {
     }
 
     if (!poster) {
-      return res.status(404).json(sendError({ poster: "Not found" }));
+      return res.status(404).json(sendError({ poster: 'Not found' }));
     }
   }
 
@@ -72,22 +76,33 @@ module.exports = async (req, res, next) => {
     }
 
     if (!team) {
-      return res.status(404).json(sendError({ teamManager: "Not found" }));
+      return res.status(404).json(sendError({ teamManager: 'Not found' }));
     }
 
     const teamManagers = team.managers.map((m) => m.toString());
     if (!teamManagers.includes(req.user.id)) {
-      return res.status(403).json(sendError({ general: "Forbidden action" }));
+      return res.status(403).json(sendError({ general: 'Forbidden action' }));
     }
   } else {
     data.teamManager = undefined;
+  }
+
+  if (data.donationEnabled) {
+    try {
+      requireCampaignExternalIdField();
+    } catch (err) {
+      console.log(
+        'Salesforce Campaign external ID field is not configured at create-event.'
+      );
+      return next(err);
+    }
   }
 
   let event;
   try {
     event = await Event.create(data);
   } catch (err) {
-    if (typeof err.errors === "object") {
+    if (typeof err.errors === 'object') {
       const validationErrors = {};
 
       Object.keys(err.errors).forEach((key) => {
@@ -105,6 +120,19 @@ module.exports = async (req, res, next) => {
     return next(err);
   }
 
+  if (event.donationEnabled) {
+    try {
+      await syncMapathonCampaign(event);
+    } catch (err) {
+      console.log(
+        `Salesforce Campaign failed to be synced for Mapathon ${
+          event.id
+        } at create-event.`
+      );
+      return next(err);
+    }
+  }
+
   try {
     await User.findByIdAndUpdate(req.user.id, {
       $push: { events: event.id },
@@ -119,7 +147,7 @@ module.exports = async (req, res, next) => {
   if (event.location.coordinates) {
     eventLocation = {
       lat: event.location.coordinates[1],
-      lng: event.location.coordinates[0],
+      lng: event.location.coordinates[0]
     };
   }
   const dataResponse = {
@@ -137,7 +165,7 @@ module.exports = async (req, res, next) => {
     poster: event.poster,
     reviewsGoal: event.reviewsGoal,
     status: event.status,
-    teamManager: event.teamManager,
+    teamManager: event.teamManager
   };
 
   return res.status(201).json(dataResponse);
