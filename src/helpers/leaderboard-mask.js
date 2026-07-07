@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 const MASKED = {
   firstName: "Anonymous",
   lastName: "",
+  displayName: null,
   username: null,
   avatar: null,
   email: null,
@@ -67,6 +68,7 @@ function maskUserIdentity(row, publicVisibility, opts = {}) {
       ...row,
       firstName: MASKED.firstName,
       lastName: MASKED.lastName,
+      displayName: MASKED.displayName,
       username: MASKED.username,
       avatar: MASKED.avatar,
       anonymous: true,

@@ -125,6 +125,7 @@ module.exports = async (req, res, next) => {
                 avatar: { $ifNull: ["$user.avatar", ""] },
                 firstName: { $ifNull: ["$user.firstName", ""] },
                 lastName: { $ifNull: ["$user.lastName", ""] },
+                displayName: { $ifNull: ["$user.displayName", null] },
                 username: { $ifNull: ["$user.username", ""] },
                 reviewsAmount: 1,
                 publicVisibility: {

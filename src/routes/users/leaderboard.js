@@ -38,6 +38,7 @@ function shapeUser(user) {
     id: user._id.toString(),
     firstName: user.firstName || "",
     lastName: user.lastName || "",
+    displayName: user.displayName || null,
     username: user.username || "",
     avatar: user.avatar || "",
     // Frontend disables the row link when false (private profile not clickable).
@@ -54,7 +55,7 @@ async function buildAllTime(limit, opts = {}) {
   })
     .sort({ reviewsAmount: -1, createdAt: 1 })
     .limit(limit)
-    .select("firstName lastName username avatar reviewsAmount publicVisibility profilePublic")
+    .select("firstName lastName displayName username avatar reviewsAmount publicVisibility profilePublic")
     .lean();
 
   const rows = users.map((u) =>
@@ -104,6 +105,7 @@ async function buildMonth(limit, opts = {}) {
         id: { $toString: "$user._id" },
         firstName: { $ifNull: ["$user.firstName", ""] },
         lastName: { $ifNull: ["$user.lastName", ""] },
+        displayName: { $ifNull: ["$user.displayName", null] },
         username: { $ifNull: ["$user.username", ""] },
         avatar: { $ifNull: ["$user.avatar", ""] },
         reviewsAmount: 1,

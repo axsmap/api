@@ -42,6 +42,7 @@ module.exports = async (req, res, next) => {
                 firstName: 1,
                 lastName: 1,
                 username: 1,
+                displayName: { $ifNull: ['$displayName', null] },
                 // Frontend only links to a profile when it's public.
                 profilePublic: { $ifNull: ['$profilePublic', true] },
                 publicVisibility: { $ifNull: ['$publicVisibility', 'displayName'] }
@@ -91,6 +92,7 @@ module.exports = async (req, res, next) => {
                 firstName: 1,
                 lastName: 1,
                 username: 1,
+                displayName: { $ifNull: ['$displayName', null] },
                 // Frontend only links to a profile when it's public.
                 profilePublic: { $ifNull: ['$profilePublic', true] },
                 publicVisibility: { $ifNull: ['$publicVisibility', 'displayName'] },

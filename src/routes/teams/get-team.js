@@ -32,6 +32,7 @@ module.exports = async (req, res, next) => {
                 avatar: 1,
                 firstName: 1,
                 lastName: 1,
+                displayName: { $ifNull: ['$displayName', null] },
                 username: 1,
                 publicVisibility: { $ifNull: ['$publicVisibility', 'displayName'] }
               }
@@ -59,6 +60,7 @@ module.exports = async (req, res, next) => {
                 avatar: 1,
                 firstName: 1,
                 lastName: 1,
+                displayName: { $ifNull: ['$displayName', null] },
                 username: 1,
                 publicVisibility: { $ifNull: ['$publicVisibility', 'displayName'] }
               }

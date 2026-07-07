@@ -32,6 +32,7 @@ module.exports = async (req, res, next) => {
             comments: { $ifNull: ["$comments", null] },
             firstName: { $ifNull: ["$user.firstName", null] },
             lastName: { $ifNull: ["$user.lastName", null] },
+            displayName: { $ifNull: ["$user.displayName", null] },
             avatar: { $ifNull: ["$user.avatar", null] },
             createdAt: 1,
             userId: "$user._id",
@@ -52,7 +53,7 @@ module.exports = async (req, res, next) => {
       const anonymous = r.publicVisibility === "anonymous";
       const { userId, publicVisibility, ...rest } = r;
       if (anonymous && !viewerIsAdmin && !isOwner) {
-        return { ...rest, firstName: "Anonymous", lastName: "", avatar: null, anonymous: true };
+        return { ...rest, firstName: "Anonymous", lastName: "", displayName: null, avatar: null, anonymous: true };
       }
       return { ...rest, anonymous };
     });

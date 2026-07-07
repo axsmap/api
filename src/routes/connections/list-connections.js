@@ -6,7 +6,7 @@ const { Event } = require("../../models/event");
 const { maskUserIdentity } = require("../../helpers/leaderboard-mask");
 
 const STATES = new Set(["pending", "accepted", "declined", "all"]);
-const USER_FIELDS = "avatar firstName lastName username publicVisibility";
+const USER_FIELDS = "avatar firstName lastName displayName username publicVisibility";
 
 // GET /connections?state=pending|accepted|declined|all
 module.exports = async (req, res, next) => {
@@ -32,6 +32,7 @@ module.exports = async (req, res, next) => {
             avatar: u.avatar,
             firstName: u.firstName,
             lastName: u.lastName,
+            displayName: u.displayName || null,
             username: u.username,
           },
           u.publicVisibility,

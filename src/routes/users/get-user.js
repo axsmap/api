@@ -419,7 +419,7 @@ async function getUserResponse(matchStage, collation, viewerOpts = {}) {
         // Phase 2 fields — defaults applied here because aggregation pipelines
         // don't apply mongoose schema defaults for absent fields. Existing
         // 14k user docs don't have these set yet; new edits will persist them.
-        displayName: { $ifNull: ["$displayName", null] },
+        displayName: mask.field("displayName", "displayName"),
         socials: {
           $ifNull: [
             "$socials",
