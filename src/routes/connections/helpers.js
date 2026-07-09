@@ -18,6 +18,7 @@ const userPublicProjection = {
   _id: 0,
   id: '$_id',
   avatar: 1,
+  displayName: 1,
   firstName: 1,
   lastName: 1
 };

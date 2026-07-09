@@ -72,6 +72,7 @@ const eventListPipeline = ({ eventsQuery, sortBy, page, pageLimit }) => [
           in: {
             id: '$$manager._id',
             avatar: '$$manager.avatar',
+            displayName: '$$manager.displayName',
             firstName: '$$manager.firstName',
             lastName: '$$manager.lastName',
             username: '$$manager.username'
@@ -85,6 +86,7 @@ const eventListPipeline = ({ eventsQuery, sortBy, page, pageLimit }) => [
           in: {
             id: '$$participant._id',
             avatar: '$$participant.avatar',
+            displayName: '$$participant.displayName',
             firstName: '$$participant.firstName',
             lastName: '$$participant.lastName',
             username: '$$participant.username'

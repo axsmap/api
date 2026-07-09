@@ -84,6 +84,13 @@ module.exports = async (req, res, next) => {
       ? data.connectionPreference
       : user.connectionPreference;
 
+  if (typeof data.displayName !== 'undefined') {
+    user.displayName =
+      data.displayName === null || data.displayName === ''
+        ? null
+        : cleanSpaces(data.displayName);
+  }
+
   user.language = data.language || user.language;
 
   user.lastName = data.lastName ? cleanSpaces(data.lastName) : user.lastName;
@@ -135,6 +142,7 @@ module.exports = async (req, res, next) => {
           avatar: user.avatar,
           connectionPreference: user.connectionPreference,
           description: user.description,
+          displayName: user.displayName,
           disabilities: user.disabilities,
           firstName: user.firstName,
           gender: user.gender,
@@ -179,6 +187,7 @@ module.exports = async (req, res, next) => {
     avatar: user.avatar,
     connectionPreference: user.connectionPreference,
     description: user.description,
+    displayName: user.displayName || null,
     disabilities: user.disabilities,
     firstName: user.firstName,
     gender: user.gender,
