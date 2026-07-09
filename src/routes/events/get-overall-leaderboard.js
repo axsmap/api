@@ -74,6 +74,7 @@ module.exports = async (req, res, next) => {
             _id: 0,
             userId: '$_id',
             avatar: '$user.avatar',
+            displayName: '$user.displayName',
             firstName: '$user.firstName',
             lastName: '$user.lastName',
             username: '$user.username',

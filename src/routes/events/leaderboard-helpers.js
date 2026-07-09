@@ -24,7 +24,10 @@ const getDb = async () => {
   return client.db(decodeURIComponent(database));
 };
 
-const getUsername = user => {
+const getDisplayName = user => {
+  const displayName = (user.displayName || '').trim();
+  if (displayName) return displayName;
+
   const firstName = (user.firstName || '').trim();
   const lastName = (user.lastName || '').trim();
 
@@ -41,7 +44,10 @@ const getUsername = user => {
 
 const normalizeLeaderboardItem = mapathonId => (item, index) => ({
   rank: index + 1,
-  username: getUsername(item),
+  displayName: getDisplayName(item),
+  username: item.username || '',
+  firstName: item.firstName || '',
+  lastName: item.lastName || '',
   placesMapped: item.placesMapped || 0,
   userId: item.userId.toString(),
   mapathonId: mapathonId ? mapathonId.toString() : null,

@@ -4,6 +4,7 @@ const { connectionProjection, toObjectId } = require('./helpers');
 const userProjection = prefix => ({
   id: `$${prefix}._id`,
   avatar: `$${prefix}.avatar`,
+  displayName: `$${prefix}.displayName`,
   firstName: `$${prefix}.firstName`,
   lastName: `$${prefix}.lastName`
 });
