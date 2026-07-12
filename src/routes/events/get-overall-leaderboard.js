@@ -16,6 +16,8 @@ const getMonthlyDateRange = () => {
 };
 
 module.exports = async (req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+
   let contributors;
 
   try {
@@ -74,6 +76,7 @@ module.exports = async (req, res, next) => {
             _id: 0,
             userId: '$_id',
             avatar: '$user.avatar',
+            displayName: '$user.displayName',
             firstName: '$user.firstName',
             lastName: '$user.lastName',
             username: '$user.username',

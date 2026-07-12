@@ -36,6 +36,7 @@ module.exports = async (req, res, next) => {
     address: req.body.address,
     description: req.body.description,
     endDate: req.body.endDate,
+    isInviteOnly: req.body.isInviteOnly,
     isOpen: req.body.isOpen,
     locationCoordinates: req.body.locationCoordinates,
     managers: req.body.managers,
@@ -80,6 +81,10 @@ module.exports = async (req, res, next) => {
 
   event.isOpen =
     typeof data.isOpen !== 'undefined' ? data.isOpen : event.isOpen;
+  event.isInviteOnly =
+    typeof data.isInviteOnly !== 'undefined'
+      ? data.isInviteOnly
+      : event.isInviteOnly;
 
   if (data.locationCoordinates && data.locationCoordinates.length > 0) {
     event.location = {

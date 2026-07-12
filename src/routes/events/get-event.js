@@ -140,6 +140,7 @@ module.exports = async (req, res, next) => {
                 donationGoal: 1,
                 donationId: 1,
                 endDate: 1,
+                isInviteOnly: 1,
                 isOpen: 1,
                 location: 1,
                 name: 1,
@@ -156,6 +157,7 @@ module.exports = async (req, res, next) => {
                     in: {
                       id: '$$manager._id',
                       avatar: '$$manager.avatar',
+                      displayName: '$$manager.displayName',
                       firstName: '$$manager.firstName',
                       lastName: '$$manager.lastName',
                       username: '$$manager.username'
@@ -169,6 +171,7 @@ module.exports = async (req, res, next) => {
                     in: {
                       id: '$$participant._id',
                       avatar: '$$participant.avatar',
+                      displayName: '$$participant.displayName',
                       firstName: '$$participant.firstName',
                       lastName: '$$participant.lastName',
                       username: '$$participant.username',

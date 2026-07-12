@@ -95,6 +95,13 @@ module.exports = {
       errors.isOpen = 'Should be a boolean';
     }
 
+    if (
+      typeof data.isInviteOnly !== 'undefined' &&
+      typeof data.isInviteOnly !== 'boolean'
+    ) {
+      errors.isInviteOnly = 'Should be a boolean';
+    }
+
     if (typeof data.locationCoordinates === 'undefined') {
       errors.locationCoordinates = 'Is required';
     } else if (!Array.isArray(data.locationCoordinates)) {
@@ -243,6 +250,13 @@ module.exports = {
       typeof data.isOpen !== 'boolean'
     ) {
       errors.isOpen = 'Should be a boolean';
+    }
+
+    if (
+      typeof data.isInviteOnly !== 'undefined' &&
+      typeof data.isInviteOnly !== 'boolean'
+    ) {
+      errors.isInviteOnly = 'Should be a boolean';
     }
 
     if (typeof data.locationCoordinates !== 'undefined') {
@@ -461,7 +475,9 @@ module.exports = {
       'reviewsAmount',
       '-reviewsAmount',
       'startDate',
-      '-startDate'
+      '-startDate',
+      'createdAt',
+      '-createdAt'
     ];
     if (queryParams.sortBy && !sortOptions.includes(queryParams.sortBy)) {
       errors.sortBy = 'Should be a valid sort';

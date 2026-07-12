@@ -4,11 +4,17 @@ function publicDonation(donation) {
     event: donation.event,
     creditedUser: donation.creditedUser,
     amount: donation.amountCents / 100,
+    type: donation.type,
+    pledgeAmount: donation.pledgeAmountCents
+      ? donation.pledgeAmountCents / 100
+      : null,
+    pledgeCap: donation.pledgeCapCents ? donation.pledgeCapCents / 100 : null,
     currency: donation.currency,
     status: donation.status,
     anonymous: donation.anonymous,
     donorName: donation.anonymous ? 'Anonymous' : donation.donorName,
     showAmountPublicly: donation.showAmountPublicly,
+    showPledgePublicly: donation.showPledgePublicly,
     confirmedAt: donation.confirmedAt,
     createdAt: donation.createdAt
   };

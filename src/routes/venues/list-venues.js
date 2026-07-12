@@ -491,17 +491,12 @@ module.exports = async (req, res, next) => {
       }
     }
 
-    //Format Google Places results and get array of IDs
+    // Format Google Places results and get array of IDs.
+    // Keep list/search photos empty on purpose so clients use local
+    // category placeholders instead of loading Google Place Photo URLs.
     let places = [];
     const placesIds = [];
     placesResponse.data.results.forEach(place => {
-      let photo = '';
-      if (place.photos) {
-        photo = `https://maps.googleapis.com/maps/api/place/photo?key=${placesApiKey}&maxwidth=300&photoreference=${
-          place.photos[0].photo_reference
-        }`;
-      }
-
       places.push({
         //address: place.vicinity,
         address: place.formatted_address,
@@ -510,7 +505,7 @@ module.exports = async (req, res, next) => {
           lng: place.geometry.location.lng
         },
         name: place.name,
-        photo,
+        photo: '',
         placeId: place.place_id,
         types: place.types
       });

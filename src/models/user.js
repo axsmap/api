@@ -40,6 +40,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       maxlength: [254, 'Should be less than 255 characters']
     },
+    displayName: {
+      type: String,
+      maxlength: [60, 'Should be less than 61 characters'],
+      default: null
+    },
     events: [
       {
         type: mongoose.Schema.Types.ObjectId,

@@ -1,5 +1,3 @@
-const axios = require('axios');
-const FormData = require('form-data');
 const moment = require('moment');
 
 const { Event } = require('../../models/event');
@@ -17,6 +15,7 @@ module.exports = async (req, res, next) => {
     donationEnabled: req.body.donationEnabled,
     donationGoal: req.body.donationGoal,
     endDate: req.body.endDate,
+    isInviteOnly: req.body.isInviteOnly,
     isOpen: req.body.isOpen,
     locationCoordinates: req.body.locationCoordinates,
     name: req.body.name,
@@ -99,39 +98,6 @@ module.exports = async (req, res, next) => {
     data.teamManager = undefined;
   }
 
-  if (data.donationEnabled) {
-    const campaignData = new FormData();
-    campaignData.append('title', data.name);
-    campaignData.append('goal_in_cents', data.donationGoal * 100);
-
-    let options = {
-      method: 'POST',
-      url: `https://${
-        process.env.DONATELY_SUBDOMAIN
-      }.dntly.com/api/v1/admin/campaigns`,
-      headers: {
-        'Content-Type': `multipart/form-data; boundary=${
-          campaignData._boundary
-        }`
-      },
-      auth: {
-        username: process.env.DONATELY_TOKEN,
-        password: ''
-      },
-      data: campaignData
-    };
-
-    let response;
-    try {
-      response = await axios(options);
-    } catch (err) {
-      console.log('Donation campaign failed to be created at create-event.');
-      return next(err);
-    }
-
-    data.donationId = response.data.campaign.id;
-  }
-
   let event;
   try {
     event = await Event.create(data);
@@ -175,7 +141,8 @@ module.exports = async (req, res, next) => {
     id: event.id,
     address: event.address,
     description: event.description,
-    endDate: event.description,
+    endDate: event.endDate,
+    isInviteOnly: event.isInviteOnly,
     isOpen: event.isOpen,
     location: eventLocation,
     managers: event.managers,

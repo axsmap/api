@@ -1,24 +1,24 @@
-const crypto = require('crypto');
 const mongoose = require('mongoose');
 
-const { createOrder } = require('../../helpers/paypal');
 const { Donation } = require('../../models/donation');
 const { Event } = require('../../models/event');
 const { User } = require('../../models/user');
 const { publicDonation } = require('./helpers');
 
-function webAppUrl(req) {
-  const configured = process.env.WEB_APP_URL || process.env.APP_URL;
-  if (configured) return configured.replace(/\/$/, '');
-
-  const origin = req.headers.origin || '';
+function centsFromAmount(value) {
+  const numericAmount = Number(value);
+  const amountCents = Math.round(numericAmount * 100);
   if (
-    /^https:\/\//.test(origin) ||
-    /^http:\/\/localhost(?::\d+)?$/.test(origin)
+    !Number.isFinite(numericAmount) ||
+    amountCents < 100 ||
+    amountCents > 100000000
   ) {
-    return origin;
+    return { error: 'Should be between $1 and $1,000,000' };
   }
-  return 'http://localhost:3000';
+  if (Math.abs(numericAmount * 100 - amountCents) > 0.001) {
+    return { error: 'Should have at most two decimal places' };
+  }
+  return { amountCents };
 }
 
 module.exports = async (req, res, next) => {
@@ -26,10 +26,10 @@ module.exports = async (req, res, next) => {
     eventId,
     creditedUserId,
     amount,
+    maximumCap,
     donorName,
     donorEmail,
-    anonymous,
-    showAmountPublicly
+    anonymous
   } = req.body;
 
   if (!mongoose.Types.ObjectId.isValid(eventId)) {
@@ -39,29 +39,23 @@ module.exports = async (req, res, next) => {
     return res.status(400).json({ creditedUserId: 'Invalid participant' });
   }
 
-  const numericAmount = Number(amount);
-  const amountCents = Math.round(numericAmount * 100);
-  if (
-    !Number.isFinite(numericAmount) ||
-    amountCents < 100 ||
-    amountCents > 100000000
-  ) {
+  const amountResult = centsFromAmount(amount);
+  if (amountResult.error)
+    return res.status(400).json({ amount: amountResult.error });
+
+  const capResult = centsFromAmount(maximumCap);
+  if (capResult.error) {
+    return res.status(400).json({ maximumCap: capResult.error });
+  }
+  if (capResult.amountCents < amountResult.amountCents) {
     return res
       .status(400)
-      .json({ amount: 'Should be between $1 and $1,000,000' });
+      .json({ maximumCap: 'Should be at least one location pledge' });
   }
-  if (Math.abs(numericAmount * 100 - amountCents) > 0.001) {
-    return res
-      .status(400)
-      .json({ amount: 'Should have at most two decimal places' });
-  }
+
   if (typeof anonymous !== 'boolean') {
     return res.status(400).json({ anonymous: 'Should be a boolean' });
   }
-  if (typeof showAmountPublicly !== 'boolean') {
-    return res.status(400).json({ showAmountPublicly: 'Should be a boolean' });
-  }
-
   const cleanDonorName = typeof donorName === 'string' ? donorName.trim() : '';
   if (!anonymous && !cleanDonorName) {
     return res.status(400).json({ donorName: 'Is required' });
@@ -91,7 +85,7 @@ module.exports = async (req, res, next) => {
         _id: creditedUserId,
         isArchived: false,
         isBlocked: false
-      }).select('firstName lastName username events')
+      }).select('_id')
     ]);
   } catch (error) {
     return next(error);
@@ -114,63 +108,24 @@ module.exports = async (req, res, next) => {
     });
   }
 
-  const checkoutToken = crypto.randomBytes(32).toString('hex');
-  let donation;
   try {
-    donation = await Donation.create({
+    const pledge = await Donation.create({
       event: eventId,
       creditedUser: creditedUserId,
-      amountCents,
+      type: 'pledge',
+      amountCents: capResult.amountCents,
+      pledgeAmountCents: amountResult.amountCents,
+      pledgeCapCents: capResult.amountCents,
       donorName: anonymous ? '' : cleanDonorName,
       donorEmail: cleanDonorEmail,
       anonymous,
-      showAmountPublicly,
-      checkoutToken
+      showAmountPublicly: true,
+      showPledgePublicly: true,
+      status: 'pledged'
     });
+
+    return res.status(201).json({ pledge: publicDonation(pledge) });
   } catch (error) {
-    return next(error);
-  }
-
-  const baseUrl = webAppUrl(req);
-  const returnUrl = `${baseUrl}/donations/paypal/complete?donationId=${
-    donation.id
-  }`;
-  const cancelUrl =
-    `${baseUrl}/donations/paypal/cancel?donationId=${donation.id}` +
-    `&checkoutToken=${checkoutToken}`;
-
-  try {
-    const order = await createOrder({
-      donation,
-      event,
-      participant,
-      returnUrl,
-      cancelUrl
-    });
-    const approvalLink = (order.links || []).find(
-      link => link.rel === 'payer-action'
-    );
-    const fallbackApprovalLink = (order.links || []).find(
-      link => link.rel === 'approve'
-    );
-    const approvalUrl =
-      (approvalLink && approvalLink.href) ||
-      (fallbackApprovalLink && fallbackApprovalLink.href);
-
-    if (!approvalUrl) throw new Error('PayPal approval URL was not returned');
-
-    donation.paypalOrderId = order.id;
-    donation.paypalStatus = order.status || 'CREATED';
-    await donation.save();
-
-    return res.status(201).json({
-      donation: publicDonation(donation),
-      approvalUrl
-    });
-  } catch (error) {
-    donation.status = 'failed';
-    donation.paypalStatus = 'CREATE_FAILED';
-    await donation.save().catch(() => {});
     return next(error);
   }
 };

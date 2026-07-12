@@ -9,6 +9,7 @@ const editReview = require('./edit-review');
 const flagReview = require('./flag-review');
 const listReviews = require('./list-reviews');
 const voteReview = require('./vote-review');
+const voiceConversation = require('./voice-conversation');
 const voiceToReview = require('./voice-to-review');
 
 const router = new express.Router();
@@ -16,6 +17,7 @@ const router = new express.Router();
 router.get('', isAuthenticated({ isOptional: false }), listReviews);
 router.post('', isAuthenticated({ isOptional: false }), createReview);
 router.post('/create', isAuthenticated({ isOptional: false }), createAiReview);
+router.post('/voice-conversation', voiceConversation);
 router.post('/voice-to-review', voiceToReview);
 router.put('/:reviewId', isAuthenticated({ isOptional: false }), editReview);
 router.put(

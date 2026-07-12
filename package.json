@@ -10,7 +10,8 @@
     "cmt": "git-cz",
     "deploy": "now && now alias",
     "serve": "cross-env NODE_ENV=development gulp",
-    "start": "node src/index.js"
+    "start": "node src/index.js",
+    "start:local": "cross-env PORT=8000 NODE_ENV=production node src/index.js"
   },
   "devDependencies": {
     "commitizen": "2.10.1",

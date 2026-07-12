@@ -52,6 +52,16 @@ const eventSchema = new mongoose.Schema(
       default: false,
       required: [true, 'Is required']
     },
+    isInviteOnly: {
+      type: Boolean,
+      default: false,
+      required: [true, 'Is required']
+    },
+    inviteCode: {
+      type: String,
+      default: '',
+      select: false
+    },
     location: {
       type: {
         type: String,

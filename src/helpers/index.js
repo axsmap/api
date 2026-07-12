@@ -2,11 +2,10 @@ const aws = require('aws-sdk');
 const { camelCase } = require('lodash');
 const jwt = require('jsonwebtoken');
 const { mapKeys, pickBy } = require('lodash');
-const { ObjectId } = require('mongodb');
 const nodemailer = require('nodemailer');
 const { snakeCase } = require('lodash');
 
-const { getDb } = require('../routes/events/leaderboard-helpers');
+const { User } = require('../models/user');
 
 module.exports = {
   cleanSpaces(string) {
@@ -33,23 +32,10 @@ module.exports = {
 
       let user;
       try {
-        const db = await getDb();
-        user = await db.collection('users').findOne(
-          {
-            _id: new ObjectId(decoded.userId),
-            isArchived: false
-          },
-          {
-            projection: {
-              __v: 0,
-              createdAt: 0,
-              isAdmin: 0,
-              isArchived: 0,
-              hashedPassword: 0,
-              updatedAt: 0
-            }
-          }
-        );
+        user = await User.findOne({
+          _id: decoded.userId,
+          isArchived: false
+        }).select('-__v -createdAt -isArchived -hashedPassword -updatedAt');
       } catch (err) {
         console.log(
           `User ${decoded.userId} failed to be found at authenticate`
@@ -58,7 +44,6 @@ module.exports = {
       }
 
       if (user) {
-        user.id = user._id.toString();
         req.user = user;
 
         if (

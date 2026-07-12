@@ -115,6 +115,7 @@ module.exports = async (req, res, next) => {
     blockedUsers = blockedUsers.map(user => ({
       id: user._id.toString(),
       avatar: user.avatar,
+      displayName: user.displayName || null,
       firstName: user.firstName,
       lastName: user.lastName,
       username: user.username
@@ -130,6 +131,7 @@ module.exports = async (req, res, next) => {
     blockedUsers,
     connectionPreference: req.user.connectionPreference || 'mapathon',
     description: req.user.description,
+    displayName: req.user.displayName || null,
     disabilities: req.user.disabilities,
     email: req.user.email,
     events,

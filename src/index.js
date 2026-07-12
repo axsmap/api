@@ -1,5 +1,6 @@
 const fs = require('fs');
 const https = require('https');
+const path = require('path');
 
 const bodyParser = require('body-parser');
 const cors = require('cors');
@@ -10,7 +11,18 @@ const morgan = require('morgan');
 const raven = require('raven');
 
 // Fill process.env with environment variables
-require('dotenv').config();
+const envPath = path.resolve(__dirname, '..', '.env');
+const dotenvResult = require('dotenv').config({ path: envPath });
+if (dotenvResult.error) {
+  console.warn(
+    `[env] Could not load ${envPath}: ${dotenvResult.error.message}`
+  );
+} else {
+  console.log(`[env] Loaded ${envPath}`);
+}
+console.log(
+  `[env] OPENAI_API_KEY ${process.env.OPENAI_API_KEY ? 'loaded' : 'missing'}`
+);
 //console.log(process.env)
 
 const port = process.env.PORT || 8000;

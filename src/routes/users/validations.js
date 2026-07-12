@@ -250,6 +250,14 @@ module.exports = {
       errors.connectionPreference = 'Should be a valid connection preference';
     }
 
+    if (typeof data.displayName !== 'undefined' && data.displayName !== null) {
+      if (typeof data.displayName !== 'string') {
+        errors.displayName = 'Should be a string';
+      } else if (cleanSpaces(data.displayName).length > 60) {
+        errors.displayName = 'Should have less than 61 characters';
+      }
+    }
+
     if (typeof data.username !== 'undefined') {
       if (typeof data.username !== 'string') {
         errors.username = 'Should be a string';

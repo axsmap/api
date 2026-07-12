@@ -97,6 +97,80 @@ async function getUserResponse(matchStage, collation) {
             }
           },
           {
+            $lookup: {
+              from: 'donations',
+              let: { eventId: '$_id' },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $and: [
+                        { $eq: ['$event', '$$eventId'] },
+                        { $eq: ['$creditedUser', '$$userId'] },
+                        { $eq: ['$type', 'pledge'] },
+                        { $in: ['$status', ['pledged', 'approved']] }
+                      ]
+                    }
+                  }
+                },
+                { $sort: { createdAt: -1 } },
+                {
+                  $lookup: {
+                    from: 'reviews',
+                    let: {
+                      pledgeEventId: '$event',
+                      pledgeUserId: '$creditedUser',
+                      pledgedAt: '$createdAt'
+                    },
+                    pipeline: [
+                      {
+                        $match: {
+                          $expr: {
+                            $and: [
+                              { $eq: ['$event', '$$pledgeEventId'] },
+                              { $eq: ['$user', '$$pledgeUserId'] },
+                              { $ne: ['$isBanned', true] },
+                              { $gt: ['$createdAt', '$$pledgedAt'] }
+                            ]
+                          }
+                        }
+                      },
+                      { $group: { _id: '$venue' } },
+                      { $count: 'n' }
+                    ],
+                    as: '_postPledgeReviewCount'
+                  }
+                },
+                {
+                  $project: {
+                    _id: 0,
+                    id: '$_id',
+                    eventId: '$event',
+                    name: {
+                      $cond: ['$anonymous', 'Anonymous', '$donorName']
+                    },
+                    pledgeAmount: { $divide: ['$pledgeAmountCents', 100] },
+                    pledgeCap: { $divide: ['$pledgeCapCents', 100] },
+                    status: 1,
+                    anonymous: 1,
+                    showAmountPublicly: { $literal: true },
+                    showPledgePublicly: { $literal: true },
+                    mappedCount: {
+                      $ifNull: [
+                        {
+                          $arrayElemAt: ['$_postPledgeReviewCount.n', 0]
+                        },
+                        0
+                      ]
+                    },
+                    createdAt: 1
+                  }
+                }
+              ],
+              as: '_publicPledges'
+            }
+          },
+          {
             // Per-event participation row carries personalGoal + hiddenFromProfile.
             // May be absent for events the user joined before EventParticipant
             // rows were created — $ifNull supplies defaults below.
@@ -182,6 +256,7 @@ async function getUserResponse(matchStage, collation) {
                   0
                 ]
               },
+              pledges: '$_publicPledges',
               hiddenFromProfile: {
                 $ifNull: [
                   { $arrayElemAt: ['$_participation.hiddenFromProfile', 0] },
@@ -234,7 +309,6 @@ async function getUserResponse(matchStage, collation) {
             }
           },
           { $sort: { amountCents: -1, confirmedAt: -1 } },
-          { $limit: 5 },
           {
             $lookup: {
               from: 'events',
