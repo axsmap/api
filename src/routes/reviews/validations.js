@@ -2,7 +2,8 @@ const { isEmpty } = require('lodash');
 const { isInt, isMongoId } = require('validator');
 
 module.exports = {
-  validateCreateEditReview(data) {
+  validateCreateEditReview(data, options = {}) {
+    const { requirePlace = true } = options;
     const errors = {};
 
     //
@@ -84,14 +85,14 @@ module.exports = {
       if (typeof data.interiorScore !== 'number') {
         errors.interiorScore = 'Should be a number';
       } else if (data.interiorScore < 1 || data.interiorScore > 7) {
-        //Remove required interiorScore
-        //errors.interiorScore = 'Should be between 1 and 7';
+        // Remove required interiorScore
+        // errors.interiorScore = 'Should be between 1 and 7';
       }
     }
      */
 
     //
-    //original fields
+    // original fields
     //
     if (
       typeof data.allowsGuideDog !== 'undefined' &&
@@ -176,9 +177,12 @@ module.exports = {
       errors.photo = 'Should be a string';
     }
 
-    if (!data.place) {
+    if (requirePlace && !data.place) {
       errors.place = 'Is required';
-    } else if (typeof data.place !== 'string') {
+    } else if (
+      typeof data.place !== 'undefined' &&
+      typeof data.place !== 'string'
+    ) {
       errors.place = 'Should be a string';
     }
 
@@ -203,7 +207,7 @@ module.exports = {
   validateListReviews(queryParams) {
     const errors = {};
 
-    //Remove bathroomScore validation
+    // Remove bathroomScore validation
     if (queryParams.bathroomScore) {
       /*
       const limits = queryParams.bathroomScore.split(',');
@@ -219,7 +223,7 @@ module.exports = {
       */
     }
 
-    //Remove entryScore validation
+    // Remove entryScore validation
     if (queryParams.entryScore) {
       /*
       const limits = queryParams.entryScore.split(',');

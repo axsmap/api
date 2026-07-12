@@ -5,8 +5,99 @@ const { Event } = require('../../models/event');
 const { Review } = require('../../models/review');
 const { Team } = require('../../models/team');
 const { Venue } = require('../../models/venue');
+const venueReviewSummary = require('../../helpers/venue-review-summary.js');
 
 const { validateCreateEditReview } = require('./validations');
+
+const booleanFields = [
+  'hasPermanentRamp',
+  'hasPortableRamp',
+  'hasWideEntrance',
+  'hasAccessibleTableHeight',
+  'hasAccessibleElevator',
+  'hasInteriorRamp',
+  'hasSwingOutDoor',
+  'hasLargeStall',
+  'hasSupportAroundToilet',
+  'hasLoweredSinks',
+  'allowsGuideDog',
+  'hasParking',
+  'hasSecondEntry',
+  'hasWellLit',
+  'isQuiet',
+  'isSpacious'
+];
+
+const stepKeys = ['zero', 'one', 'two', 'moreThanTwo'];
+
+const hasOwn = (object, key) =>
+  Object.prototype.hasOwnProperty.call(object, key);
+
+const ensureCounter = value => ({
+  yes: value && typeof value.yes === 'number' ? value.yes : 0,
+  no: value && typeof value.no === 'number' ? value.no : 0
+});
+
+const ensureSteps = steps => ({
+  zero: steps && typeof steps.zero === 'number' ? steps.zero : 0,
+  one: steps && typeof steps.one === 'number' ? steps.one : 0,
+  two: steps && typeof steps.two === 'number' ? steps.two : 0,
+  moreThanTwo:
+    steps && typeof steps.moreThanTwo === 'number' ? steps.moreThanTwo : 0
+});
+
+const decrement = value => Math.max(0, value - 1);
+
+const applyBooleanCounterChange = (venue, field, previousValue, nextValue) => {
+  if (previousValue === nextValue) return;
+
+  const counter = ensureCounter(venue[field]);
+
+  if (typeof previousValue === 'boolean') {
+    const previousKey = previousValue ? 'yes' : 'no';
+    counter[previousKey] = decrement(counter[previousKey]);
+  }
+
+  if (typeof nextValue === 'boolean') {
+    const nextKey = nextValue ? 'yes' : 'no';
+    counter[nextKey] += 1;
+  }
+
+  venue[field] = counter;
+};
+
+const applyStepsCounterChange = (venue, previousValue, nextValue) => {
+  if (previousValue === nextValue) return;
+
+  const steps = ensureSteps(venue.steps);
+
+  if (typeof previousValue === 'number' && stepKeys[previousValue]) {
+    steps[stepKeys[previousValue]] = decrement(steps[stepKeys[previousValue]]);
+  }
+
+  if (typeof nextValue === 'number' && stepKeys[nextValue]) {
+    steps[stepKeys[nextValue]] += 1;
+  }
+
+  venue.steps = steps;
+};
+
+const recalculateVenueScores = venue => {
+  let scoring = venueReviewSummary.calculateRatingLevel('entrance', venue);
+  venue.entranceScore = scoring.ratingLevel;
+  venue.entranceGlyphs = scoring.ratingGlyphs;
+  scoring = venueReviewSummary.calculateRatingLevel('interior', venue);
+  venue.interiorScore = scoring.ratingLevel;
+  venue.interiorGlyphs = scoring.ratingGlyphs;
+  scoring = venueReviewSummary.calculateRatingLevel('restroom', venue);
+  venue.restroomScore = scoring.ratingLevel;
+  venue.restroomGlyphs = scoring.ratingGlyphs;
+  venue.mapMarkerScore = venueReviewSummary.calculateMapMarkerScore(
+    venue.entranceScore,
+    venue.interiorScore,
+    venue.restroomScore
+  );
+};
 
 module.exports = async (req, res, next) => {
   if (req.user.isBlocked) {
@@ -57,7 +148,6 @@ module.exports = async (req, res, next) => {
   }
 
   const data = pick(req.body, [
-    //new expanded fields
     'hasPermanentRamp',
     'hasPortableRamp',
     'hasWideEntrance',
@@ -68,31 +158,28 @@ module.exports = async (req, res, next) => {
     'hasLargeStall',
     'hasSupportAroundToilet',
     'hasLoweredSinks',
-
-    //original fields
-    //'bathroomScore',
+    'allowsGuideDog',
     'comments',
-    //'entryScore',
     'event',
-    'guideDog',
-    'parking',
-    'quiet',
-    'ramp',
-    'secondEntry',
-    'spacious',
+    'hasParking',
+    'hasSecondEntry',
+    'hasWellLit',
+    'isQuiet',
+    'isSpacious',
     'steps',
-    'team',
-    'wellLit'
+    'team'
   ]);
-  const { errors, isValid } = validateCreateEditReview(data);
+  const { errors, isValid } = validateCreateEditReview(data, {
+    requirePlace: false
+  });
 
   if (!isValid) {
     return res.status(400).json(errors);
   }
 
-  //review.bathroomScore = data.bathroomScore || review.bathroomScore;
-  review.comments = data.comments || review.comments;
-  //review.entryScore = data.entryScore || review.entryScore;
+  if (hasOwn(data, 'comments')) {
+    review.comments = data.comments;
+  }
 
   if (data.event) {
     let event;
@@ -125,31 +212,15 @@ module.exports = async (req, res, next) => {
     review.event = data.event;
   }
 
-  review.guideDog = data.guideDog || review.guideDog;
-  review.parking = data.parking || review.parking;
-  review.quiet = data.quiet || review.quiet;
-  review.ramp = data.ramp || review.ramp;
-  review.secondEntry = data.secondEntry || review.secondEntry;
-  review.spacious = data.spacious || review.spacious;
+  booleanFields.forEach(field => {
+    if (!hasOwn(data, field)) return;
 
-  //new expanded fields
-  review.hasPermanentRamp = data.hasPermanentRamp || review.hasPermanentRamp;
-  review.hasPortableRamp = data.hasPortableRamp || review.hasPortableRamp;
-  review.hasWideEntrance = data.hasWideEntrance || review.hasWideEntrance;
-  review.hasAccessibleTableHeight =
-    data.hasAccessibleTableHeight || review.hasAccessibleTableHeight;
-  review.hasAccessibleElevator =
-    data.hasAccessibleElevator || review.hasAccessibleElevator;
-  review.hasInteriorRamp = data.hasInteriorRamp || review.hasInteriorRamp;
-  review.hasSwingOutDoor = data.hasSwingOutDoor || review.hasSwingOutDoor;
-  review.hasLargeStall = data.hasLargeStall || review.hasLargeStall;
-  review.hasSupportAroundToilet =
-    data.hasSupportAroundToilet || review.hasSupportAroundToilet;
-  review.hasLoweredSinks = data.hasLoweredSinks || review.hasLoweredSinks;
+    applyBooleanCounterChange(venue, field, review[field], data[field]);
+    review[field] = data[field];
+  });
 
-  if (data.steps) {
-    venue.stepsReviews[review.steps] -= 1;
-    venue.stepsReviews[data.steps] += 1;
+  if (hasOwn(data, 'steps')) {
+    applyStepsCounterChange(venue, review.steps, data.steps);
     review.steps = data.steps;
   }
 
@@ -175,9 +246,9 @@ module.exports = async (req, res, next) => {
     review.team = data.team;
   }
 
-  review.wellLit = data.wellLit || review.wellLit;
-
   review.updatedAt = moment.utc().toDate();
+  venue.updatedAt = review.updatedAt;
+  recalculateVenueScores(venue);
 
   try {
     await review.save();
