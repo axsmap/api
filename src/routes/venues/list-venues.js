@@ -79,6 +79,73 @@ const mapDbVenue = venue => {
   });
 };
 
+const findFallbackVenues = async (queryParams, coordinates, venuesFilters) => {
+  const fallbackFilters = {
+    location: {
+      $near: {
+        $geometry: {
+          type: 'Point',
+          coordinates: [coordinates[1], coordinates[0]]
+        },
+        $maxDistance: 50000
+      }
+    },
+    isArchived: false
+  };
+
+  if (queryParams.type) {
+    fallbackFilters.types = queryParams.type;
+  }
+
+  const geoNearQuery = Object.assign(
+    { isArchived: false },
+    queryParams.type ? { types: queryParams.type } : {},
+    queryParams.name ? { name: { $regex: queryParams.name, $options: 'i' } } : {}
+  );
+
+  let venues;
+  try {
+    const db = await getDb();
+    venues = await db
+      .collection('venues')
+      .aggregate([
+        {
+          $geoNear: {
+            near: {
+              type: 'Point',
+              coordinates: [Number(coordinates[1]), Number(coordinates[0])]
+            },
+            distanceField: 'distance',
+            maxDistance: 50000,
+            spherical: true,
+            query: geoNearQuery
+          }
+        },
+        {
+          $limit: 20
+        }
+      ])
+      .toArray();
+  } catch (err) {
+    console.log(
+      `Fallback venues failed to be found at list-venues.\nvenuesQuery: ${JSON.stringify(
+        fallbackFilters
+      )}`
+    );
+    throw err;
+  }
+
+  return {
+    nextPage: undefined,
+    googlePlacesUnavailable: true,
+    photoMode: 'placeholder',
+    results: venues
+      .map(mapDbVenue)
+      .map(venue => applyVenueScores(venue, venuesFilters))
+      .filter(Boolean)
+  };
+};
+
 module.exports = async (req, res, next) => {
   const queryParams = req.query;
   const placesApiKey =
@@ -117,7 +184,16 @@ module.exports = async (req, res, next) => {
     if (statusCode === 'ZERO_RESULTS') {
       return res.status(404).json({ keywords: 'Address not found' });
     } else if (statusCode === 'OVER_QUERY_LIMIT') {
-      return next(new Error('Over query limit with Google Places API'));
+      try {
+        const fallbackResponse = await findFallbackVenues(
+          queryParams,
+          coordinates,
+          {}
+        );
+        return res.status(200).json(fallbackResponse);
+      } catch (err) {
+        return next(err);
+      }
     } else if (statusCode === 'REQUEST_DENIED') {
       return next(new Error('Request denied with Google Places API'));
     } else if (statusCode === 'INVALID_REQUEST') {
@@ -391,7 +467,7 @@ module.exports = async (req, res, next) => {
     try {
       console.log(
         'performing google search: ' +
-          `https://maps.googleapis.com/maps/api/place/${searchType}/json${nearbyParams}`
+          `https://maps.googleapis.com/maps/api/place/${searchType}/json`
       );
       placesResponse = await axios.get(
         `https://maps.googleapis.com/maps/api/place/${searchType}/json${nearbyParams}`
@@ -407,71 +483,30 @@ module.exports = async (req, res, next) => {
 
     const statusCode = placesResponse.data.status;
     if (statusCode === 'OVER_QUERY_LIMIT') {
-      return next(new Error('Over query limit with Google Places API'));
+      try {
+        dataResponse = await findFallbackVenues(
+          queryParams,
+          coordinates,
+          venuesFilters
+        );
+      } catch (err) {
+        return next(err);
+      }
+      return res.status(200).json(dataResponse);
     } else if (statusCode === 'REQUEST_DENIED') {
       console.log(
         'Google Places request denied; falling back to AXS venue search'
       );
 
-      const fallbackFilters = {
-        location: {
-          $near: {
-            $geometry: {
-              type: 'Point',
-              coordinates: [coordinates[1], coordinates[0]]
-            },
-            $maxDistance: 50000
-          }
-        },
-        isArchived: false
-      };
-
-      if (queryParams.type) {
-        fallbackFilters.types = queryParams.type;
-      }
-
-      let venues;
       try {
-        const db = await getDb();
-        venues = await db
-          .collection('venues')
-          .aggregate([
-            {
-              $geoNear: {
-                near: {
-                  type: 'Point',
-                  coordinates: [Number(coordinates[1]), Number(coordinates[0])]
-                },
-                distanceField: 'distance',
-                maxDistance: 50000,
-                spherical: true,
-                query: Object.assign(
-                  { isArchived: false },
-                  queryParams.type ? { types: queryParams.type } : {}
-                )
-              }
-            },
-            {
-              $limit: 20
-            }
-          ])
-          .toArray();
-      } catch (err) {
-        console.log(
-          `Fallback venues failed to be found at list-venues.\nvenuesQuery: ${JSON.stringify(
-            fallbackFilters
-          )}`
+        dataResponse = await findFallbackVenues(
+          queryParams,
+          coordinates,
+          venuesFilters
         );
+      } catch (err) {
         return next(err);
       }
-
-      dataResponse = {
-        nextPage: undefined,
-        results: venues
-          .map(mapDbVenue)
-          .map(venue => applyVenueScores(venue))
-          .filter(Boolean)
-      };
 
       return res.status(200).json(dataResponse);
     } else if (statusCode === 'INVALID_REQUEST') {
@@ -713,6 +748,8 @@ module.exports = async (req, res, next) => {
 
     dataResponse = {
       nextPage: placesResponse.data.next_page_token,
+      googlePlacesUnavailable: false,
+      photoMode: 'placeholder',
       results: places
     };
   } //ends legacy filter logic, false conditional
