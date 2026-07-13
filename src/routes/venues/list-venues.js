@@ -100,7 +100,9 @@ const findFallbackVenues = async (queryParams, coordinates, venuesFilters) => {
   const geoNearQuery = Object.assign(
     { isArchived: false },
     queryParams.type ? { types: queryParams.type } : {},
-    queryParams.name ? { name: { $regex: queryParams.name, $options: 'i' } } : {}
+    queryParams.name
+      ? { name: { $regex: queryParams.name, $options: 'i' } }
+      : {}
   );
 
   let venues;
@@ -478,11 +480,29 @@ module.exports = async (req, res, next) => {
           queryParams
         )}`
       );
-      return next(err);
+      try {
+        dataResponse = await findFallbackVenues(
+          queryParams,
+          coordinates,
+          venuesFilters
+        );
+      } catch (fallbackErr) {
+        return next(fallbackErr);
+      }
+      return res.status(200).json(dataResponse);
     }
 
     const statusCode = placesResponse.data.status;
-    if (statusCode === 'OVER_QUERY_LIMIT') {
+    if (statusCode === 'OK') {
+      // Continue below with Google results.
+    } else if (statusCode === 'ZERO_RESULTS') {
+      return res.status(200).json({
+        nextPage: undefined,
+        googlePlacesUnavailable: false,
+        photoMode: 'placeholder',
+        results: []
+      });
+    } else if (statusCode === 'OVER_QUERY_LIMIT') {
       try {
         dataResponse = await findFallbackVenues(
           queryParams,
@@ -509,10 +529,23 @@ module.exports = async (req, res, next) => {
       }
 
       return res.status(200).json(dataResponse);
-    } else if (statusCode === 'INVALID_REQUEST') {
-      return next(new Error('Invalid request with Google Places API'));
-    } else if (statusCode === 'UNKNOWN_ERROR') {
-      return next(new Error('Unknown error with Google Places API'));
+    } else {
+      console.log(
+        `Google Places ${statusCode ||
+          'UNKNOWN_STATUS'}; falling back to AXS venue search`
+      );
+
+      try {
+        dataResponse = await findFallbackVenues(
+          queryParams,
+          coordinates,
+          venuesFilters
+        );
+      } catch (err) {
+        return next(err);
+      }
+
+      return res.status(200).json(dataResponse);
     }
     //do we need to check for 0?
 
@@ -526,12 +559,16 @@ module.exports = async (req, res, next) => {
       }
     }
 
-    // Format Google Places results and get array of IDs.
-    // Keep list/search photos empty so clients use local category
-    // placeholders instead of loading Google Place Photo URLs.
     let places = [];
     const placesIds = [];
     placesResponse.data.results.forEach(place => {
+      let photo = '';
+      if (place.photos && place.photos[0]) {
+        photo = `https://maps.googleapis.com/maps/api/place/photo?key=${placesApiKey}&maxwidth=300&photoreference=${
+          place.photos[0].photo_reference
+        }`;
+      }
+
       places.push({
         //address: place.vicinity,
         address: place.formatted_address,
@@ -540,7 +577,7 @@ module.exports = async (req, res, next) => {
           lng: place.geometry.location.lng
         },
         name: place.name,
-        photo: '',
+        photo,
         placeId: place.place_id,
         types: place.types
       });
