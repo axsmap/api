@@ -47,7 +47,10 @@ test('user lookup by username returns the shared public profile response', async
         return Promise.resolve([
           {
             id: '4fb091c465f05c010000001f',
+            displayName: 'Jason',
             username: 'jason-dasilva-6iy8v',
+            profilePublic: true,
+            publicVisibility: 'displayName',
             isArchived: false,
             isBlocked: false,
             ranking: [{ ranking: 6 }],
@@ -73,7 +76,10 @@ test('user lookup by username returns the shared public profile response', async
   });
   assert.deepStrictEqual(collation, { locale: 'en', strength: 2 });
   assert.strictEqual(response.status, 200);
+  assert.strictEqual(response.body.displayName, 'Jason');
   assert.strictEqual(response.body.username, 'jason-dasilva-6iy8v');
+  assert.strictEqual(response.body.profilePublic, true);
+  assert.strictEqual(response.body.publicVisibility, 'displayName');
   assert.strictEqual(response.body.ranking, 7);
   assert.strictEqual(response.body.isArchived, undefined);
   assert.strictEqual(response.body.isBlocked, undefined);
