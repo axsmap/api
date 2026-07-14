@@ -104,8 +104,11 @@ module.exports = async (req, res, next) => {
               projection: {
                 _id: 1,
                 avatar: 1,
+                displayName: 1,
                 firstName: 1,
                 lastName: 1,
+                profilePublic: 1,
+                publicVisibility: 1,
                 username: 1
               }
             }
@@ -118,6 +121,8 @@ module.exports = async (req, res, next) => {
       displayName: user.displayName || null,
       firstName: user.firstName,
       lastName: user.lastName,
+      profilePublic: user.profilePublic !== false,
+      publicVisibility: user.publicVisibility || 'displayName',
       username: user.username
     }));
   } catch (err) {
@@ -143,6 +148,8 @@ module.exports = async (req, res, next) => {
     managedEvents,
     managedTeams,
     phone: req.user.phone,
+    profilePublic: req.user.profilePublic !== false,
+    publicVisibility: req.user.publicVisibility || 'displayName',
     reviewFieldsAmount: req.user.reviewFieldsAmount,
     reviewsAmount: req.user.reviewsAmount,
     showDisabilities: req.user.showDisabilities,

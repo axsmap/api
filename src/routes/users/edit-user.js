@@ -91,6 +91,16 @@ module.exports = async (req, res, next) => {
         : cleanSpaces(data.displayName);
   }
 
+  user.profilePublic =
+    typeof data.profilePublic !== 'undefined'
+      ? data.profilePublic
+      : user.profilePublic !== false;
+
+  user.publicVisibility =
+    typeof data.publicVisibility !== 'undefined'
+      ? data.publicVisibility
+      : user.publicVisibility || 'displayName';
+
   user.language = data.language || user.language;
 
   user.lastName = data.lastName ? cleanSpaces(data.lastName) : user.lastName;
@@ -150,6 +160,8 @@ module.exports = async (req, res, next) => {
           language: user.language,
           lastName: user.lastName,
           phone: user.phone,
+          profilePublic: user.profilePublic,
+          publicVisibility: user.publicVisibility,
           showDisabilities: user.showDisabilities,
           showEmail: user.showEmail,
           showPhone: user.showPhone,
@@ -194,6 +206,8 @@ module.exports = async (req, res, next) => {
     isSubscribed: user.isSubscribed,
     lastName: user.lastName,
     phone: user.phone,
+    profilePublic: user.profilePublic,
+    publicVisibility: user.publicVisibility,
     showDisabilities: user.showDisabilities,
     showEmail: user.showEmail,
     showPhone: user.showPhone,

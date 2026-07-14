@@ -77,6 +77,10 @@ module.exports = async (req, res, next) => {
             displayName: '$user.displayName',
             firstName: '$user.firstName',
             lastName: '$user.lastName',
+            profilePublic: { $ifNull: ['$user.profilePublic', true] },
+            publicVisibility: {
+              $ifNull: ['$user.publicVisibility', 'displayName']
+            },
             username: '$user.username',
             placesMapped: 1
           }

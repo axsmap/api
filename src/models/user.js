@@ -45,6 +45,20 @@ const userSchema = new mongoose.Schema(
       maxlength: [60, 'Should be less than 61 characters'],
       default: null
     },
+    profilePublic: {
+      type: Boolean,
+      default: true,
+      required: [true, 'Is required']
+    },
+    publicVisibility: {
+      type: String,
+      default: 'displayName',
+      enum: {
+        values: ['displayName', 'anonymous'],
+        general: 'Invalid type of public visibility'
+      },
+      required: [true, 'Is required']
+    },
     events: [
       {
         type: mongoose.Schema.Types.ObjectId,

@@ -159,6 +159,12 @@ module.exports = async (req, res, next) => {
                       displayName: '$$manager.displayName',
                       firstName: '$$manager.firstName',
                       lastName: '$$manager.lastName',
+                      profilePublic: {
+                        $ifNull: ['$$manager.profilePublic', true]
+                      },
+                      publicVisibility: {
+                        $ifNull: ['$$manager.publicVisibility', 'displayName']
+                      },
                       username: '$$manager.username'
                     }
                   }
@@ -173,6 +179,15 @@ module.exports = async (req, res, next) => {
                       displayName: '$$participant.displayName',
                       firstName: '$$participant.firstName',
                       lastName: '$$participant.lastName',
+                      profilePublic: {
+                        $ifNull: ['$$participant.profilePublic', true]
+                      },
+                      publicVisibility: {
+                        $ifNull: [
+                          '$$participant.publicVisibility',
+                          'displayName'
+                        ]
+                      },
                       username: '$$participant.username',
                       reviewsAmount: '$$participant.reviewsAmount'
                     }

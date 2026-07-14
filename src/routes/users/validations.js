@@ -258,6 +258,20 @@ module.exports = {
       }
     }
 
+    if (
+      typeof data.profilePublic !== 'undefined' &&
+      typeof data.profilePublic !== 'boolean'
+    ) {
+      errors.profilePublic = 'Should be a boolean';
+    }
+
+    if (
+      typeof data.publicVisibility !== 'undefined' &&
+      !['displayName', 'anonymous'].includes(data.publicVisibility)
+    ) {
+      errors.publicVisibility = 'Should be a valid public visibility';
+    }
+
     if (typeof data.username !== 'undefined') {
       if (typeof data.username !== 'string') {
         errors.username = 'Should be a string';

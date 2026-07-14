@@ -75,6 +75,10 @@ const eventListPipeline = ({ eventsQuery, sortBy, page, pageLimit }) => [
             displayName: '$$manager.displayName',
             firstName: '$$manager.firstName',
             lastName: '$$manager.lastName',
+            profilePublic: { $ifNull: ['$$manager.profilePublic', true] },
+            publicVisibility: {
+              $ifNull: ['$$manager.publicVisibility', 'displayName']
+            },
             username: '$$manager.username'
           }
         }
@@ -89,6 +93,12 @@ const eventListPipeline = ({ eventsQuery, sortBy, page, pageLimit }) => [
             displayName: '$$participant.displayName',
             firstName: '$$participant.firstName',
             lastName: '$$participant.lastName',
+            profilePublic: {
+              $ifNull: ['$$participant.profilePublic', true]
+            },
+            publicVisibility: {
+              $ifNull: ['$$participant.publicVisibility', 'displayName']
+            },
             username: '$$participant.username'
           }
         }
