@@ -2,6 +2,7 @@ const express = require('express');
 
 const auth = require('./auth');
 const connections = require('./connections');
+const donations = require('./donations');
 const events = require('./events');
 const invites = require('./invites');
 const others = require('./others');
@@ -18,6 +19,7 @@ const router = new express.Router();
 router.use('', others);
 router.use('/auth', auth);
 router.use('/connections', connections);
+router.use('/donations', donations);
 router.use('/events', events);
 router.use('/invites', invites);
 router.use('/petitions', petitions);

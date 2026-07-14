@@ -103,6 +103,35 @@ module.exports = async (req, res, next) => {
   }
 
   if (existingConnection) {
+    if (existingConnection.state === 'declined') {
+      try {
+        const db = await getDb();
+        await db.collection('connections').updateOne(
+          { _id: existingConnection._id },
+          {
+            $set: {
+              requester,
+              recipient: recipientId,
+              state: 'pending',
+              updatedAt: moment.utc().toDate()
+            },
+            $addToSet: { sharedEvents: event._id }
+          }
+        );
+      } catch (err) {
+        console.log(
+          `Connection ${existingConnection._id.toString()} failed to reopen`
+        );
+        return next(err);
+      }
+
+      return res.status(200).json({
+        id: existingConnection._id.toString(),
+        state: 'pending',
+        general: 'Connection requested'
+      });
+    }
+
     if (
       !(existingConnection.sharedEvents || []).find(
         e => e.toString() === event._id.toString()
