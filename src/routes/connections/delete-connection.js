@@ -2,6 +2,7 @@ const { isMongoId } = require('validator');
 
 const { getDb } = require('../events/leaderboard-helpers');
 const { canViewConnection, toObjectId } = require('./helpers');
+const { revokeChatAccess } = require('../../socket/revoke-chat-access');
 
 module.exports = async (req, res, next) => {
   const connectionId = req.params.connectionId;
@@ -28,6 +29,11 @@ module.exports = async (req, res, next) => {
   try {
     const db = await getDb();
     await db.collection('connections').deleteOne({ _id: connection._id });
+    await revokeChatAccess(
+      req.app.get('io'),
+      [connection._id],
+      'This connection was removed.'
+    );
   } catch (err) {
     console.log(`Connection ${connection._id.toString()} failed to be removed`);
     return next(err);
