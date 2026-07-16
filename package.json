@@ -57,6 +57,7 @@
     "now": "11.4.6",
     "randomstring": "1.1.5",
     "raven": "2.6.0",
+    "socket.io": "^4.8.3",
     "speakingurl": "14.0.0",
     "validator": "9.4.1"
   },

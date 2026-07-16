@@ -53,9 +53,69 @@ module.exports = async (req, res, next) => {
         {
           $lookup: {
             from: 'events',
-            localField: 'sharedEvents',
-            foreignField: '_id',
+            let: {
+              sharedEventIds: {
+                $map: {
+                  input: { $ifNull: ['$sharedEvents', []] },
+                  as: 'eventId',
+                  in: { $toString: '$$eventId' }
+                }
+              }
+            },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $in: [{ $toString: '$_id' }, '$$sharedEventIds']
+                  }
+                }
+              }
+            ],
             as: 'sharedEvents'
+          }
+        },
+        {
+          $lookup: {
+            from: 'events',
+            let: {
+              requesterId: '$requester._id',
+              recipientId: '$recipient._id'
+            },
+            pipeline: [
+              {
+                $match: {
+                  isArchived: false,
+                  $expr: {
+                    $and: [
+                      {
+                        $in: [
+                          '$$requesterId',
+                          {
+                            $concatArrays: [
+                              { $ifNull: ['$participants', []] },
+                              { $ifNull: ['$managers', []] }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        $in: [
+                          '$$recipientId',
+                          {
+                            $concatArrays: [
+                              { $ifNull: ['$participants', []] },
+                              { $ifNull: ['$managers', []] }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              },
+              { $sort: { endDate: -1, startDate: -1 } }
+            ],
+            as: 'inferredSharedEvents'
           }
         },
         {
@@ -65,7 +125,13 @@ module.exports = async (req, res, next) => {
             recipient: userProjection('recipient'),
             sharedEvents: {
               $map: {
-                input: '$sharedEvents',
+                input: {
+                  $cond: [
+                    { $gt: [{ $size: '$sharedEvents' }, 0] },
+                    '$sharedEvents',
+                    { $slice: ['$inferredSharedEvents', 1] }
+                  ]
+                },
                 as: 'event',
                 in: {
                   id: '$$event._id',

@@ -1,4 +1,5 @@
 const fs = require('fs');
+const http = require('http');
 const https = require('https');
 
 const bodyParser = require('body-parser');
@@ -8,15 +9,17 @@ const helmet = require('helmet');
 const ip = require('ip');
 const morgan = require('morgan');
 const raven = require('raven');
+const { Server: SocketIOServer } = require('socket.io');
 
 // Fill process.env with environment variables
 require('dotenv').config();
 //console.log(process.env)
 
-const port = process.env.PORT  || 8000;
+const port = process.env.PORT || 8000;
 
 const connectToDB = require('./helpers/db-connector');
 const routes = require('./routes');
+const configureSocketServer = require('./socket');
 
 function connectedToDB() {
   const app = express();
@@ -59,23 +62,41 @@ function connectedToDB() {
     raven.captureException(err);
   });
 
-  // App Initialization
-  if (process.env.NODE_ENV === 'production') {
-    console.log(`Listening on http://${ip.address()}:${port}`);
-    app.listen(port);
-  } else {
-    https
-      .createServer(
+  const isProduction = process.env.NODE_ENV === 'production';
+  const server = isProduction
+    ? http.createServer(app)
+    : https.createServer(
         {
           key: fs.readFileSync('./certificates/server.key'),
           cert: fs.readFileSync('./certificates/server.crt')
         },
         app
-      )
-      .listen(port, () =>
-        console.log(`Listening on https://${ip.address()}:${port}`)
       );
-  }
+
+  const allowedOrigins = [
+    process.env.WEB_APP_URL,
+    'http://localhost:3000',
+    'https://axsmap.com',
+    'https://www.axsmap.com'
+  ].filter(Boolean);
+
+  const io = new SocketIOServer(server, {
+    cors: {
+      origin: allowedOrigins,
+      methods: ['GET', 'POST'],
+      credentials: true
+    },
+    maxHttpBufferSize: 10000
+  });
+
+  configureSocketServer(io);
+  app.set('io', io);
+
+  const protocol = isProduction ? 'http' : 'https';
+  server.listen(port, () => {
+    console.log(`Listening on ${protocol}://${ip.address()}:${port}`);
+    console.log('Socket.IO is attached to the API server');
+  });
 }
 
 connectToDB(connectedToDB);
