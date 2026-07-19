@@ -146,6 +146,12 @@ const venueSchema = new mongoose.Schema(
       type: String,
       maxlength: [255, 'Should be less than 256 characters']
     },
+    countryCode: {
+      type: String,
+      uppercase: true,
+      minlength: [2, 'Should be a two-letter country code'],
+      maxlength: [2, 'Should be a two-letter country code']
+    },
     allowsGuideDog: {
       yes: {
         type: Number,

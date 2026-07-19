@@ -1,6 +1,7 @@
 const moment = require('moment');
 
 const { Event } = require('../../models/event');
+const { evaluateUserBadges } = require('../../services/badge-evaluator');
 
 module.exports = async (req, res, next) => {
   const eventId = req.params.eventId;
@@ -63,6 +64,16 @@ module.exports = async (req, res, next) => {
   } catch (err) {
     console.log(`User ${req.user.id} failed to be updated at leave-event`);
     return next(err);
+  }
+
+  try {
+    await evaluateUserBadges(req.user._id, { revokeUnearned: true });
+  } catch (err) {
+    console.error('[badges:evaluate:event-leave]', {
+      userId: req.user.id,
+      eventId,
+      error: err.message
+    });
   }
 
   return res.status(200).json({ general: 'Success' });

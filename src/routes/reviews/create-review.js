@@ -7,10 +7,12 @@ const { Photo } = require('../../models/photo');
 const { Review } = require('../../models/review');
 const { Team } = require('../../models/team');
 const { Venue } = require('../../models/venue');
+const { evaluateUserBadges } = require('../../services/badge-evaluator');
 
 const { validateCreateEditReview } = require('./validations');
 const venueReviewSummary = require('../../helpers/venue-review-summary.js');
 const { getDb } = require('../events/leaderboard-helpers');
+const { countryCodeFromPlace } = require('../../helpers/place-country');
 
 const toObjectId = id => (id ? new ObjectId(id) : undefined);
 
@@ -183,6 +185,7 @@ module.exports = async (req, res, next) => {
       const placeData = response.data.result;
       const venueData = {
         address: placeData.formatted_address,
+        countryCode: countryCodeFromPlace(placeData),
         location: {
           type: 'Point',
           coordinates: [
@@ -500,6 +503,7 @@ module.exports = async (req, res, next) => {
     const placeData = response.data.result;
     const venueData = {
       address: placeData.formatted_address,
+      countryCode: countryCodeFromPlace(placeData),
       location: {
         coordinates: [
           placeData.geometry.location.lng,
@@ -916,5 +920,13 @@ module.exports = async (req, res, next) => {
     userReviewsAmount: req.user.reviewsAmount,
     venue: review.venue
   };
+  try {
+    await evaluateUserBadges(req.user._id);
+  } catch (err) {
+    console.error('[badges:evaluate:review]', {
+      userId: req.user.id,
+      error: err.message
+    });
+  }
   return res.status(201).json(dataResponse);
 };

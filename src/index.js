@@ -37,6 +37,14 @@ function connectedToDB() {
   app.use(bodyParser.json());
   app.use(helmet());
 
+  app.use(
+    '/badges',
+    express.static(`${__dirname}/../public/badges`, {
+      fallthrough: false,
+      maxAge: '1h'
+    })
+  );
+
   // Routes
   app.set('strict routing', true);
   app.use('/', routes);
