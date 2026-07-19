@@ -11,6 +11,7 @@ const createUser = require('./create-user');
 const deleteUser = require('./delete-user');
 const editUser = require('./edit-user');
 const getUser = require('./get-user');
+const getUserBadges = require('./get-user-badges');
 const getUserByUsername = require('./get-user-by-username');
 const getProfile = require('./get-profile');
 const listUsers = require('./list-users');
@@ -28,6 +29,11 @@ router.put('/opened', isAuthenticated({ isOptional: false }), markOpened);
 router.put('/password', isAuthenticated({ isOptional: false }), changePassword);
 router.get('', isAuthenticated({ isOptional: false }), listUsers);
 router.post('', isAuthenticated({ isOptional: false }), createUser);
+router.get(
+  '/:userId/badges',
+  isAuthenticated({ isOptional: true }),
+  getUserBadges
+);
 router.get('/:userId', getUser);
 router.put('/:userId', isAuthenticated({ isOptional: false }), editUser);
 router.delete(
