@@ -164,6 +164,15 @@ const userSchema = new mongoose.Schema(
       default: false,
       required: [true, 'Is required']
     },
+    hideBadges: {
+      type: Boolean,
+      default: false,
+      required: [true, 'Is required']
+    },
+    salesforceContactId: {
+      type: String,
+      maxlength: [18, 'Should be a Salesforce ID']
+    },
     teams: [
       {
         type: mongoose.Schema.Types.ObjectId,

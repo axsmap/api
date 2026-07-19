@@ -1,6 +1,7 @@
 const moment = require('moment');
 
 const { Review } = require('../../models/review');
+const { evaluateUserBadges } = require('../../services/badge-evaluator');
 
 module.exports = async (req, res, next) => {
   if (!req.user.isAdmin) {
@@ -33,6 +34,16 @@ module.exports = async (req, res, next) => {
   } catch (err) {
     console.log(`Review ${review.id} failed to be updated at ban-review`);
     return next(err);
+  }
+
+  try {
+    await evaluateUserBadges(review.user, { revokeUnearned: true });
+  } catch (err) {
+    console.error('[badges:evaluate:review-ban]', {
+      userId: String(review.user),
+      reviewId,
+      error: err.message
+    });
   }
 
   return res.status(200).json({ general: 'Success' });

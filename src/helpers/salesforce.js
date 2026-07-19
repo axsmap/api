@@ -8,8 +8,9 @@ function configuredApiVersion() {
 }
 
 function configuredLoginUrl() {
-  return (process.env.SALESFORCE_LOGIN_URL || 'https://login.salesforce.com')
-    .replace(/\/$/, '');
+  return (
+    process.env.SALESFORCE_LOGIN_URL || 'https://login.salesforce.com'
+  ).replace(/\/$/, '');
 }
 
 function requireConfig(name) {
@@ -24,8 +25,7 @@ function requireConfig(name) {
 
 function authenticationParameters() {
   const params = new URLSearchParams();
-  const authFlow =
-    process.env.SALESFORCE_AUTH_FLOW || 'refresh_token';
+  const authFlow = process.env.SALESFORCE_AUTH_FLOW || 'refresh_token';
 
   if (authFlow === 'client_credentials') {
     params.set('grant_type', 'client_credentials');
@@ -102,7 +102,9 @@ async function authenticatedRequest({ method, path, data }) {
   const session = await authenticate();
   const response = await axios({
     method,
-    url: `${session.instanceUrl}/services/data/${configuredApiVersion()}${path}`,
+    url: `${
+      session.instanceUrl
+    }/services/data/${configuredApiVersion()}${path}`,
     data,
     headers: {
       Authorization: `Bearer ${session.accessToken}`,
@@ -139,6 +141,24 @@ async function query(soql) {
     path: `/query?q=${encodeURIComponent(soql)}`
   });
   return result.records || [];
+}
+
+async function queryAll(soql) {
+  let result = await request({
+    method: 'get',
+    path: `/query?q=${encodeURIComponent(soql)}`
+  });
+  const records = result.records || [];
+  while (result.nextRecordsUrl) {
+    const marker = `/services/data/${configuredApiVersion()}`;
+    const path =
+      result.nextRecordsUrl.indexOf(marker) === 0
+        ? result.nextRecordsUrl.slice(marker.length)
+        : result.nextRecordsUrl;
+    result = await request({ method: 'get', path });
+    records.push(...(result.records || []));
+  }
+  return records;
 }
 
 async function findOne({ objectName, fieldName, value }) {
@@ -182,7 +202,9 @@ async function upsertRecord({
     value: externalIdValue
   });
   if (!record) {
-    throw new Error('Salesforce upsert completed but record could not be found');
+    throw new Error(
+      'Salesforce upsert completed but record could not be found'
+    );
   }
   return record;
 }
@@ -203,9 +225,19 @@ async function createRecord({ objectName, fields }) {
     data: fields
   });
   if (!result.id) {
-    throw new Error('Salesforce create completed but no record ID was returned');
+    throw new Error(
+      'Salesforce create completed but no record ID was returned'
+    );
   }
   return { Id: result.id };
+}
+
+async function deleteRecord({ objectName, recordId }) {
+  await request({
+    method: 'delete',
+    path: `/sobjects/${objectName}/${encodeURIComponent(recordId)}`
+  });
+  return { Id: recordId };
 }
 
 function resetSession() {
@@ -218,9 +250,11 @@ module.exports = {
   escapeSoql,
   fieldsForExternalIdUpsert,
   createRecord,
+  deleteRecord,
   findOne,
   isInvalidSessionError,
   query,
+  queryAll,
   request,
   resetSession,
   updateRecord,
