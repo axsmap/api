@@ -2,7 +2,6 @@ const badgeAssetBaseUrl = (
   process.env.BADGE_ASSET_BASE_URL || 'https://api.axsmap.com/badges'
 ).replace(/\/$/, '');
 const icon = badgeId => `${badgeAssetBaseUrl}/${badgeId}.svg`;
-const legacyIcon = badgeId => `https://www.axsmap.com/badges/${badgeId}.svg`;
 
 const ranking = [
   ['scout_badge', 'AXS Map Scout', 'Scout', 5],
@@ -121,27 +120,6 @@ const achievements = [
     20
   ],
   [
-    'traveler_badge',
-    'AXS Map Traveler Badge',
-    'Submitted reviews in 2 different countries.',
-    'geographic_review',
-    2
-  ],
-  [
-    'explorer_badge',
-    'Explorer Badge',
-    'Submitted reviews in 3 different countries.',
-    'geographic_review',
-    3
-  ],
-  [
-    'globetrotter_badge',
-    'Globetrotter Badge',
-    'Submitted reviews in 5 different countries.',
-    'geographic_review',
-    5
-  ],
-  [
     'fundraiser_badge',
     'Fundraiser Badge',
     'Joined 5 fundraising mapathons.',
@@ -168,9 +146,9 @@ const achievements = [
       ...(googlePlaceTypes ? { googlePlaceTypes } : {})
     },
     threshold,
-    iconUrl: type === 'geographic_review' ? legacyIcon(badgeId) : icon(badgeId),
+    iconUrl: icon(badgeId),
     displayOrder: ranking.length + index,
-    isActive: type !== 'geographic_review',
+    isActive: true,
     visibility: { public: true },
     metadata: {}
   })

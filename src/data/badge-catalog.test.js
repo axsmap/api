@@ -4,27 +4,21 @@ const path = require('path');
 
 const badgeCatalog = require('./badge-catalog');
 
-assert.strictEqual(badgeCatalog.length, 23);
-assert.strictEqual(new Set(badgeCatalog.map(badge => badge.badgeId)).size, 23);
+assert.strictEqual(badgeCatalog.length, 20);
+assert.strictEqual(new Set(badgeCatalog.map(badge => badge.badgeId)).size, 20);
 
 badgeCatalog.forEach(badge => {
-  if (badge.isActive) {
-    assert.strictEqual(
-      badge.iconUrl,
-      `https://api.axsmap.com/badges/${badge.badgeId}.svg`
-    );
-    assert.ok(
-      fs.existsSync(
-        path.join(__dirname, '../../public/badges', `${badge.badgeId}.svg`)
-      ),
-      `Missing SVG for ${badge.badgeId}`
-    );
-  } else {
-    assert.strictEqual(
-      badge.iconUrl,
-      `https://www.axsmap.com/badges/${badge.badgeId}.svg`
-    );
-  }
+  assert.strictEqual(badge.isActive, true);
+  assert.strictEqual(
+    badge.iconUrl,
+    `https://api.axsmap.com/badges/${badge.badgeId}.svg`
+  );
+  assert.ok(
+    fs.existsSync(
+      path.join(__dirname, '../../public/badges', `${badge.badgeId}.svg`)
+    ),
+    `Missing SVG for ${badge.badgeId}`
+  );
 });
 
 assert.strictEqual(badgeCatalog.filter(badge => badge.isActive).length, 20);
