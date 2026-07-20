@@ -20,6 +20,7 @@ const port = process.env.PORT || 8000;
 const connectToDB = require('./helpers/db-connector');
 const routes = require('./routes');
 const configureSocketServer = require('./socket');
+const { getChatAllowedOrigins } = require('./socket/cors-origins');
 
 function connectedToDB() {
   const app = express();
@@ -81,12 +82,7 @@ function connectedToDB() {
         app
       );
 
-  const allowedOrigins = [
-    process.env.WEB_APP_URL,
-    'http://localhost:3000',
-    'https://axsmap.com',
-    'https://www.axsmap.com'
-  ].filter(Boolean);
+  const allowedOrigins = getChatAllowedOrigins();
 
   const io = new SocketIOServer(server, {
     cors: {
