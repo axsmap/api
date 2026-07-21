@@ -1,9 +1,14 @@
-const aws = require("aws-sdk");
+const { SESv2Client, SendEmailCommand } = require("@aws-sdk/client-sesv2");
 const { camelCase } = require("lodash");
 const jwt = require("jsonwebtoken");
 const { mapKeys, pickBy } = require("lodash");
 const nodemailer = require("nodemailer");
 const { snakeCase } = require("lodash");
+
+// SESv2 client (AWS SDK v3) for the nodemailer 9 SES transport. Region +
+// credentials come from the standard env chain (AWS_REGION /
+// AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY).
+const sesClient = new SESv2Client({});
 
 const { User } = require("../models/user");
 
@@ -147,9 +152,7 @@ module.exports = {
     textContent,
   }) {
     const transporter = nodemailer.createTransport({
-      SES: new aws.SES({
-        apiVersion: "2010-12-01",
-      }),
+      SES: { sesClient, SendEmailCommand },
     });
 
     return transporter.sendMail({
