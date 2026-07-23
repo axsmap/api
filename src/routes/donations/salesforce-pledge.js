@@ -69,6 +69,9 @@ async function resolveCampaign(event) {
 }
 
 async function resolveParticipantContact(participant) {
+  if (participant.salesforceContactId) {
+    return { Id: participant.salesforceContactId };
+  }
   if (!participant.email) {
     const error = new Error('Mapathon participant does not have an email');
     error.code = 'PARTICIPANT_EMAIL_REQUIRED';
@@ -83,11 +86,18 @@ async function resolveParticipantContact(participant) {
 }
 
 async function resolveDonorContact(pledge) {
-  return salesforce.findOne({
-    objectName: 'Contact',
-    fieldName: process.env.SALESFORCE_CONTACT_EMAIL_FIELD || 'Email',
-    value: pledge.donorEmail
-  });
+  try {
+    return await salesforce.findOne({
+      objectName: 'Contact',
+      fieldName: process.env.SALESFORCE_CONTACT_EMAIL_FIELD || 'Email',
+      value: pledge.donorEmail
+    });
+  } catch (error) {
+    // Donor is optional on a pledge; do not block settlement when historical
+    // Salesforce data contains duplicate Contacts for the donor email.
+    if (error.code === 'SALESFORCE_AMBIGUOUS_MATCH') return null;
+    throw error;
+  }
 }
 
 async function syncCalculatedPledge({ pledge, event, participant }) {

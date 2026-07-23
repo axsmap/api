@@ -1,15 +1,17 @@
-const assert = require('node:assert/strict');
+const assert = require('assert');
+// eslint-disable-next-line import/no-unresolved
 const test = require('node:test');
 
+const salesforce = require('../../helpers/salesforce');
 const {
   isoDate,
   pledgeFieldMapping,
   publicRecognition,
   resolveCampaign,
   resolveDonorContact,
+  resolveParticipantContact,
   syncCalculatedPledge
 } = require('./salesforce-pledge');
-const salesforce = require('../../helpers/salesforce');
 
 test('maps a calculated pledge to the exact Salesforce fields', () => {
   const fields = pledgeFieldMapping({
@@ -113,6 +115,41 @@ test('donor Contact resolution is lookup-only', async () => {
       fieldName: 'Email',
       value: 'new-donor@example.com'
     });
+  } finally {
+    salesforce.findOne = originalFindOne;
+  }
+});
+
+test('uses a mapped participant Contact without an ambiguous email lookup', async () => {
+  const originalFindOne = salesforce.findOne;
+  let lookupCalled = false;
+  salesforce.findOne = async () => {
+    lookupCalled = true;
+  };
+  try {
+    const contact = await resolveParticipantContact({
+      email: 'duplicate@example.com',
+      salesforceContactId: '003mapped'
+    });
+    assert.deepEqual(contact, { Id: '003mapped' });
+    assert.equal(lookupCalled, false);
+  } finally {
+    salesforce.findOne = originalFindOne;
+  }
+});
+
+test('omits an ambiguous optional donor Contact during settlement', async () => {
+  const originalFindOne = salesforce.findOne;
+  salesforce.findOne = async () => {
+    const error = new Error('Multiple Contact records match Email');
+    error.code = 'SALESFORCE_AMBIGUOUS_MATCH';
+    throw error;
+  };
+  try {
+    assert.equal(
+      await resolveDonorContact({ donorEmail: 'duplicate@example.com' }),
+      null
+    );
   } finally {
     salesforce.findOne = originalFindOne;
   }
