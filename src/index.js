@@ -20,6 +20,13 @@ const port = process.env.PORT || 8000;
 const connectToDB = require('./helpers/db-connector');
 const routes = require('./routes');
 const configureSocketServer = require('./socket');
+const { getDb } = require('./routes/events/leaderboard-helpers');
+const {
+  ensureLeaderboardIndexes
+} = require('./services/leaderboard-milestones');
+const {
+  startLeaderboardSync
+} = require('./services/salesforce-leaderboard-sync');
 
 function connectedToDB() {
   const app = express();
@@ -104,6 +111,14 @@ function connectedToDB() {
   server.listen(port, () => {
     console.log(`Listening on ${protocol}://${ip.address()}:${port}`);
     console.log('Socket.IO is attached to the API server');
+    getDb()
+      .then(async db => {
+        await ensureLeaderboardIndexes(db);
+        startLeaderboardSync(db);
+      })
+      .catch(error => {
+        console.error('[salesforce:leaderboard-sync:start]', error.message);
+      });
   });
 }
 
