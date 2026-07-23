@@ -4,9 +4,12 @@ const test = require('node:test');
 
 const salesforce = require('../../helpers/salesforce');
 const {
+  campaignIsActive,
   campaignFieldMapping,
+  findReusableCampaign,
   isoDate,
   requireCampaignExternalIdField,
+  soqlDateLiteral,
   syncMapathonCampaign
 } = require('./salesforce-campaign');
 
@@ -57,9 +60,38 @@ test('marks draft Mapathon Campaigns inactive', () => {
   assert.equal(fields.Description, undefined);
 });
 
+test('marks ended or archived Mapathon Campaigns inactive', () => {
+  const now = new Date('2026-07-23T12:00:00.000Z');
+  assert.equal(
+    campaignIsActive(
+      { endDate: new Date('2026-07-22T23:59:59.000Z') },
+      now
+    ),
+    false
+  );
+  assert.equal(
+    campaignIsActive(
+      {
+        endDate: new Date('2026-07-31T23:59:59.000Z'),
+        isArchived: true
+      },
+      now
+    ),
+    false
+  );
+});
+
 test('formats Salesforce Campaign dates without time components', () => {
   assert.equal(isoDate(new Date('2026-07-01T14:00:00.000Z')), '2026-07-01');
   assert.equal(isoDate(null), null);
+});
+
+test('formats Salesforce Date literals without quotes', () => {
+  assert.equal(
+    soqlDateLiteral(new Date('2026-07-01T14:00:00.000Z')),
+    '2026-07-01'
+  );
+  assert.equal(soqlDateLiteral(null), 'null');
 });
 
 test('requires the configured Salesforce Campaign external ID field', () => {
@@ -78,10 +110,12 @@ test('requires the configured Salesforce Campaign external ID field', () => {
 
 test('upserts Campaign by event id using the configured external ID field', async () => {
   const previous = process.env.SALESFORCE_CAMPAIGN_EXTERNAL_ID_FIELD;
+  const originalQuery = salesforce.query;
   const originalUpsertRecord = salesforce.upsertRecord;
   let upsertRequest;
 
   process.env.SALESFORCE_CAMPAIGN_EXTERNAL_ID_FIELD = 'AXS_Map_Mapathon_ID__c';
+  salesforce.query = async () => [];
   salesforce.upsertRecord = async request => {
     upsertRequest = request;
     return { Id: '701campaign' };
@@ -103,7 +137,33 @@ test('upserts Campaign by event id using the configured external ID field', asyn
     assert.equal(upsertRequest.externalIdValue, 'event-id');
     assert.equal(upsertRequest.fields.AXS_Map_Mapathon_ID__c, 'event-id');
   } finally {
+    salesforce.query = originalQuery;
     salesforce.upsertRecord = originalUpsertRecord;
     restoreEnvironment('SALESFORCE_CAMPAIGN_EXTERNAL_ID_FIELD', previous);
+  }
+});
+
+test('reuses a unique matching Campaign that predates external IDs', async () => {
+  const originalQuery = salesforce.query;
+  let soql;
+  salesforce.query = async query => {
+    soql = query;
+    return [{ Id: '701existing', AXS_Map_Mapathon_ID__c: null }];
+  };
+  try {
+    const record = await findReusableCampaign({
+      event: {
+        id: 'event-id',
+        name: "Downtown's Mapathon",
+        startDate: new Date('2026-07-01T14:00:00.000Z'),
+        endDate: new Date('2026-07-31T22:00:00.000Z')
+      },
+      externalIdField: 'AXS_Map_Mapathon_ID__c'
+    });
+    assert.equal(record.Id, '701existing');
+    assert.match(soql, /StartDate = 2026-07-01/);
+    assert.match(soql, /EndDate = 2026-07-31/);
+  } finally {
+    salesforce.query = originalQuery;
   }
 });
