@@ -265,6 +265,8 @@ async function ensureLeaderboardIndexes(db) {
 }
 
 module.exports = {
+  AXS_MAP_ACCOUNT_IDS,
+  AXS_MAP_USERNAMES,
   REVIEW_MILESTONES,
   captureLeaderboardProgress,
   ensureLeaderboardIndexes,
@@ -272,5 +274,6 @@ module.exports = {
   monthKey,
   monthRange,
   positionEvents,
-  reviewEvents
+  reviewEvents,
+  stateSyncDocument
 };

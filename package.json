@@ -21,6 +21,8 @@
     "verify:badge-assets": "node src/scripts/verify-badge-assets.js",
     "reconcile:salesforce-fundraising": "node src/scripts/reconcile-salesforce-fundraising.js",
     "reconcile:salesforce-fundraising:apply": "node src/scripts/reconcile-salesforce-fundraising.js --apply --confirm-production",
+    "backfill:salesforce-leaderboard": "node src/scripts/backfill-leaderboard-salesforce.js",
+    "backfill:salesforce-leaderboard:apply": "node src/scripts/backfill-leaderboard-salesforce.js --apply --confirm-production",
     "inspect:salesforce-principal": "node src/scripts/inspect-salesforce-principal.js",
     "provision:salesforce-badges:cli": "node src/scripts/run-with-salesforce-cli-auth.js src/scripts/provision-salesforce-badges.js",
     "deploy:salesforce-badges:cli": "node src/scripts/deploy-salesforce-badge-metadata.js",
