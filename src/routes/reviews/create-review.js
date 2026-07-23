@@ -8,11 +8,16 @@ const { Review } = require('../../models/review');
 const { Team } = require('../../models/team');
 const { Venue } = require('../../models/venue');
 const { evaluateUserBadges } = require('../../services/badge-evaluator');
-
-const { validateCreateEditReview } = require('./validations');
+const {
+  captureLeaderboardProgress
+} = require('../../services/leaderboard-milestones');
+const {
+  scheduleLeaderboardSync
+} = require('../../services/salesforce-leaderboard-sync');
 const venueReviewSummary = require('../../helpers/venue-review-summary.js');
 const { getDb } = require('../events/leaderboard-helpers');
 const { countryCodeFromPlace } = require('../../helpers/place-country');
+const { validateCreateEditReview } = require('./validations');
 
 const toObjectId = id => (id ? new ObjectId(id) : undefined);
 
@@ -383,6 +388,16 @@ module.exports = async (req, res, next) => {
         } failed to be updated at create-review, at final step`
       );
       return next(err);
+    }
+
+    try {
+      await captureLeaderboardProgress(db, userId, now);
+      scheduleLeaderboardSync(db);
+    } catch (err) {
+      console.error('[leaderboard:capture:review]', {
+        userId: req.user.id,
+        error: err.message
+      });
     }
 
     return res.status(201).json({
