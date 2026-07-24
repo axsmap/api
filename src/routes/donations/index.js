@@ -10,6 +10,7 @@ const createPledge = require('./create-pledge');
 const listPledgeSettlementCandidates = require('./list-pledge-settlement-candidates');
 const listUserPledges = require('./list-user-pledges');
 const paypalWebhook = require('./paypal-webhook');
+const salesforcePaymentConfirmation = require('./salesforce-payment-confirmation');
 const syncPledgeSalesforce = require('./sync-pledge-salesforce');
 
 const router = new express.Router();
@@ -17,6 +18,7 @@ const router = new express.Router();
 router.post('/paypal/checkout', createCheckout);
 router.post('/paypal/capture', captureCheckout);
 router.post('/paypal/webhook', paypalWebhook);
+router.post('/salesforce/payment-confirmation', salesforcePaymentConfirmation);
 router.post('/pledges', createPledge);
 router.get(
   '/pledges/settlement-candidates',
