@@ -72,6 +72,10 @@
         <readable>true</readable>
     </fieldPermissions>
     <label>AXS Map Leaderboard Integration</label>
+    <externalCredentialPrincipalAccesses>
+        <enabled>true</enabled>
+        <externalCredentialPrincipal>Access_Map_Webhook-AccessMap</externalCredentialPrincipal>
+    </externalCredentialPrincipalAccesses>
     <objectPermissions>
         <allowCreate>false</allowCreate>
         <allowDelete>false</allowDelete>
