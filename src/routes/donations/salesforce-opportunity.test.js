@@ -6,8 +6,13 @@ const salesforce = require('../../helpers/salesforce');
 const {
   DEFAULT_EXTERNAL_ID_FIELD,
   configuredExternalIdField,
+  donorContactFields,
+  donorNameParts,
   opportunityFieldMapping,
   opportunityName,
+  persistSalesforceSuccess,
+  resolveCampaign,
+  resolveOrCreateDonorContact,
   salesforceErrorMessage,
   upsertDonationOpportunity
 } = require('./salesforce-opportunity');
@@ -255,6 +260,55 @@ test('updates an existing Opportunity matched by PayPal transaction', async () =
   }
 });
 
+test('syncs historical donations when the credited participant was removed', async () => {
+  const previousEnvironment = {
+    campaign: process.env.SALESFORCE_CAMPAIGN_EXTERNAL_ID_FIELD,
+    fallback: process.env.SALESFORCE_GENERAL_DONATION_CAMPAIGN_EXTERNAL_ID,
+    email: process.env.SALESFORCE_OPPORTUNITY_DONOR_EMAIL_FIELD,
+    paypal: process.env.SALESFORCE_OPPORTUNITY_PAYPAL_TRANSACTION_FIELD,
+    participant: process.env.SALESFORCE_OPPORTUNITY_PARTICIPANT_FIELD
+  };
+  const originalFindOne = salesforce.findOne;
+  const originalUpsertRecord = salesforce.upsertRecord;
+  process.env.SALESFORCE_CAMPAIGN_EXTERNAL_ID_FIELD = 'Mapathon_Id__c';
+  process.env.SALESFORCE_GENERAL_DONATION_CAMPAIGN_EXTERNAL_ID = 'general';
+  process.env.SALESFORCE_OPPORTUNITY_DONOR_EMAIL_FIELD = 'Donor_Email__c';
+  process.env.SALESFORCE_OPPORTUNITY_PAYPAL_TRANSACTION_FIELD =
+    'PayPal_Transaction_ID__c';
+  process.env.SALESFORCE_OPPORTUNITY_PARTICIPANT_FIELD = 'Participant__c';
+  salesforce.findOne = async request => {
+    if (request.objectName === 'Campaign') return { Id: '701general' };
+    return null;
+  };
+  salesforce.upsertRecord = async request => ({
+    Id: '006historical',
+    fields: request.fields
+  });
+
+  try {
+    const record = await upsertDonationOpportunity({
+      donation: donation(),
+      event: null,
+      participant: null
+    });
+    assert.equal(record.Id, '006historical');
+    assert.equal(record.fields.Participant__c, undefined);
+  } finally {
+    salesforce.findOne = originalFindOne;
+    salesforce.upsertRecord = originalUpsertRecord;
+    Object.entries(previousEnvironment).forEach(([name, value]) => {
+      const environmentName = {
+        campaign: 'SALESFORCE_CAMPAIGN_EXTERNAL_ID_FIELD',
+        fallback: 'SALESFORCE_GENERAL_DONATION_CAMPAIGN_EXTERNAL_ID',
+        email: 'SALESFORCE_OPPORTUNITY_DONOR_EMAIL_FIELD',
+        paypal: 'SALESFORCE_OPPORTUNITY_PAYPAL_TRANSACTION_FIELD',
+        participant: 'SALESFORCE_OPPORTUNITY_PARTICIPANT_FIELD'
+      }[name];
+      restoreEnvironment(environmentName, value);
+    });
+  }
+});
+
 test('falls back to the general donation Campaign when Mapathon is unsynced', async () => {
   const previousCampaign = process.env.SALESFORCE_CAMPAIGN_EXTERNAL_ID_FIELD;
   const previousFallback =
@@ -292,6 +346,107 @@ test('falls back to the general donation Campaign when Mapathon is unsynced', as
       previousFallback
     );
   }
+});
+
+test('falls back to the general Campaign when a historical Mapathon is missing', async () => {
+  const previousCampaign = process.env.SALESFORCE_CAMPAIGN_EXTERNAL_ID_FIELD;
+  const previousFallback =
+    process.env.SALESFORCE_GENERAL_DONATION_CAMPAIGN_EXTERNAL_ID;
+  const originalFindOne = salesforce.findOne;
+  process.env.SALESFORCE_CAMPAIGN_EXTERNAL_ID_FIELD = 'AXS_Map_Mapathon_ID__c';
+  process.env.SALESFORCE_GENERAL_DONATION_CAMPAIGN_EXTERNAL_ID =
+    'general-donations';
+  const requests = [];
+  salesforce.findOne = async request => {
+    requests.push(request);
+    return { Id: '701general' };
+  };
+
+  try {
+    assert.deepEqual(await resolveCampaign(null), { Id: '701general' });
+    assert.deepEqual(requests.map(request => request.value), [
+      'general-donations'
+    ]);
+  } finally {
+    salesforce.findOne = originalFindOne;
+    restoreEnvironment(
+      'SALESFORCE_CAMPAIGN_EXTERNAL_ID_FIELD',
+      previousCampaign
+    );
+    restoreEnvironment(
+      'SALESFORCE_GENERAL_DONATION_CAMPAIGN_EXTERNAL_ID',
+      previousFallback
+    );
+  }
+});
+
+test('maps donor identity to a Salesforce Contact', () => {
+  assert.deepEqual(donorNameParts({ donorName: 'Jane Q. Donor' }), {
+    firstName: 'Jane Q.',
+    lastName: 'Donor'
+  });
+  assert.deepEqual(donorNameParts({ donorName: '' }), {
+    firstName: 'AXS Map',
+    lastName: 'Donor'
+  });
+  assert.deepEqual(
+    donorContactFields({
+      donorName: 'Jane Donor',
+      donorEmail: 'jane@example.com'
+    }),
+    {
+      Email: 'jane@example.com',
+      FirstName: 'Jane',
+      LastName: 'Donor'
+    }
+  );
+});
+
+test('creates a missing donor Contact only when enabled', async () => {
+  const previousEnabled = process.env.SALESFORCE_CONTACT_CREATE_ENABLED;
+  const originalFindOne = salesforce.findOne;
+  const originalCreateRecord = salesforce.createRecord;
+  process.env.SALESFORCE_CONTACT_CREATE_ENABLED = 'true';
+  salesforce.findOne = async () => null;
+  let createRequest;
+  salesforce.createRecord = async request => {
+    createRequest = request;
+    return { Id: '003created' };
+  };
+
+  try {
+    const contact = await resolveOrCreateDonorContact({
+      donorName: 'Jane Donor',
+      donorEmail: 'jane@example.com'
+    });
+    assert.deepEqual(contact, { Id: '003created' });
+    assert.equal(createRequest.objectName, 'Contact');
+    assert.equal(createRequest.fields.Email, 'jane@example.com');
+  } finally {
+    salesforce.findOne = originalFindOne;
+    salesforce.createRecord = originalCreateRecord;
+    restoreEnvironment(
+      'SALESFORCE_CONTACT_CREATE_ENABLED',
+      previousEnabled
+    );
+  }
+});
+
+test('writes Salesforce status without validating legacy donation references', async () => {
+  let update;
+  const legacyDonation = {
+    _id: 'legacy-id',
+    constructor: {
+      updateOne: async (filter, change) => {
+        update = { filter, change };
+      }
+    }
+  };
+
+  await persistSalesforceSuccess(legacyDonation, '006legacy');
+  assert.deepEqual(update.filter, { _id: 'legacy-id' });
+  assert.equal(update.change.$set.salesforceOpportunityId, '006legacy');
+  assert.equal(legacyDonation.salesforceOpportunityId, '006legacy');
 });
 
 test('formats Salesforce error bodies into saved sync errors', () => {

@@ -29,12 +29,14 @@ async function resolveCampaign(event) {
   const externalIdField = process.env.SALESFORCE_CAMPAIGN_EXTERNAL_ID_FIELD;
   if (!externalIdField) return null;
 
-  const eventCampaign = await salesforce.findOne({
-    objectName: 'Campaign',
-    fieldName: externalIdField,
-    value: event.id
-  });
-  if (eventCampaign) return eventCampaign;
+  if (event && event.id) {
+    const eventCampaign = await salesforce.findOne({
+      objectName: 'Campaign',
+      fieldName: externalIdField,
+      value: event.id
+    });
+    if (eventCampaign) return eventCampaign;
+  }
 
   const fallbackCampaignId =
     process.env.SALESFORCE_GENERAL_DONATION_CAMPAIGN_EXTERNAL_ID;
@@ -64,6 +66,57 @@ async function resolveParticipantContact(participant) {
 
 async function resolveDonorContact(donation) {
   return resolveContactByEmail(donation.donorEmail);
+}
+
+function contactCreationEnabled() {
+  return process.env.SALESFORCE_CONTACT_CREATE_ENABLED === 'true';
+}
+
+function donorNameParts(donation) {
+  const donorName = String(donation.donorName || '').trim();
+  if (!donorName) {
+    return { firstName: 'AXS Map', lastName: 'Donor' };
+  }
+
+  const parts = donorName.split(/\s+/).filter(Boolean);
+  if (parts.length === 1) {
+    return { firstName: '', lastName: parts[0] };
+  }
+  return {
+    firstName: parts.slice(0, -1).join(' '),
+    lastName: parts[parts.length - 1]
+  };
+}
+
+function donorContactFields(donation) {
+  const emailField = process.env.SALESFORCE_CONTACT_EMAIL_FIELD || 'Email';
+  const firstNameField =
+    process.env.SALESFORCE_CONTACT_FIRST_NAME_FIELD || 'FirstName';
+  const lastNameField =
+    process.env.SALESFORCE_CONTACT_LAST_NAME_FIELD || 'LastName';
+  const accountId = process.env.SALESFORCE_CONTACT_ACCOUNT_ID;
+  const sourceField = process.env.SALESFORCE_CONTACT_SOURCE_FIELD;
+  const sourceValue = process.env.SALESFORCE_CONTACT_SOURCE_VALUE || 'AXS Map';
+  const { firstName, lastName } = donorNameParts(donation);
+  const fields = {
+    [emailField]: donation.donorEmail,
+    [lastNameField]: lastName
+  };
+
+  if (firstName) fields[firstNameField] = firstName;
+  if (accountId) fields.AccountId = accountId;
+  if (sourceField) fields[sourceField] = sourceValue;
+  return fields;
+}
+
+async function resolveOrCreateDonorContact(donation) {
+  const existingContact = await resolveDonorContact(donation);
+  if (existingContact || !contactCreationEnabled()) return existingContact;
+
+  return salesforce.createRecord({
+    objectName: 'Contact',
+    fields: donorContactFields(donation)
+  });
 }
 
 function opportunityFieldMapping({
@@ -159,7 +212,7 @@ async function upsertDonationOpportunity({ donation, event, participant }) {
   const [campaign, participantContact, donorContact] = await Promise.all([
     resolveCampaign(event),
     resolveParticipantContact(participant),
-    resolveDonorContact(donation)
+    resolveOrCreateDonorContact(donation)
   ]);
 
   if (process.env.SALESFORCE_CAMPAIGN_EXTERNAL_ID_FIELD && !campaign) {
@@ -169,6 +222,7 @@ async function upsertDonationOpportunity({ donation, event, participant }) {
   }
   if (
     process.env.SALESFORCE_OPPORTUNITY_PARTICIPANT_FIELD &&
+    participant &&
     !participantContact
   ) {
     const error = new Error(
@@ -234,19 +288,38 @@ function salesforceErrorMessage(error) {
   return error.message || 'Salesforce sync failed';
 }
 
+async function persistSalesforceSuccess(donation, recordId) {
+  const syncedAt = new Date();
+  await donation.constructor.updateOne(
+    { _id: donation._id },
+    {
+      $set: {
+        salesforceOpportunityId: recordId,
+        salesforceSyncedAt: syncedAt,
+        salesforceSyncError: ''
+      }
+    }
+  );
+  donation.salesforceOpportunityId = recordId;
+  donation.salesforceSyncedAt = syncedAt;
+  donation.salesforceSyncError = '';
+}
+
 async function syncDonationOpportunitySafely(donation) {
   try {
     const record = await syncDonationOpportunity(donation);
     if (!record) return null;
 
-    donation.salesforceOpportunityId = record.Id;
-    donation.salesforceSyncedAt = new Date();
-    donation.salesforceSyncError = '';
-    await donation.save();
+    await persistSalesforceSuccess(donation, record.Id);
     return record;
   } catch (error) {
     donation.salesforceSyncError = salesforceErrorMessage(error);
-    await donation.save().catch(() => {});
+    await donation.constructor
+      .updateOne(
+        { _id: donation._id },
+        { $set: { salesforceSyncError: donation.salesforceSyncError } }
+      )
+      .catch(() => {});
     console.log(
       `Salesforce Opportunity failed to sync for donation ${donation.id}: ` +
         donation.salesforceSyncError
@@ -259,11 +332,15 @@ module.exports = {
   DEFAULT_EXTERNAL_ID_FIELD,
   configuredExternalIdField,
   donationContext,
+  donorContactFields,
+  donorNameParts,
   opportunityFieldMapping,
   opportunityName,
+  persistSalesforceSuccess,
   resolveCampaign,
   resolveContactByEmail,
   resolveDonorContact,
+  resolveOrCreateDonorContact,
   resolveParticipantContact,
   salesforceErrorMessage,
   syncDonationOpportunity,
