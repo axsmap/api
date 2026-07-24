@@ -31,7 +31,7 @@
     "sync:badges:cli": "node src/scripts/sync-badges-salesforce-cli.js"
   },
   "devDependencies": {
-    "commitizen": "2.10.1",
+    "commitizen": "4.3.2",
     "cross-env": "5.0.5",
     "cz-conventional-changelog": "2.1.0",
     "eslint": "4.19.1",
@@ -61,7 +61,7 @@
     "google-auth-library": "9.15.1",
     "helmet": "3.8.1",
     "ip": "1.1.5",
-    "jimp": "0.2.28",
+    "jimp": "1.6.1",
     "jsonwebtoken": "7.4.1",
     "lodash": "4.17.4",
     "moment": "2.18.1",
